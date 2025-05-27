@@ -43,6 +43,46 @@ To run the application locally without Docker:
    go run .
    ```
 
+### Running Locally from Terminal
+
+1. **Clone the repository** (if you haven't already):
+   ```bash
+   git clone https://github.com/brentlyjr/WhatThePooh-Server.git
+   cd WhatThePooh-Server
+   ```
+
+2. **Set up environment variables**:
+   Create a `.env` file in the project root:
+   ```bash
+   touch .env
+   ```
+   Add your required environment variables to the `.env` file.
+
+3. **Install dependencies**:
+   ```bash
+   go mod download
+   ```
+
+4. **Run the application**:
+   ```bash
+   go run .
+   ```
+   
+   Or build and run the binary:
+   ```bash
+   go build
+   ./WhatThePooh-Server
+   ```
+
+5. **Verify the application is running**:
+   The server should start and listen on port 8080 by default. You can test it by opening:
+   ```
+   http://localhost:8080
+   ```
+
+6. **Stopping the application**:
+   Press `Ctrl+C` in the terminal to stop the server.
+
 ## Project Structure
 
 - `main.go` - Main application entry point
