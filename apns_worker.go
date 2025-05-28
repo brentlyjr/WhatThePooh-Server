@@ -1,13 +1,122 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"os"
+	"regexp"
 	"time"
 
 	"github.com/sideshow/apns2"
 	"github.com/sideshow/apns2/payload"
 	"github.com/sideshow/apns2/token"
 )
+
+type APNSConfig struct {
+	AuthKeyPath string
+	KeyID       string
+	TeamID      string
+	BundleID    string
+	IsDev       bool
+}
+
+type NotificationRequest struct {
+	DeviceToken string `json:"deviceToken"`
+	Message     string `json:"message"`
+	Title       string `json:"title"`
+	Badge       int    `json:"badge"`
+}
+
+var apnsClient *apns2.Client
+
+func InitializeAPNS(config APNSConfig) error {
+	authKey, err := token.AuthKeyFromFile(config.AuthKeyPath)
+	if err != nil {
+		return err
+	}
+
+	tkn := &token.Token{
+		AuthKey: authKey,
+		KeyID:   config.KeyID,
+		TeamID:  config.TeamID,
+	}
+
+	if config.IsDev {
+		apnsClient = apns2.NewTokenClient(tkn).Development()
+	} else {
+		apnsClient = apns2.NewTokenClient(tkn).Production()
+	}
+
+	return nil
+}
+
+// ValidateDeviceToken checks if a token matches the expected format
+func ValidateDeviceToken(token string) bool {
+	// APNS device tokens are 64 characters long and contain only hexadecimal characters
+	matched, err := regexp.MatchString(`^[0-9a-fA-F]{64}$`, token)
+	if err != nil {
+		return false
+	}
+	return matched
+}
+
+// TestDeviceToken sends a silent notification to verify the token is valid
+func TestDeviceToken(deviceToken string) error {
+	notification := &apns2.Notification{
+		DeviceToken: deviceToken,
+		Topic:       os.Getenv("APNS_BUNDLE_ID"),
+		Payload:     payload.NewPayload().ContentAvailable(),
+	}
+
+	res, err := apnsClient.Push(notification)
+	if err != nil {
+		return fmt.Errorf("failed to send test notification: %v", err)
+	}
+
+	if !res.Sent() {
+		return fmt.Errorf("invalid token: %s", res.Reason)
+	}
+
+	return nil
+}
+
+// RegisterDevice validates and stores a device token
+func RegisterDevice(registration DeviceRegistration) error {
+	// Validate token format
+	if !ValidateDeviceToken(registration.DeviceToken) {
+		return fmt.Errorf("invalid device token format")
+	}
+
+	// Test the token with a silent notification
+	if err := TestDeviceToken(registration.DeviceToken); err != nil {
+		return fmt.Errorf("token validation failed: %v", err)
+	}
+
+	// Store the token in the database
+	return StoreDeviceToken(registration)
+}
+
+func SendPushNotification(req NotificationRequest) error {
+	notification := &apns2.Notification{
+		DeviceToken: req.DeviceToken,
+		Topic:       os.Getenv("APNS_BUNDLE_ID"),
+		Payload: payload.NewPayload().
+			AlertTitle(req.Title).
+			AlertBody(req.Message).
+			Badge(req.Badge),
+	}
+
+	res, err := apnsClient.Push(notification)
+	if err != nil {
+		return err
+	}
+
+	if !res.Sent() {
+		return fmt.Errorf("push failed: %s", res.Reason)
+	}
+
+	return nil
+}
 
 func StartWorker() {
 	authKey, err := token.AuthKeyFromFile("AuthKey_YOURKEYID.p8")
@@ -42,4 +151,29 @@ func StartWorker() {
 
 		time.Sleep(500 * time.Millisecond) // optional throttle
 	}
+}
+
+// GetRegisteredDevices returns all registered device tokens
+func GetRegisteredDevices() ([]DeviceRegistration, error) {
+	rows, err := db.Query(`
+		SELECT device_token, app_version, device_type, last_updated
+		FROM devices
+		ORDER BY last_updated DESC
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query devices: %v", err)
+	}
+	defer rows.Close()
+
+	var devices []DeviceRegistration
+	for rows.Next() {
+		var device DeviceRegistration
+		err := rows.Scan(&device.DeviceToken, &device.AppVersion, &device.DeviceType, &device.LastUpdated)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan device row: %v", err)
+		}
+		devices = append(devices, device)
+	}
+
+	return devices, nil
 }

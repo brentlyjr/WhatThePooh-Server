@@ -17,6 +17,24 @@ func main() {
 		log.Printf("Warning: .env file not found")
 	}
 
+	// Initialize database
+	if err := InitializeDatabase(); err != nil {
+		log.Fatal("Failed to initialize database:", err)
+	}
+
+	// Initialize APNS
+	apnsConfig := APNSConfig{
+		AuthKeyPath: os.Getenv("APNS_KEY_PATH"),
+		KeyID:       os.Getenv("APNS_KEY_ID"),
+		TeamID:      os.Getenv("APNS_TEAM_ID"),
+		BundleID:    os.Getenv("APNS_BUNDLE_ID"),
+		IsDev:       os.Getenv("APNS_ENV") == "development",
+	}
+
+	if err := InitializeAPNS(apnsConfig); err != nil {
+		log.Fatal("Failed to initialize APNS:", err)
+	}
+
 	// Get WebSocket URL and API key from environment variables
 	websocketURL := os.Getenv("WEBSOCKET_URL")
 	if websocketURL == "" {
@@ -77,6 +95,82 @@ func main() {
 			"queue_length": len(EntityQueue),
 			"entity_count": len(entityManager.GetAllEntities()),
 			"goroutines":   runtime.NumGoroutine(),
+		})
+	})
+
+	// Send push notification endpoint
+	app.Post("/api/push", func(c *fiber.Ctx) error {
+		var req NotificationRequest
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid request body",
+			})
+		}
+
+		if req.DeviceToken == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Device token is required",
+			})
+		}
+
+		if err := SendPushNotification(req); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		return c.JSON(fiber.Map{
+			"status": "Notification sent successfully",
+		})
+	})
+
+	// Register device token endpoint
+	app.Post("/api/register-device", func(c *fiber.Ctx) error {
+		var registration DeviceRegistration
+		if err := c.BodyParser(&registration); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid request body",
+			})
+		}
+
+		if registration.DeviceToken == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Device token is required",
+			})
+		}
+
+		if err := RegisterDevice(registration); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		return c.JSON(fiber.Map{
+			"status": "Device registered successfully",
+		})
+	})
+
+	// Get registered devices endpoint
+	app.Get("/api/devices", func(c *fiber.Ctx) error {
+		devices, err := GetAllDevices()
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+		return c.JSON(devices)
+	})
+
+	// Delete device endpoint
+	app.Delete("/api/devices/:token", func(c *fiber.Ctx) error {
+		token := c.Params("token")
+		if err := DeleteDeviceToken(token); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+		return c.JSON(fiber.Map{
+			"status": "Device deleted successfully",
 		})
 	})
 

@@ -36,4 +36,8 @@ ehthumbs.db
 Thumbs.db
 
 # APNS key file
-AuthKey_*.p8 
+AuthKey_*.p8
+
+# Database files
+*.db
+*.db-journal 

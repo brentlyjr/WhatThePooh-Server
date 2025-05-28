@@ -6,6 +6,7 @@ A Go-based server application for managing theme park attraction data and notifi
 
 - Docker installed on your system
 - Git (for cloning the repository)
+- SQLite3 (for local development)
 
 ## Building and Running with Docker
 
@@ -26,6 +27,15 @@ docker run -p 8080:8080 whatthepooh-server
 ### Environment Variables
 
 The application uses environment variables for configuration. Make sure to create a `.env` file in the project root before building the Docker image. The Dockerfile will automatically copy any `.env` files into the container.
+
+Required environment variables:
+```
+APNS_KEY_PATH=/path/to/your/AuthKey_YOURKEYID.p8
+APNS_KEY_ID=your_key_id
+APNS_TEAM_ID=your_team_id
+APNS_BUNDLE_ID=your.bundle.id
+APNS_ENV=development
+```
 
 ## Development
 
@@ -83,6 +93,51 @@ To run the application locally without Docker:
 6. **Stopping the application**:
    Press `Ctrl+C` in the terminal to stop the server.
 
+## API Endpoints
+
+### Device Management
+
+- **Register Device** (`POST /api/register-device`)
+  ```json
+  {
+    "deviceToken": "your_device_token",
+    "appVersion": "1.0.0",
+    "deviceType": "iPhone"
+  }
+  ```
+
+- **Get All Devices** (`GET /api/devices`)
+  Returns a list of all registered devices
+
+- **Delete Device** (`DELETE /api/devices/:token`)
+  Removes a device token from the database
+
+### Push Notifications
+
+- **Send Push Notification** (`POST /api/push`)
+  ```json
+  {
+    "deviceToken": "your_device_token",
+    "title": "Notification Title",
+    "message": "Notification Message",
+    "badge": 1
+  }
+  ```
+
+### Theme Park Data
+
+- **Get All Entities** (`GET /api/entities`)
+  Returns all theme park attractions and their current status
+
+- **Get Entity by ID** (`GET /api/entities/:id`)
+  Returns a specific attraction's status
+
+- **Health Check** (`GET /health`)
+  Returns server health status
+
+- **Metrics** (`GET /api/metrics`)
+  Returns server metrics including queue length and entity count
+
 ## Project Structure
 
 - `main.go` - Main application entry point
@@ -90,6 +145,7 @@ To run the application locally without Docker:
 - `websocket_client.go` - WebSocket client implementation
 - `queue.go` - Queue management
 - `apns_worker.go` - Apple Push Notification Service worker
+- `database.go` - Database operations for device management
 
 ## Dependencies
 
@@ -98,6 +154,7 @@ The project uses the following main dependencies:
 - github.com/gorilla/websocket
 - github.com/joho/godotenv
 - github.com/sideshow/apns2
+- github.com/mattn/go-sqlite3
 
 ## License
 
