@@ -93,7 +93,7 @@ func RegisterDevice(registration DeviceRegistration) error {
 	}
 
 	// Store the token in the database
-	return StoreDeviceToken(registration)
+	return db.StoreDeviceToken(registration)
 }
 
 func SendPushNotification(req NotificationRequest) error {
@@ -155,25 +155,5 @@ func StartWorker() {
 
 // GetRegisteredDevices returns all registered device tokens
 func GetRegisteredDevices() ([]DeviceRegistration, error) {
-	rows, err := db.Query(`
-		SELECT device_token, app_version, device_type, last_updated
-		FROM devices
-		ORDER BY last_updated DESC
-	`)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query devices: %v", err)
-	}
-	defer rows.Close()
-
-	var devices []DeviceRegistration
-	for rows.Next() {
-		var device DeviceRegistration
-		err := rows.Scan(&device.DeviceToken, &device.AppVersion, &device.DeviceType, &device.LastUpdated)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan device row: %v", err)
-		}
-		devices = append(devices, device)
-	}
-
-	return devices, nil
+	return db.GetAllDevices()
 }

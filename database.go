@@ -3,19 +3,37 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var db *sql.DB
+// Database defines the interface for database operations
+type Database interface {
+	StoreDeviceToken(registration DeviceRegistration) error
+	GetDeviceToken(token string) (*DeviceRegistration, error)
+	GetAllDevices() ([]DeviceRegistration, error)
+	DeleteDeviceToken(token string) error
+	CleanupOldDevices(maxAge time.Duration) error
+}
 
-// InitializeDatabase sets up the database connection and creates necessary tables
-func InitializeDatabase() error {
-	var err error
-	db, err = sql.Open("sqlite3", "./devices.db")
+// SQLiteDB implements the Database interface using SQLite
+type SQLiteDB struct {
+	db *sql.DB
+}
+
+// NewSQLiteDB creates a new SQLite database connection
+func NewSQLiteDB() (*SQLiteDB, error) {
+	// Use /app/data directory in container, fallback to local directory
+	dbPath := "./devices.db"
+	if _, err := os.Stat("/app/data"); err == nil {
+		dbPath = "/app/data/devices.db"
+	}
+
+	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
-		return fmt.Errorf("failed to open database: %v", err)
+		return nil, fmt.Errorf("failed to open database: %v", err)
 	}
 
 	// Create devices table if it doesn't exist
@@ -28,10 +46,10 @@ func InitializeDatabase() error {
 		)
 	`)
 	if err != nil {
-		return fmt.Errorf("failed to create devices table: %v", err)
+		return nil, fmt.Errorf("failed to create devices table: %v", err)
 	}
 
-	return nil
+	return &SQLiteDB{db: db}, nil
 }
 
 // DeviceRegistration represents a registered device in the database
@@ -43,10 +61,10 @@ type DeviceRegistration struct {
 }
 
 // StoreDeviceToken saves or updates a device token in the database
-func StoreDeviceToken(registration DeviceRegistration) error {
+func (s *SQLiteDB) StoreDeviceToken(registration DeviceRegistration) error {
 	registration.LastUpdated = time.Now().UTC()
 
-	_, err := db.Exec(`
+	_, err := s.db.Exec(`
 		INSERT INTO devices (device_token, app_version, device_type, last_updated)
 		VALUES (?, ?, ?, ?)
 		ON CONFLICT(device_token) DO UPDATE SET
@@ -63,9 +81,9 @@ func StoreDeviceToken(registration DeviceRegistration) error {
 }
 
 // GetDeviceToken retrieves a specific device token
-func GetDeviceToken(token string) (*DeviceRegistration, error) {
+func (s *SQLiteDB) GetDeviceToken(token string) (*DeviceRegistration, error) {
 	var device DeviceRegistration
-	err := db.QueryRow(`
+	err := s.db.QueryRow(`
 		SELECT device_token, app_version, device_type, last_updated
 		FROM devices
 		WHERE device_token = ?
@@ -82,8 +100,8 @@ func GetDeviceToken(token string) (*DeviceRegistration, error) {
 }
 
 // GetAllDevices returns all registered devices
-func GetAllDevices() ([]DeviceRegistration, error) {
-	rows, err := db.Query(`
+func (s *SQLiteDB) GetAllDevices() ([]DeviceRegistration, error) {
+	rows, err := s.db.Query(`
 		SELECT device_token, app_version, device_type, last_updated
 		FROM devices
 		ORDER BY last_updated DESC
@@ -107,8 +125,8 @@ func GetAllDevices() ([]DeviceRegistration, error) {
 }
 
 // DeleteDeviceToken removes a device token from the database
-func DeleteDeviceToken(token string) error {
-	_, err := db.Exec("DELETE FROM devices WHERE device_token = ?", token)
+func (s *SQLiteDB) DeleteDeviceToken(token string) error {
+	_, err := s.db.Exec("DELETE FROM devices WHERE device_token = ?", token)
 	if err != nil {
 		return fmt.Errorf("failed to delete device token: %v", err)
 	}
@@ -116,9 +134,9 @@ func DeleteDeviceToken(token string) error {
 }
 
 // CleanupOldDevices removes devices that haven't been updated in a while
-func CleanupOldDevices(maxAge time.Duration) error {
+func (s *SQLiteDB) CleanupOldDevices(maxAge time.Duration) error {
 	cutoff := time.Now().UTC().Add(-maxAge)
-	_, err := db.Exec("DELETE FROM devices WHERE last_updated < ?", cutoff)
+	_, err := s.db.Exec("DELETE FROM devices WHERE last_updated < ?", cutoff)
 	if err != nil {
 		return fmt.Errorf("failed to cleanup old devices: %v", err)
 	}

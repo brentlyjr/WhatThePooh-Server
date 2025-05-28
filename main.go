@@ -11,16 +11,22 @@ import (
 	"github.com/joho/godotenv"
 )
 
+var db Database
+
 func main() {
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
 		log.Printf("Warning: .env file not found")
 	}
 
-	// Initialize database
-	if err := InitializeDatabase(); err != nil {
-		log.Fatal("Failed to initialize database:", err)
+	// Initialize SQLite database
+	sqliteDB, err := NewSQLiteDB()
+	if err != nil {
+		log.Fatal("Failed to initialize SQLite database:", err)
 	}
+
+	// Initialize cached database
+	db = NewCachedDB(sqliteDB)
 
 	// Initialize APNS
 	apnsConfig := APNSConfig{
@@ -29,6 +35,12 @@ func main() {
 		TeamID:      os.Getenv("APNS_TEAM_ID"),
 		BundleID:    os.Getenv("APNS_BUNDLE_ID"),
 		IsDev:       os.Getenv("APNS_ENV") == "development",
+	}
+
+	// If APNS_KEY_PATH is not set, use the default path
+	if apnsConfig.AuthKeyPath == "" {
+		apnsConfig.AuthKeyPath = "./AuthKey_MU2W4LLRSY.p8"
+		log.Printf("Using default APNS key path: %s", apnsConfig.AuthKeyPath)
 	}
 
 	if err := InitializeAPNS(apnsConfig); err != nil {
@@ -139,7 +151,7 @@ func main() {
 			})
 		}
 
-		if err := RegisterDevice(registration); err != nil {
+		if err := db.StoreDeviceToken(registration); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
@@ -152,7 +164,7 @@ func main() {
 
 	// Get registered devices endpoint
 	app.Get("/api/devices", func(c *fiber.Ctx) error {
-		devices, err := GetAllDevices()
+		devices, err := db.GetAllDevices()
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
@@ -164,7 +176,7 @@ func main() {
 	// Delete device endpoint
 	app.Delete("/api/devices/:token", func(c *fiber.Ctx) error {
 		token := c.Params("token")
-		if err := DeleteDeviceToken(token); err != nil {
+		if err := db.DeleteDeviceToken(token); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
