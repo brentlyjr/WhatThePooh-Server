@@ -101,7 +101,7 @@ func main() {
 
 	// Get WebSocket URL and API key from environment variables
 	websocketURL := getEnvWithDefault("WEBSOCKET_URL", "wss://api.themeparks.wiki/v1/entity/live")
-	apiKey := getEnvOrExit("API_KEY")
+	apiKey := getEnvOrExit("THEMEPARK_API_KEY")
 
 	// Initialize entity manager
 	entityManager := NewEntityManager()

@@ -41,4 +41,7 @@ keys/*.p8
 
 # Database files
 *.db
-*.db-journal 
+*.db-journal
+
+# Azure deployment configuration
+deploy/azure-config.env 
