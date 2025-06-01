@@ -32,14 +32,14 @@ COPY --from=builder /app/main .
 # Copy any additional necessary files (like .env if needed)
 COPY .env* ./
 
-# Create directory for SQLite database
-RUN mkdir -p /app/data && chmod 777 /app/data
+# Create directories for data and APNS keys
+RUN mkdir -p /app/data /app/keys && chmod 777 /app/data
 
-# Copy APNS key file to root level
-COPY AuthKey_MU2W4LLRSY.p8 .
+# Copy APNS key file from keys subdirectory
+COPY keys/AuthKey_MU2W4LLRSY.p8 /app/keys/
 
 # List contents to verify the file was copied
-RUN ls -la
+RUN ls -la /app/keys/
 
 # Expose the port your application runs on
 EXPOSE 8080

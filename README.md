@@ -30,7 +30,7 @@ The application uses environment variables for configuration. Make sure to creat
 
 Required environment variables:
 ```
-APNS_KEY_PATH=/path/to/your/AuthKey_YOURKEYID.p8
+APNS_KEY_PATH=keys/AuthKey_YOURKEYID.p8
 APNS_KEY_ID=your_key_id
 APNS_TEAM_ID=your_team_id
 APNS_BUNDLE_ID=your.bundle.id
@@ -48,7 +48,8 @@ To run the application locally without Docker:
    ```bash
    go mod download
    ```
-3. Run the application:
+3. Create a `keys` directory in the project root and place your `AuthKey_YOURKEYID.p8` file inside it.
+4. Run the application:
    ```bash
    go run .
    ```
@@ -61,19 +62,26 @@ To run the application locally without Docker:
    cd WhatThePooh-Server
    ```
 
-2. **Set up environment variables**:
+2. **Set up APNS Key**:
+   Create a `keys` directory in the project root:
+   ```bash
+   mkdir keys
+   ```
+   Place your `AuthKey_YOURKEYID.p8` file into the `keys` directory.
+
+3. **Set up environment variables**:
    Create a `.env` file in the project root:
    ```bash
    touch .env
    ```
-   Add your required environment variables to the `.env` file.
+   Add your required environment variables to the `.env` file. Make sure `APNS_KEY_PATH` points to your key file (e.g., `keys/AuthKey_MU2W4LLRSY.p8`).
 
-3. **Install dependencies**:
+4. **Install dependencies**:
    ```bash
    go mod download
    ```
 
-4. **Run the application**:
+5. **Run the application**:
    ```bash
    go run .
    ```
@@ -84,13 +92,13 @@ To run the application locally without Docker:
    ./WhatThePooh-Server
    ```
 
-5. **Verify the application is running**:
+6. **Verify the application is running**:
    The server should start and listen on port 8080 by default. You can test it by opening:
    ```
    http://localhost:8080
    ```
 
-6. **Stopping the application**:
+7. **Stopping the application**:
    Press `Ctrl+C` in the terminal to stop the server.
 
 ## API Endpoints
@@ -146,6 +154,7 @@ To run the application locally without Docker:
 - `queue.go` - Queue management
 - `apns_worker.go` - Apple Push Notification Service worker
 - `database.go` - Database operations for device management
+- `keys/` - Directory for APNS key files (e.g., `AuthKey_YOURKEYID.p8`)
 
 ## Dependencies
 

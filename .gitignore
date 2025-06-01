@@ -35,8 +35,9 @@ go.work
 ehthumbs.db
 Thumbs.db
 
-# APNS key file
-AuthKey_*.p8
+# APNS key files in keys directory
+keys/AuthKey_*.p8
+keys/*.p8
 
 # Database files
 *.db

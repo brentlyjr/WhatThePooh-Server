@@ -13,6 +13,24 @@ import (
 
 var db Database
 
+// getEnvOrExit returns the value of the environment variable or exits if it's not set
+func getEnvOrExit(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		log.Fatalf("Required environment variable %s is not set", key)
+	}
+	return value
+}
+
+// getEnvWithDefault returns the value of the environment variable or the default value if not set
+func getEnvWithDefault(key, defaultValue string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
+
 func main() {
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
@@ -30,32 +48,60 @@ func main() {
 
 	// Initialize APNS
 	apnsConfig := APNSConfig{
-		AuthKeyPath: os.Getenv("APNS_KEY_PATH"),
-		KeyID:       os.Getenv("APNS_KEY_ID"),
-		TeamID:      os.Getenv("APNS_TEAM_ID"),
-		BundleID:    os.Getenv("APNS_BUNDLE_ID"),
+		AuthKeyPath: getEnvOrExit("APNS_KEY_PATH"),
+		KeyID:       getEnvOrExit("APNS_KEY_ID"),
+		TeamID:      getEnvOrExit("APNS_TEAM_ID"),
+		BundleID:    getEnvOrExit("APNS_BUNDLE_ID"),
 		IsDev:       os.Getenv("APNS_ENV") == "development",
 	}
 
-	// If APNS_KEY_PATH is not set, use the default path
+	// If APNS_KEY_PATH is not set, try to find the key file
 	if apnsConfig.AuthKeyPath == "" {
-		apnsConfig.AuthKeyPath = "./AuthKey_MU2W4LLRSY.p8"
-		log.Printf("Using default APNS key path: %s", apnsConfig.AuthKeyPath)
+		// First try the container path
+		containerPath := "/app/keys/AuthKey_MU2W4LLRSY.p8"
+		if _, err := os.Stat(containerPath); err == nil {
+			log.Printf("Found APNS key at container path: %s", containerPath)
+			apnsConfig.AuthKeyPath = containerPath
+		} else {
+			log.Printf("APNS key not found at container path: %s (error: %v)", containerPath, err)
+			// Fall back to local path
+			localPath := "keys/AuthKey_MU2W4LLRSY.p8"
+			if _, err := os.Stat(localPath); err == nil {
+				log.Printf("Found APNS key at local path: %s", localPath)
+				apnsConfig.AuthKeyPath = localPath
+			} else {
+				log.Printf("APNS key not found at local path: %s (error: %v)", localPath, err)
+				// List current directory contents for debugging
+				if files, err := os.ReadDir("."); err == nil {
+					log.Printf("Current directory contents:")
+					for _, file := range files {
+						log.Printf("- %s", file.Name())
+					}
+				}
+				// List /app/keys directory contents for debugging (if in container)
+				if _, err := os.Stat("/app/keys"); err == nil {
+					if files, err := os.ReadDir("/app/keys"); err == nil {
+						log.Printf("/app/keys directory contents:")
+						for _, file := range files {
+							log.Printf("- %s", file.Name())
+						}
+					}
+				} else {
+					log.Printf("Directory /app/keys not found, likely not in container.")
+				}
+			}
+		}
 	}
+
+	log.Printf("Using APNS key path: %s", apnsConfig.AuthKeyPath)
 
 	if err := InitializeAPNS(apnsConfig); err != nil {
 		log.Fatal("Failed to initialize APNS:", err)
 	}
 
 	// Get WebSocket URL and API key from environment variables
-	websocketURL := os.Getenv("WEBSOCKET_URL")
-	if websocketURL == "" {
-		websocketURL = "wss://api.themeparks.wiki/v1/entity/live"
-	}
-	apiKey := os.Getenv("API_KEY")
-	if apiKey == "" {
-		log.Fatal("API_KEY environment variable is required")
-	}
+	websocketURL := getEnvWithDefault("WEBSOCKET_URL", "wss://api.themeparks.wiki/v1/entity/live")
+	apiKey := getEnvOrExit("API_KEY")
 
 	// Initialize entity manager
 	entityManager := NewEntityManager()
