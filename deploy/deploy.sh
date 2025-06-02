@@ -104,7 +104,7 @@ az acr login --name "$ACR_NAME"
 FULL_IMAGE_NAME="$ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG"
 print_status "Building Docker image..."
 cd "$SCRIPT_DIR/.."
-docker build -t "$FULL_IMAGE_NAME" .
+docker build --platform linux/amd64 -t "$FULL_IMAGE_NAME" .
 
 print_status "Pushing image to ACR..."
 docker push "$FULL_IMAGE_NAME"
@@ -136,6 +136,8 @@ az container create \
         APNS_ENV="$APNS_ENV" \
         WEBSOCKET_URL="$WEBSOCKET_URL" \
         THEMEPARK_API_KEY="$THEMEPARK_API_KEY" \
+    --restart-policy Never \
+    --command-line "sh -c 'ls -la /app/keys && ls -la /app/data && ./main'" \
     --output none
 
 # Get the container instance details
