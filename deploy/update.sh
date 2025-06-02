@@ -81,6 +81,7 @@ az container create \
     --resource-group "$AZURE_RESOURCE_GROUP" \
     --name "$ACI_NAME" \
     --image "$FULL_IMAGE_NAME" \
+    --os-type Linux \
     --cpu "$ACI_CPU" \
     --memory "$ACI_MEMORY" \
     --registry-login-server "$ACR_LOGIN_SERVER" \
