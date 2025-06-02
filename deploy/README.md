@@ -72,6 +72,24 @@ Or with a specific image tag:
 
 ```bash
 # View current logs
+az container logs --resource-group whatthepooh-rg --name whatthepooh-server
+
+# Follow logs in real-time (recommended for live monitoring)
+az container logs --resource-group whatthepooh-rg --name whatthepooh-server --follow
+
+# View container status
+az container show --resource-group whatthepooh-rg --name whatthepooh-server
+
+# Restart container
+az container restart --resource-group whatthepooh-rg --name whatthepooh-server
+```
+
+### Using the Helper Script
+
+For convenience, you can use the included helper script:
+
+```bash
+# View current logs
 ./deploy/logs.sh logs
 
 # Follow logs in real-time
@@ -82,19 +100,6 @@ Or with a specific image tag:
 
 # Restart the container
 ./deploy/logs.sh restart
-```
-
-### Direct Azure CLI Commands
-
-```bash
-# View logs
-az container logs --resource-group whatthepooh-rg --name whatthepooh-server
-
-# View status
-az container show --resource-group whatthepooh-rg --name whatthepooh-server
-
-# Restart container
-az container restart --resource-group whatthepooh-rg --name whatthepooh-server
 ```
 
 ## Cleanup
