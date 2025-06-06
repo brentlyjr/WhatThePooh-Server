@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# -----------------------------------------------------------------------------
+# Google Cloud Project Configuration
+#
+# Copy this file to gcp_config.sh and fill in your project-specific values.
+# The gcp_config.sh file is ignored by git so you can safely store secrets.
+# -----------------------------------------------------------------------------
+
+# --- Project Details ---
+# Your Google Cloud Project ID
+PROJECT_ID="google project"
+
+# The service name for Cloud Run
+SERVICE_NAME="service name"
+
+# The region to deploy the service in
+REGION="google region"
+
+
+# --- APNS Configuration ---
+# The path to your local APNS .p8 key file
+LOCAL_APNS_KEY_PATH="path to apns key file"
+APNS_KEY_ID="apns key"
+APNS_ENV="development"
+APNS_TEAM_ID="snv234"
+APNS_BUNDLE_ID="com.fredflinstone.myapp"
+
+
+# --- Theme Park API Key ---
+# Your API key for the Theme Park Wiki
+# Replace with your actual key.
+THEMEPARK_API_KEY="your-themepark-api-key"
+
+# The WebSocket URL for the live entity feed.
+WEBSOCKET_URL="wss://api.themeparks.wiki/v1/entity/live" 

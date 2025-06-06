@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"log"
 	"os"
 	"os/signal"
@@ -32,9 +33,12 @@ func getEnvWithDefault(key, defaultValue string) string {
 }
 
 func main() {
-	// Load environment variables
-	if err := godotenv.Load(); err != nil {
-		log.Printf("Warning: .env file not found")
+	// Load .env file for local development.
+	// In GCP, these variables are set in the environment directly.
+	// godotenv.Load() will not return an error if the .env file doesn't exist.
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("No .env file found, using environment variables from system")
 	}
 
 	// Initialize SQLite database
@@ -46,54 +50,21 @@ func main() {
 	// Initialize cached database
 	db = NewCachedDB(sqliteDB)
 
+	// Decode the base64-encoded APNS key from the environment variable
+	apnsKeyBase64 := getEnvOrExit("APNS_KEY_BASE64")
+	apnsKeyBytes, err := base64.StdEncoding.DecodeString(apnsKeyBase64)
+	if err != nil {
+		log.Fatal("Failed to decode APNS_KEY_BASE64:", err)
+	}
+
 	// Initialize APNS
 	apnsConfig := APNSConfig{
-		AuthKeyPath: getEnvOrExit("APNS_KEY_PATH"),
-		KeyID:       getEnvOrExit("APNS_KEY_ID"),
-		TeamID:      getEnvOrExit("APNS_TEAM_ID"),
-		BundleID:    getEnvOrExit("APNS_BUNDLE_ID"),
-		IsDev:       os.Getenv("APNS_ENV") == "development",
+		AuthKeyBytes: apnsKeyBytes,
+		KeyID:        getEnvOrExit("APNS_KEY_ID"),
+		TeamID:       getEnvOrExit("APNS_TEAM_ID"),
+		BundleID:     getEnvOrExit("APNS_BUNDLE_ID"),
+		IsDev:        os.Getenv("APNS_ENV") == "development",
 	}
-
-	// If APNS_KEY_PATH is not set, try to find the key file
-	if apnsConfig.AuthKeyPath == "" {
-		// First try the container path
-		containerPath := "/app/keys/AuthKey_MU2W4LLRSY.p8"
-		if _, err := os.Stat(containerPath); err == nil {
-			log.Printf("Found APNS key at container path: %s", containerPath)
-			apnsConfig.AuthKeyPath = containerPath
-		} else {
-			log.Printf("APNS key not found at container path: %s (error: %v)", containerPath, err)
-			// Fall back to local path
-			localPath := "keys/AuthKey_MU2W4LLRSY.p8"
-			if _, err := os.Stat(localPath); err == nil {
-				log.Printf("Found APNS key at local path: %s", localPath)
-				apnsConfig.AuthKeyPath = localPath
-			} else {
-				log.Printf("APNS key not found at local path: %s (error: %v)", localPath, err)
-				// List current directory contents for debugging
-				if files, err := os.ReadDir("."); err == nil {
-					log.Printf("Current directory contents:")
-					for _, file := range files {
-						log.Printf("- %s", file.Name())
-					}
-				}
-				// List /app/keys directory contents for debugging (if in container)
-				if _, err := os.Stat("/app/keys"); err == nil {
-					if files, err := os.ReadDir("/app/keys"); err == nil {
-						log.Printf("/app/keys directory contents:")
-						for _, file := range files {
-							log.Printf("- %s", file.Name())
-						}
-					}
-				} else {
-					log.Printf("Directory /app/keys not found, likely not in container.")
-				}
-			}
-		}
-	}
-
-	log.Printf("Using APNS key path: %s", apnsConfig.AuthKeyPath)
 
 	if err := InitializeAPNS(apnsConfig); err != nil {
 		log.Fatal("Failed to initialize APNS:", err)
@@ -232,11 +203,11 @@ func main() {
 		})
 	})
 
-	// Start server in a goroutine
+	// Start the server in a goroutine so it doesn't block
 	go func() {
-		log.Println("Server started on :8080")
+		log.Println("What the Pooh Server started on :8080")
 		if err := app.Listen(":8080"); err != nil {
-			log.Fatal(err)
+			log.Fatalf("Failed to start server: %v", err)
 		}
 	}()
 

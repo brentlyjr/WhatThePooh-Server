@@ -44,4 +44,10 @@ keys/*.p8
 *.db-journal
 
 # Azure deployment configuration
-deploy/azure-config.env 
+deploy/azure-config.env
+
+# Local secrets and config files
+gcp-deploy/gcp_config.sh
+
+# Binaries
+main

@@ -23,26 +23,18 @@ FROM alpine:latest
 
 WORKDIR /app
 
-# Install SQLite runtime
+# Install SQLite libraries needed for the final binary
 RUN apk add --no-cache sqlite-libs
 
-# Copy the binary from builder
+# Copy the compiled binary from the builder stage
 COPY --from=builder /app/main .
 
-# Copy any additional necessary files (like .env if needed)
-COPY .env* ./
+# Database file will be created by the application
+# We can create a data directory
+RUN mkdir -p /app/data
 
-# Create directories for data and APNS keys
-RUN mkdir -p /app/data /app/keys && chmod 777 /app/data
-
-# Copy APNS key file from keys subdirectory
-COPY keys/AuthKey_MU2W4LLRSY.p8 /app/keys/
-
-# List contents to verify the file was copied
-RUN ls -la /app/keys/
-
-# Expose the port your application runs on
+# Expose the port the app runs on
 EXPOSE 8080
 
-# Run the application
+# Run the binary
 CMD ["./main"] 

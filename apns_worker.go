@@ -13,11 +13,11 @@ import (
 )
 
 type APNSConfig struct {
-	AuthKeyPath string
-	KeyID       string
-	TeamID      string
-	BundleID    string
-	IsDev       bool
+	AuthKeyBytes []byte
+	KeyID        string
+	TeamID       string
+	BundleID     string
+	IsDev        bool
 }
 
 type NotificationRequest struct {
@@ -30,7 +30,7 @@ type NotificationRequest struct {
 var apnsClient *apns2.Client
 
 func InitializeAPNS(config APNSConfig) error {
-	authKey, err := token.AuthKeyFromFile(config.AuthKeyPath)
+	authKey, err := token.AuthKeyFromBytes(config.AuthKeyBytes)
 	if err != nil {
 		return err
 	}
