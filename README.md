@@ -4,102 +4,65 @@ A Go-based server application for managing theme park attraction data and notifi
 
 ## Prerequisites
 
-- Docker installed on your system
+- Go 1.24.3 or later
 - Git (for cloning the repository)
-- SQLite3 (for local development)
+- Docker (optional, for containerized deployment)
+
+## Local Development Setup
+
+To run the application on your local machine, follow these steps.
+
+1.  **Clone the Repository**
+    ```bash
+    git clone https://github.com/brentlyjr/WhatThePooh-Server.git
+    cd WhatThePooh-Server
+    ```
+
+2.  **Install Dependencies**
+    ```bash
+    go mod tidy
+    ```
+
+3.  **Configure Environment Variables**
+    The project uses a `.env` file for local configuration. An example file is provided.
+
+    *   **Create your personal `.env` file:**
+        ```bash
+        cp .env.example .env
+        ```
+
+    *   **Place your APNS Key:**
+        Put your `AuthKey_YOURKEYID.p8` file into the `/keys` directory.
+
+    *   **Generate the Base64 Key:**
+        The application requires your APNS key to be base64 encoded for security. Run the following command, making sure to replace `AuthKey_YOURKEYID.p8` with your actual filename.
+        ```bash
+        base64 -i keys/AuthKey_YOURKEYID.p8 | tr -d '\n'
+        ```
+
+    *   **Update your `.env` file:**
+        Open the `.env` file and paste the output from the previous command as the value for `APNS_KEY_BASE64`. Fill in the other required values like your `APNS_KEY_ID`, `APNS_TEAM_ID`, etc.
+
+4.  **Run the Application**
+    ```bash
+    go run .
+    ```
+    The server will start on `http://localhost:8080`.
 
 ## Building and Running with Docker
 
-### Build the Docker Image
+The project can also be built and run as a Docker container.
 
-```bash
-# Build the Docker image
-docker build -t whatthepooh-server .
-```
+1.  **Build the Docker Image**
+    ```bash
+    docker build -t whatthepooh-server .
+    ```
 
-### Run the Container
-
-```bash
-# Run the container
-docker run -p 8080:8080 whatthepooh-server
-```
-
-### Environment Variables
-
-The application uses environment variables for configuration. Make sure to create a `.env` file in the project root before building the Docker image. The Dockerfile will automatically copy any `.env` files into the container.
-
-Required environment variables:
-```
-APNS_KEY_PATH=keys/AuthKey_YOURKEYID.p8
-APNS_KEY_ID=your_key_id
-APNS_TEAM_ID=your_team_id
-APNS_BUNDLE_ID=your.bundle.id
-APNS_ENV=development
-```
-
-## Development
-
-### Local Development
-
-To run the application locally without Docker:
-
-1. Install Go 1.24.3 or later
-2. Install dependencies:
-   ```bash
-   go mod download
-   ```
-3. Create a `keys` directory in the project root and place your `AuthKey_YOURKEYID.p8` file inside it.
-4. Run the application:
-   ```bash
-   go run .
-   ```
-
-### Running Locally from Terminal
-
-1. **Clone the repository** (if you haven't already):
-   ```bash
-   git clone https://github.com/brentlyjr/WhatThePooh-Server.git
-   cd WhatThePooh-Server
-   ```
-
-2. **Set up APNS Key**:
-   Create a `keys` directory in the project root:
-   ```bash
-   mkdir keys
-   ```
-   Place your `AuthKey_YOURKEYID.p8` file into the `keys` directory.
-
-3. **Set up environment variables**:
-   Create a `.env` file in the project root:
-   ```bash
-   touch .env
-   ```
-   Add your required environment variables to the `.env` file. Make sure `APNS_KEY_PATH` points to your key file (e.g., `keys/AuthKey_MU2W4LLRSY.p8`).
-
-4. **Install dependencies**:
-   ```bash
-   go mod download
-   ```
-
-5. **Run the application**:
-   ```bash
-   go run .
-   ```
-   
-   Or build and run the binary:
-   ```bash
-   go build
-   ./WhatThePooh-Server
-   ```
-
-6. **Verify the application is running**:
-   The server should start and listen on port 8080 by default. You can test it by opening:
-   ```
-   http://localhost:8080
-   ```
-
-7. **Stopping the application**:
-   Press `Ctrl+C` in the terminal to stop the server.
+2.  **Run the Container**
+    When running with Docker, you must pass your environment variables to the container. The recommended way is to use the `--env-file` flag with your configured `.env` file.
+    ```bash
+    docker run --env-file ./.env -p 8080:8080 whatthepooh-server
+    ```
 
 ## API Endpoints
 
