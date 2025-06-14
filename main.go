@@ -6,13 +6,19 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"sync"
 	"syscall"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 )
 
 var db Database
+var (
+	reconnectionTimestamps []time.Time
+	reconnectionMutex     sync.RWMutex
+)
 
 // getEnvOrExit returns the value of the environment variable or exits if it's not set
 func getEnvOrExit(key string) string {
@@ -30,6 +36,31 @@ func getEnvWithDefault(key, defaultValue string) string {
 		return defaultValue
 	}
 	return value
+}
+
+// AddReconnectionTimestamp adds a new reconnection timestamp to the global array
+func AddReconnectionTimestamp() {
+	reconnectionMutex.Lock()
+	defer reconnectionMutex.Unlock()
+	
+	// Add new timestamp
+	reconnectionTimestamps = append(reconnectionTimestamps, time.Now())
+	
+	// Keep only the last 100 timestamps
+	if len(reconnectionTimestamps) > 100 {
+		reconnectionTimestamps = reconnectionTimestamps[len(reconnectionTimestamps)-100:]
+	}
+}
+
+// GetReconnectionTimestamps returns a copy of the reconnection timestamps
+func GetReconnectionTimestamps() []time.Time {
+	reconnectionMutex.RLock()
+	defer reconnectionMutex.RUnlock()
+	
+	// Return a copy of the timestamps
+	timestamps := make([]time.Time, len(reconnectionTimestamps))
+	copy(timestamps, reconnectionTimestamps)
+	return timestamps
 }
 
 func main() {
@@ -124,6 +155,9 @@ func main() {
 			"queue_length": len(EntityQueue),
 			"entity_count": len(entityManager.GetAllEntities()),
 			"goroutines":   runtime.NumGoroutine(),
+			"restarts":     GetReconnectionTimestamps(),
+			"events":       wsClient.GetEventStats(),
+			"statuses":     wsClient.GetStatusStats(),
 		})
 	})
 

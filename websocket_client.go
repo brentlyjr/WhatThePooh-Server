@@ -107,39 +107,7 @@ func (c *WebSocketClient) incrementStatusCounter(status EntityStatus) {
 	c.messageCounts.statusCounts[status]++
 }
 
-func (c *WebSocketClient) printStats() {
-	c.messageCounts.RLock()
-	defer c.messageCounts.RUnlock()
-	
-	log.Println("\n=== Message Statistics ===")
-	log.Println("Event Types:")
-	for eventType, count := range c.messageCounts.eventCounts {
-		log.Printf("  '%s': %d messages", eventType, count)
-	}
-	
-	log.Println("\nEntity Statuses:")
-	for status, count := range c.messageCounts.statusCounts {
-		log.Printf("  '%s': %d entities", status, count)
-	}
-	log.Println("=======================\n")
-}
-
 func (c *WebSocketClient) Connect() {
-	// Start periodic stats printing
-	go func() {
-		ticker := time.NewTicker(1 * time.Minute)
-		defer ticker.Stop()
-		
-		for {
-			select {
-			case <-ticker.C:
-				c.printStats()
-			case <-c.done:
-				return
-			}
-		}
-	}()
-
 	for {
 		select {
 		case <-c.done:
@@ -182,6 +150,8 @@ func (c *WebSocketClient) Connect() {
 			}
 
 			c.conn = conn
+			// Record the reconnection timestamp
+			AddReconnectionTimestamp()
 			log.Printf("[%s] Connected to WebSocket", time.Now().Format("2006-01-02 15:04:05 MST"))
 
 			// Subscribe to all parks
@@ -276,4 +246,28 @@ func (c *WebSocketClient) Close() {
 	if c.conn != nil {
 		c.conn.Close()
 	}
+}
+
+func (c *WebSocketClient) GetEventStats() map[string]uint64 {
+	c.messageCounts.RLock()
+	defer c.messageCounts.RUnlock()
+	
+	// Create a copy of the event counts
+	stats := make(map[string]uint64)
+	for eventType, count := range c.messageCounts.eventCounts {
+		stats[eventType] = count
+	}
+	return stats
+}
+
+func (c *WebSocketClient) GetStatusStats() map[EntityStatus]uint64 {
+	c.messageCounts.RLock()
+	defer c.messageCounts.RUnlock()
+	
+	// Create a copy of the status counts
+	stats := make(map[EntityStatus]uint64)
+	for status, count := range c.messageCounts.statusCounts {
+		stats[status] = count
+	}
+	return stats
 } 
