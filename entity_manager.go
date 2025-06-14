@@ -30,6 +30,7 @@ type Entity struct {
 // EntityManager handles the thread-safe storage and updates of entities
 type EntityManager struct {
 	entities sync.Map
+	mu       sync.Mutex
 }
 
 // NewEntityManager creates a new EntityManager
@@ -62,26 +63,44 @@ func (em *EntityManager) GetAllEntities() map[string]Entity {
 
 // ProcessEntity processes an entity update from the queue
 func (em *EntityManager) ProcessEntity(entity Entity) {
-	// Get the current entity if it exists
-	currentEntity, exists := em.GetEntity(entity.EntityID)
-	
-	// Set initial timestamps if this is a new entity
+	em.mu.Lock()
+	defer em.mu.Unlock()
+
+	existing, exists := em.entities.Load(entity.EntityID)
 	if !exists {
-		entity.LastStatusChange = time.Now().UTC()
-		entity.LastWaitTimeChange = time.Now().UTC()
-	} else {
-		// Copy timestamps from current entity
-		entity.LastStatusChange = currentEntity.LastStatusChange
-		entity.LastWaitTimeChange = currentEntity.LastWaitTimeChange
-		
-		// Update timestamps if values have changed
-		if currentEntity.Status != entity.Status {
-			entity.LastStatusChange = time.Now().UTC()
-		}
-		if currentEntity.WaitTime != entity.WaitTime {
-			entity.LastWaitTimeChange = time.Now().UTC()
-		}
+		now := time.Now()
+		entity.LastStatusChange = now
+		entity.LastWaitTimeChange = now
+		em.entities.Store(entity.EntityID, entity)
+		return
 	}
-	
-	em.UpdateEntity(entity)
+
+	// Convert existing to Entity type
+	existingEntity := existing.(Entity)
+
+	// Check for status change
+	if entity.Status != existingEntity.Status {
+		messageBus.PublishStatus(StatusChangeMessage{
+			EntityID:  entity.EntityID,
+			OldStatus: existingEntity.Status,
+			NewStatus: entity.Status,
+			Timestamp: time.Now(),
+		})
+		existingEntity.Status = entity.Status
+		existingEntity.LastStatusChange = time.Now()
+	}
+
+	// Check for wait time change
+	if entity.WaitTime != existingEntity.WaitTime {
+		messageBus.PublishWaitTime(WaitTimeMessage{
+			EntityID:    entity.EntityID,
+			OldWaitTime: existingEntity.WaitTime,
+			NewWaitTime: entity.WaitTime,
+			Timestamp:   time.Now(),
+		})
+		existingEntity.WaitTime = entity.WaitTime
+		existingEntity.LastWaitTimeChange = time.Now()
+	}
+
+	em.entities.Store(entity.EntityID, existingEntity)
 } 
