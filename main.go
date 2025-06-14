@@ -18,6 +18,7 @@ var db Database
 var (
 	reconnectionTimestamps []time.Time
 	reconnectionMutex     sync.RWMutex
+	serverStartTime       time.Time
 )
 
 // getEnvOrExit returns the value of the environment variable or exits if it's not set
@@ -64,6 +65,9 @@ func GetReconnectionTimestamps() []time.Time {
 }
 
 func main() {
+	// Record server start time
+	serverStartTime = time.Now()
+
 	// Load .env file for local development.
 	// In GCP, these variables are set in the environment directly.
 	// godotenv.Load() will not return an error if the .env file doesn't exist.
@@ -158,6 +162,7 @@ func main() {
 			"restarts":     GetReconnectionTimestamps(),
 			"events":       wsClient.GetEventStats(),
 			"statuses":     wsClient.GetStatusStats(),
+			"server_start": serverStartTime,
 		})
 	})
 

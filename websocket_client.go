@@ -197,15 +197,19 @@ func (c *WebSocketClient) subscribe(entityID string) error {
 
 func (c *WebSocketClient) handleMessage(message []byte) {
 	timestamp := time.Now().Format("2006-01-02 15:04:05 MST")
-	log.Printf("[%s] Raw message: %s", timestamp, string(message))
+	// log.Printf("[%s] Raw message: %s", timestamp, string(message))
 
 	var msg LiveDataMessage
 	if err := json.Unmarshal(message, &msg); err != nil {
-		log.Printf("Failed to parse message: %v", err)
+		log.Printf("[%s] Error parsing message: %v", timestamp, err)
 		return
 	}
 
-	// Increment counter for this event type
+	// Log error events
+	if msg.Event == "error" {
+		log.Printf("[%s] WebSocket Error Event: %s", timestamp, string(message))
+	}
+
 	c.incrementCounter(msg.Event)
 
 	if msg.Event == "heartbeat" {
