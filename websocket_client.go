@@ -27,23 +27,16 @@ type Park struct {
 
 var parks = []Park{
 	// Disney Parks
-	{ID: "7340550b-c14d-4def-80bb-acdb51d49a66", Name: "Disneyland Park", Type: Disney, IsSelected: true, IsVisible: true},
-	{ID: "832fcd51-ea19-4e77-85c7-75d5843b127c", Name: "Disney California Adventure Park", Type: Disney, IsSelected: false, IsVisible: true},
-	{ID: "75ea578a-adc8-4116-a54d-dccb60765ef9", Name: "Magic Kingdom Park", Type: Disney, IsSelected: false, IsVisible: true},
-	{ID: "47f90d2c-e191-4239-a466-5892ef59a88b", Name: "EPCOT", Type: Disney, IsSelected: false, IsVisible: true},
-	{ID: "288747d1-8b4f-4a64-867e-ea7c9b27bad8", Name: "Disney's Hollywood Studios", Type: Disney, IsSelected: false, IsVisible: true},
-	{ID: "1c84a229-8862-4648-9c71-378ddd2c7693", Name: "Disney's Animal Kingdom Theme Park", Type: Disney, IsSelected: false, IsVisible: true},
-	{ID: "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b", Name: "Hong Kong Disneyland", Type: Disney, IsSelected: false, IsVisible: false},
-	{ID: "3cc919f1-d16d-43e0-8c3f-1dd269bd1a42", Name: "Tokyo Disneyland", Type: Disney, IsSelected: false, IsVisible: false},
-	{ID: "67b290d5-3478-4f23-b601-2f8fb71ba803", Name: "Tokyo DisneySea", Type: Disney, IsSelected: false, IsVisible: false},
-	{ID: "ddc4357c-c148-4b36-9888-07894fe75e83", Name: "Shanghai Disneyland", Type: Disney, IsSelected: false, IsVisible: false},
-	{ID: "dae968d5-630d-4719-8b06-3d107e944401", Name: "Disneyland Park (Paris)", Type: Disney, IsSelected: false, IsVisible: false},
-	{ID: "ca888437-ebb4-4d50-aed2-d227f7096968", Name: "Walt Disney Studios Park", Type: Disney, IsSelected: false, IsVisible: false},
+	{ID: "bfc89fd6-314d-44b4-b89e-df1a89cf991e", Name: "Disneyland Resort"},
+	{ID: "e957da41-3552-4cf6-b636-5babc5cbc4e5", Name: "Walt Disney World® Resort"},
+	{ID: "abcfffe7-01f2-4f92-ae61-5093346f5a68", Name: "Hong Kong Disneyland Parks"},
+	{ID: "faff60df-c766-4470-8adb-dee78e813f42", Name: "Tokyo Disney Resort"},
+	{ID: "6e1464ca-1e9b-49c3-8937-c5c6f6675057", Name: "Shanghai Disney Resort"},
+	{ID: "e8d0207f-da8a-4048-bec8-117aa946b2c2", Name: "Disneyland Paris"},
+
 	// Universal Parks
-	{ID: "bc4005c5-8c7e-41d7-b349-cdddf1796427", Name: "Universal Studios Hollywood", Type: Universal, IsSelected: false, IsVisible: true},
-	{ID: "eb3f4560-2383-4a36-9152-6b3e5ed6bc57", Name: "Universal Studios Florida", Type: Universal, IsSelected: false, IsVisible: true},
-	{ID: "267615cc-8943-4c2a-ae2c-5da728ca591f", Name: "Universal Islands of Adventure", Type: Universal, IsSelected: false, IsVisible: true},
-	{ID: "12dbb85b-265f-44e6-bccf-f1faa17211fc", Name: "Universal's Epic Universe", Type: Universal, IsSelected: false, IsVisible: true},
+	{ID: "9fc68f1c-3f5e-4f09-89f2-aab2cf1a0741", Name: "Universal Studios"},
+	{ID: "89db5d43-c434-4097-b71f-f6869f495a22", Name: "Universal Orlando Resort"},
 }
 
 type WebSocketClient struct {
