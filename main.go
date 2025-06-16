@@ -128,6 +128,9 @@ func main() {
 	// Start message processors
 	StartMessageProcessors()
 
+	// Start the APNS worker pool
+	StartAPNSWorkers(5) // Start 5 workers
+
 	// Create Fiber app
 	app := fiber.New()
 
@@ -169,31 +172,32 @@ func main() {
 		})
 	})
 
-	// Send push notification endpoint
-	app.Post("/api/push", func(c *fiber.Ctx) error {
-		var req NotificationRequest
-		if err := c.BodyParser(&req); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Invalid request body",
-			})
-		}
+	// This endpoint is deprecated in favor of the queue-based worker system.
+	// A new system for ad-hoc pushes may be needed in the future.
+	// app.Post("/api/push", func(c *fiber.Ctx) error {
+	// 	var req NotificationRequest
+	// 	if err := c.BodyParser(&req); err != nil {
+	// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 			"error": "Invalid request body",
+	// 		})
+	// 	}
 
-		if req.DeviceToken == "" {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Device token is required",
-			})
-		}
+	// 	if req.DeviceToken == "" {
+	// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	// 			"error": "Device token is required",
+	// 		})
+	// 	}
 
-		if err := SendPushNotification(req); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": err.Error(),
-			})
-		}
+	// 	if err := SendPushNotification(req); err != nil {
+	// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+	// 			"error": err.Error(),
+	// 		})
+	// 	}
 
-		return c.JSON(fiber.Map{
-			"status": "Notification sent successfully",
-		})
-	})
+	// 	return c.JSON(fiber.Map{
+	// 		"status": "Notification sent successfully",
+	// 	})
+	// })
 
 	// Register device token endpoint
 	app.Post("/api/register-device", func(c *fiber.Ctx) error {

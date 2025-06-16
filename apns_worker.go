@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"regexp"
-	"time"
 
 	"github.com/sideshow/apns2"
 	"github.com/sideshow/apns2/payload"
@@ -112,44 +111,60 @@ func SendPushNotification(req NotificationRequest) error {
 	}
 
 	if !res.Sent() {
+		// If the token is invalid, remove it from the database
+		if res.Reason == apns2.ReasonBadDeviceToken || res.Reason == apns2.ReasonUnregistered {
+			log.Printf("Removing invalid device token: %s", req.DeviceToken)
+			// It's good practice to handle the error from deletion
+			if delErr := db.DeleteDeviceToken(req.DeviceToken); delErr != nil {
+				log.Printf("Error removing device token %s: %v", req.DeviceToken, delErr)
+			}
+		}
 		return fmt.Errorf("push failed: %s", res.Reason)
 	}
 
 	return nil
 }
 
-func StartWorker() {
-	authKey, err := token.AuthKeyFromFile("AuthKey_YOURKEYID.p8")
-	if err != nil {
-		log.Fatal("Failed to load APNs auth key:", err)
+// StartAPNSWorkers starts a pool of workers to send push notifications.
+func StartAPNSWorkers(numWorkers int) {
+	log.Printf("Starting %d APNS worker(s)...", numWorkers)
+	for i := 0; i < numWorkers; i++ {
+		go apnsSender(i + 1)
 	}
+}
 
-	tkn := &token.Token{
-		AuthKey: authKey,
-		KeyID:   "YOUR_KEY_ID",
-		TeamID:  "YOUR_TEAM_ID",
-	}
-
-	client := apns2.NewTokenClient(tkn).Development()
-	topic := "com.yourcompany.yourapp"
+// apnsSender is a single worker that consumes from the PushQueue.
+func apnsSender(id int) {
+	log.Printf("APNS Sender Worker %d started", id)
+	bundleID := os.Getenv("APNS_BUNDLE_ID")
 
 	for req := range PushQueue {
+		log.Printf("[Worker %d] Sending push to %s", id, req.DeviceToken)
+
 		notification := &apns2.Notification{
 			DeviceToken: req.DeviceToken,
-			Topic:       topic,
-			Payload:     payload.NewPayload().Alert(req.Message).Badge(1),
+			Topic:       bundleID,
+			Payload:     payload.NewPayload().Alert(req.Message).Badge(1).MutableContent(),
 		}
 
-		res, err := client.Push(notification)
+		res, err := apnsClient.Push(notification)
 		if err != nil {
-			log.Println("Push error:", err)
-		} else if res.Sent() {
-			log.Println("Push sent to:", req.DeviceToken)
-		} else {
-			log.Println("Push failed:", res.Reason)
+			log.Printf("[Worker %d] Push error for token %s: %v", id, req.DeviceToken, err)
+			continue
 		}
 
-		time.Sleep(500 * time.Millisecond) // optional throttle
+		if res.Sent() {
+			log.Printf("[Worker %d] Push sent successfully to %s", id, req.DeviceToken)
+		} else {
+			log.Printf("[Worker %d] Push failed for token %s: %s", id, req.DeviceToken, res.Reason)
+			// If the token is invalid or unregistered, remove it from our database
+			if res.Reason == apns2.ReasonBadDeviceToken || res.Reason == apns2.ReasonUnregistered {
+				log.Printf("[Worker %d] Removing invalid device token: %s", id, req.DeviceToken)
+				if delErr := db.DeleteDeviceToken(req.DeviceToken); delErr != nil {
+					log.Printf("[Worker %d] Error removing device token %s: %v", id, req.DeviceToken, delErr)
+				}
+			}
+		}
 	}
 }
 

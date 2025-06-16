@@ -231,8 +231,8 @@ func (c *WebSocketClient) handleMessage(message []byte) {
 		// Queue the entity for processing
 		QueueEntity(entity)
 
-		log.Printf("[%s] Queued update for %s (Wait Time: %d, Status: %s)", 
-			timestamp, msg.Name, waitTime, msg.Data.Status)
+		// log.Printf("[%s] Queued update for %s (Wait Time: %d, Status: %s)", 
+		// 	timestamp, msg.Name, waitTime, msg.Data.Status)
 	} else {
 		log.Printf("[%s] Received message: %s", timestamp, string(message))
 	}
