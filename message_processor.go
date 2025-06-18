@@ -36,6 +36,8 @@ func StartMessageProcessors() {
 				pushReq := PushRequest{
 					DeviceToken: device.DeviceToken,
 					Message:     notificationMsg,
+					EntityID:    msg.EntityID,
+					ParkID:      msg.ParkID,
 				}
 				// Use the non-blocking Push function
 				Push(pushReq)

@@ -24,6 +24,8 @@ type NotificationRequest struct {
 	Message     string `json:"message"`
 	Title       string `json:"title"`
 	Badge       int    `json:"badge"`
+	EntityID    string `json:"entityId"`
+	ParkID      string `json:"parkId"`
 }
 
 var apnsClient *apns2.Client
@@ -102,7 +104,9 @@ func SendPushNotification(req NotificationRequest) error {
 		Payload: payload.NewPayload().
 			AlertTitle(req.Title).
 			AlertBody(req.Message).
-			Badge(req.Badge),
+			Badge(req.Badge).
+			Custom("entityId", req.EntityID).
+			Custom("parkId", req.ParkID),
 	}
 
 	res, err := apnsClient.Push(notification)
@@ -144,7 +148,7 @@ func apnsSender(id int) {
 		notification := &apns2.Notification{
 			DeviceToken: req.DeviceToken,
 			Topic:       bundleID,
-			Payload:     payload.NewPayload().Alert(req.Message).Badge(1).MutableContent(),
+			Payload:     payload.NewPayload().Alert(req.Message).Badge(1).MutableContent().Custom("entityId", req.EntityID).Custom("parkId", req.ParkID),
 		}
 
 		res, err := apnsClient.Push(notification)

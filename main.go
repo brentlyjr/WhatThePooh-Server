@@ -236,6 +236,25 @@ func main() {
 		return c.JSON(devices)
 	})
 
+	// Test endpoint to simulate a status change
+	app.Post("/api/test/status-change", func(c *fiber.Ctx) error {
+		// Create a test status change message
+		msg := StatusChangeMessage{
+			EntityID:    "gizmo-entity",
+			OldStatus:   "CLOSED",
+			NewStatus:   "OPEN",
+			Timestamp:   time.Now(),
+		}
+
+		// Publish to the message bus
+		messageBus.PublishStatus(msg)
+
+		return c.JSON(fiber.Map{
+			"status":  "Test status change published",
+			"message": msg,
+		})
+	})
+
 	// Delete device endpoint
 	app.Delete("/api/devices/:token", func(c *fiber.Ctx) error {
 		token := c.Params("token")

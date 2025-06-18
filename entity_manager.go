@@ -82,6 +82,7 @@ func (em *EntityManager) ProcessEntity(entity Entity) {
 	if entity.Status != existingEntity.Status {
 		messageBus.PublishStatus(StatusChangeMessage{
 			EntityID:  entity.EntityID,
+			ParkID:    entity.ParkID,
 			OldStatus: existingEntity.Status,
 			NewStatus: entity.Status,
 			Timestamp: time.Now(),

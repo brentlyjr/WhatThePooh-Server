@@ -7,6 +7,8 @@ import (
 type PushRequest struct {
 	DeviceToken string
 	Message     string
+	EntityID    string
+	ParkID      string
 }
 
 // EntityQueue is a buffered channel for entity updates

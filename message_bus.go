@@ -9,6 +9,7 @@ import (
 // Message types
 type StatusChangeMessage struct {
     EntityID      string
+    ParkID        string
     OldStatus     EntityStatus
     NewStatus     EntityStatus
     Timestamp     time.Time
