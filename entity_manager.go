@@ -81,11 +81,13 @@ func (em *EntityManager) ProcessEntity(entity Entity) {
 	// Check for status change
 	if entity.Status != existingEntity.Status {
 		messageBus.PublishStatus(StatusChangeMessage{
-			EntityID:  entity.EntityID,
-			ParkID:    entity.ParkID,
-			OldStatus: existingEntity.Status,
-			NewStatus: entity.Status,
-			Timestamp: time.Now(),
+			EntityID:    entity.EntityID,
+			ParkID:      entity.ParkID,
+			OldStatus:   existingEntity.Status,
+			NewStatus:   entity.Status,
+			OldWaitTime: existingEntity.WaitTime,
+			NewWaitTime: entity.WaitTime,
+			Timestamp:   time.Now(),
 		})
 		existingEntity.Status = entity.Status
 		existingEntity.LastStatusChange = time.Now()

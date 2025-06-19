@@ -236,25 +236,6 @@ func main() {
 		return c.JSON(devices)
 	})
 
-	// Test endpoint to simulate a status change
-	app.Post("/api/test/status-change", func(c *fiber.Ctx) error {
-		// Create a test status change message
-		msg := StatusChangeMessage{
-			EntityID:    "gizmo-entity",
-			OldStatus:   "CLOSED",
-			NewStatus:   "OPEN",
-			Timestamp:   time.Now(),
-		}
-
-		// Publish to the message bus
-		messageBus.PublishStatus(msg)
-
-		return c.JSON(fiber.Map{
-			"status":  "Test status change published",
-			"message": msg,
-		})
-	})
-
 	// Delete device endpoint
 	app.Delete("/api/devices/:token", func(c *fiber.Ctx) error {
 		token := c.Params("token")
@@ -265,6 +246,61 @@ func main() {
 		}
 		return c.JSON(fiber.Map{
 			"status": "Device deleted successfully",
+		})
+	})
+
+	// Test endpoint to simulate a status change
+	app.Post("/api/test/status-change", func(c *fiber.Ctx) error {
+		// Create a test status change message with the provided test data
+		msg := StatusChangeMessage{
+			EntityID:    "f0d4b531-e291-471b-9527-00410c2bbd65",
+			ParkID:      "ca888437-ebb4-4d50-aed2-d227f7096968",
+			OldStatus:   "DOWN",
+			NewStatus:   "OPERATING",
+			Timestamp:   time.Now(),
+		}
+
+		// Publish to the message bus
+		messageBus.PublishStatus(msg)
+
+		return c.JSON(fiber.Map{
+			"status": "Test status change published",
+			"message": msg,
+			"timestamp": time.Now(),
+		})
+	})
+
+	// Test endpoint with custom data
+	app.Post("/api/test/status-change-custom", func(c *fiber.Ctx) error {
+		var testData struct {
+			EntityID  string `json:"entityId"`
+			ParkID    string `json:"parkId"`
+			OldStatus string `json:"oldStatus"`
+			NewStatus string `json:"newStatus"`
+		}
+
+		if err := c.BodyParser(&testData); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid request body",
+			})
+		}
+
+		// Create a status change message with custom data
+		msg := StatusChangeMessage{
+			EntityID:    testData.EntityID,
+			ParkID:      testData.ParkID,
+			OldStatus:   EntityStatus(testData.OldStatus),
+			NewStatus:   EntityStatus(testData.NewStatus),
+			Timestamp:   time.Now(),
+		}
+
+		// Publish to the message bus
+		messageBus.PublishStatus(msg)
+
+		return c.JSON(fiber.Map{
+			"status": "Custom test status change published",
+			"message": msg,
+			"timestamp": time.Now(),
 		})
 	})
 

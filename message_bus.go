@@ -12,6 +12,8 @@ type StatusChangeMessage struct {
     ParkID        string
     OldStatus     EntityStatus
     NewStatus     EntityStatus
+    OldWaitTime   int
+    NewWaitTime   int
     Timestamp     time.Time
 }
 

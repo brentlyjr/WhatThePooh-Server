@@ -26,6 +26,10 @@ type NotificationRequest struct {
 	Badge       int    `json:"badge"`
 	EntityID    string `json:"entityId"`
 	ParkID      string `json:"parkId"`
+	OldStatus   string `json:"oldStatus"`
+	NewStatus   string `json:"newStatus"`
+	OldWaitTime int    `json:"oldWaitTime"`
+	NewWaitTime int    `json:"newWaitTime"`
 }
 
 var apnsClient *apns2.Client
@@ -102,11 +106,14 @@ func SendPushNotification(req NotificationRequest) error {
 		DeviceToken: req.DeviceToken,
 		Topic:       os.Getenv("APNS_BUNDLE_ID"),
 		Payload: payload.NewPayload().
-			AlertTitle(req.Title).
-			AlertBody(req.Message).
+			ContentAvailable().
 			Badge(req.Badge).
 			Custom("entityId", req.EntityID).
-			Custom("parkId", req.ParkID),
+			Custom("parkId", req.ParkID).
+			Custom("oldStatus", req.OldStatus).
+			Custom("newStatus", req.NewStatus).
+			Custom("oldWaitTime", req.OldWaitTime).
+			Custom("newWaitTime", req.NewWaitTime),
 	}
 
 	res, err := apnsClient.Push(notification)
@@ -145,10 +152,25 @@ func apnsSender(id int) {
 	for req := range PushQueue {
 		log.Printf("[Worker %d] Sending push to %s", id, req.DeviceToken)
 
+		// Create the payload
+		payload := payload.NewPayload().
+			ContentAvailable().
+			Badge(1).
+			Custom("entityId", req.EntityID).
+			Custom("parkId", req.ParkID).
+			Custom("oldStatus", req.OldStatus).
+			Custom("newStatus", req.NewStatus).
+			Custom("oldWaitTime", req.OldWaitTime).
+			Custom("newWaitTime", req.NewWaitTime)
+
+		// Log the payload structure for debugging
+		log.Printf("[Worker %d] APNS Payload Structure: {\"aps\":{\"content-available\":1,\"badge\":1},\"entityId\":\"%s\",\"parkId\":\"%s\",\"oldStatus\":\"%s\",\"newStatus\":\"%s\",\"oldWaitTime\":%d,\"newWaitTime\":%d}", 
+			id, req.EntityID, req.ParkID, req.OldStatus, req.NewStatus, req.OldWaitTime, req.NewWaitTime)
+
 		notification := &apns2.Notification{
 			DeviceToken: req.DeviceToken,
 			Topic:       bundleID,
-			Payload:     payload.NewPayload().Alert(req.Message).Badge(1).MutableContent().Custom("entityId", req.EntityID).Custom("parkId", req.ParkID),
+			Payload:     payload,
 		}
 
 		res, err := apnsClient.Push(notification)

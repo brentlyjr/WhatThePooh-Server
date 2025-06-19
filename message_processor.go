@@ -38,6 +38,10 @@ func StartMessageProcessors() {
 					Message:     notificationMsg,
 					EntityID:    msg.EntityID,
 					ParkID:      msg.ParkID,
+					OldStatus:   string(msg.OldStatus),
+					NewStatus:   string(msg.NewStatus),
+					OldWaitTime: msg.OldWaitTime,
+					NewWaitTime: msg.NewWaitTime,
 				}
 				// Use the non-blocking Push function
 				Push(pushReq)

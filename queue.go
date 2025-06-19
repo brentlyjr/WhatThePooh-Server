@@ -9,6 +9,10 @@ type PushRequest struct {
 	Message     string
 	EntityID    string
 	ParkID      string
+	OldStatus   string
+	NewStatus   string
+	OldWaitTime int
+	NewWaitTime int
 }
 
 // EntityQueue is a buffered channel for entity updates
