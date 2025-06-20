@@ -1,6 +1,34 @@
 # Google Cloud Platform (GCP) Deployment
 
-This directory contains the script and configuration for deploying the WhatThePooh Server to Google Cloud Run, using Artifact Registry for container storage and Secret Manager for handling credentials.
+This directory contains scripts for deploying the WhatThePooh Server to Google Cloud Platform using Cloud Run.
+
+## Quick Start
+
+1. **Prerequisites**
+   - Google Cloud CLI installed and authenticated
+   - Docker installed
+   - A Google Cloud project with billing enabled
+
+2. **Setup**
+   ```bash
+   # Copy the example config and fill in your values
+   cp gcp_config.sh.example gcp_config.sh
+   
+   # Edit the configuration file with your project details
+   nano gcp_config.sh
+   
+   # Make the deployment script executable
+   chmod +x gcp-deploy/gcp-deploy.sh
+   ```
+
+3. **Deploy**
+   ```bash
+   ./gcp-deploy/gcp-deploy.sh
+   ```
+
+## Scripts Overview
+
+*   **`gcp-deploy.sh`**: This is the all-in-one script that orchestrates the entire deployment. It is designed to be idempotent, meaning you can run it repeatedly without causing errors. It will simply update existing resources rather than creating duplicates.
 
 ## Prerequisites
 
@@ -36,7 +64,7 @@ The deployment script uses a configuration file for all your secrets and applica
 You only need to do this once.
 
 ```bash
-chmod +x gcp-deploy/deploy.sh
+chmod +x gcp-deploy/gcp-deploy.sh
 ```
 
 ## Deployment
@@ -44,7 +72,7 @@ chmod +x gcp-deploy/deploy.sh
 To deploy the application, simply run the main deployment script from the **root directory of the project**:
 
 ```bash
-./gcp-deploy/deploy.sh
+./gcp-deploy/gcp-deploy.sh
 ```
 
 This single script handles the entire deployment pipeline:
@@ -78,7 +106,7 @@ gcloud run services logs tail what-the-pooh-server --project YOUR-PROJECT-ID --r
 
 ## How It Works
 
-*   **`deploy.sh`**: This is the all-in-one script that orchestrates the entire deployment. It is designed to be idempotent, meaning you can run it repeatedly without causing errors. It will simply update existing resources.
+*   **`gcp-deploy.sh`**: This is the all-in-one script that orchestrates the entire deployment. It is designed to be idempotent, meaning you can run it repeatedly without causing errors. It will simply update existing resources.
 *   **`gcp_config.sh`**: This file contains your secrets and configuration. **It is ignored by Git and should never be committed to source control.**
 *   **Secret Manager**: All sensitive values (API keys, etc.) are stored securely in Google Secret Manager, not in environment variables directly. The Cloud Run service is granted secure access to these secrets at runtime.
 *   **Cloud Build**: Builds are performed server-side by Cloud Build, which is faster and more consistent than building on a local machine.
