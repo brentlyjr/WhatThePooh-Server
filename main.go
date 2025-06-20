@@ -208,6 +208,9 @@ func main() {
 			})
 		}
 
+		log.Printf("Received device registration: DeviceToken=%s, AppVersion=%s, DeviceType=%s, LastUpdated=%v", 
+			registration.DeviceToken, registration.AppVersion, registration.DeviceType, registration.LastUpdated)
+
 		if registration.DeviceToken == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "Device token is required",
