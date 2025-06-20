@@ -6,14 +6,14 @@ WORKDIR /app
 # Install git, gcc, and SQLite development files
 RUN apk add --no-cache git gcc musl-dev sqlite-dev
 
-# Copy go mod and sum files
+# Copy go mod and sum files from root
 COPY go.mod go.sum ./
 
 # Download dependencies
 RUN go mod download
 
-# Copy source code
-COPY . .
+# Copy source code from source directory
+COPY source/ .
 
 # Build the application with CGO enabled
 RUN CGO_ENABLED=1 GOOS=linux go build -o main .

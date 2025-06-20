@@ -35,5 +35,5 @@ echo "✅ Sandbox APNS key file found"
 echo ""
 
 # Run the server
-echo "🚀 Starting server with 'go run .'..."
-go run . 
+echo "🚀 Starting server with 'go run ./source'..."
+go run ./source 

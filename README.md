@@ -45,7 +45,7 @@ To run the application on your local machine, follow these steps.
 
 4.  **Run the Application**
     ```bash
-    go run .
+    go run ./source
     ```
     The server will start on `http://localhost:8080`.
 
@@ -111,13 +111,22 @@ The project can also be built and run as a Docker container.
 
 ## Project Structure
 
-- `main.go` - Main application entry point
-- `entity_manager.go` - Manages theme park attraction data
-- `websocket_client.go` - WebSocket client implementation
-- `queue.go` - Queue management
-- `apns_worker.go` - Apple Push Notification Service worker
-- `database.go` - Database operations for device management
+- `source/` - Go source code directory
+  - `main.go` - Main application entry point
+  - `entity_manager.go` - Manages theme park attraction data
+  - `websocket_client.go` - WebSocket client implementation
+  - `queue.go` - Queue management
+  - `apns_worker.go` - Apple Push Notification Service worker
+  - `database.go` - Database operations for device management
+  - `cache.go` - Caching layer for database operations
+  - `message_bus.go` - Message bus implementation
+  - `message_processor.go` - Message processing logic
+- `go.mod` - Go module definition (root level)
+- `go.sum` - Go module checksums (root level)
 - `keys/` - Directory for APNS key files (e.g., `AuthKey_YOURKEYID.p8`)
+- `gcp-deploy/` - Google Cloud Platform deployment scripts
+- `run-local.sh` - Local development script
+- `Dockerfile` - Docker container configuration
 
 ## Dependencies
 

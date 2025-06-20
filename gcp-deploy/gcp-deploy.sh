@@ -132,7 +132,7 @@ fi
 
 # 6. Build the container image using Cloud Build
 echo "Building container image with Cloud Build..."
-gcloud builds submit --tag "$REGION-docker.pkg.dev/$PROJECT_ID/$SERVICE_NAME/$SERVICE_NAME" --project=$PROJECT_ID
+gcloud builds submit --tag "$REGION-docker.pkg.dev/$PROJECT_ID/$SERVICE_NAME/$SERVICE_NAME" --project=$PROJECT_ID source/
 
 # 7. Deploy to Cloud Run
 echo "Deploying to Cloud Run..."

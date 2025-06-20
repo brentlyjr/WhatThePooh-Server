@@ -14,7 +14,7 @@ For local development, use the sandbox APNS environment to avoid affecting produ
 This script automatically:
 - Sets all environment variables for sandbox APNS
 - Uses the sandbox key (`keys/AuthKey_MU2W4LLRSY.p8`)
-- Starts the server with `go run .`
+- Starts the server with `go run ./source`
 
 ### Option 2: Manual environment setup
 ```bash
@@ -28,7 +28,7 @@ export THEMEPARK_API_KEY="519dd9c1-cc1e-4d4a-906d-d628cf0250bc"
 export APNS_KEY_BASE64=$(base64 -i "keys/AuthKey_MU2W4LLRSY.p8" | tr -d '\n')
 
 # Run the server
-go run .
+go run ./source
 ```
 
 ## Production Deployment (Production APNS)
