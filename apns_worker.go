@@ -48,8 +48,10 @@ func InitializeAPNS(config APNSConfig) error {
 
 	if config.IsDev {
 		apnsClient = apns2.NewTokenClient(tkn).Development()
+		log.Printf("APNS initialized in DEVELOPMENT mode")
 	} else {
 		apnsClient = apns2.NewTokenClient(tkn).Production()
+		log.Printf("APNS initialized in PRODUCTION mode")
 	}
 
 	return nil
