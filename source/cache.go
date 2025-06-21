@@ -47,13 +47,25 @@ func (c *CachedDB) LoadFromDatabase() error {
 
 // StoreDeviceToken saves or updates a device token in both cache and database
 func (c *CachedDB) StoreDeviceToken(registration DeviceRegistration) error {
-	// Update cache immediately
-	c.mu.Lock()
-	c.cache.Store(registration.DeviceToken, registration)
-	c.mu.Unlock()
+	// Store in database first (this will set the server timestamp)
+	if err := c.db.StoreDeviceToken(registration); err != nil {
+		return err
+	}
 
-	// Update database
-	return c.db.StoreDeviceToken(registration)
+	// Get the updated registration from database to get the correct timestamp
+	updatedDevice, err := c.db.GetDeviceToken(registration.DeviceToken)
+	if err != nil {
+		return err
+	}
+
+	// Update cache with the device that has the correct server timestamp
+	if updatedDevice != nil {
+		c.mu.Lock()
+		c.cache.Store(registration.DeviceToken, *updatedDevice)
+		c.mu.Unlock()
+	}
+
+	return nil
 }
 
 // GetDeviceToken retrieves a device token from cache first, then database if not found

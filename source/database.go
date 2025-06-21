@@ -62,7 +62,8 @@ type DeviceRegistration struct {
 
 // StoreDeviceToken saves or updates a device token in the database
 func (s *SQLiteDB) StoreDeviceToken(registration DeviceRegistration) error {
-	registration.LastUpdated = time.Now().UTC()
+	// Always use server time for last_updated
+	now := time.Now().UTC()
 
 	_, err := s.db.Exec(`
 		INSERT INTO devices (device_token, app_version, device_type, last_updated)
@@ -70,8 +71,8 @@ func (s *SQLiteDB) StoreDeviceToken(registration DeviceRegistration) error {
 		ON CONFLICT(device_token) DO UPDATE SET
 			app_version = excluded.app_version,
 			device_type = excluded.device_type,
-			last_updated = excluded.last_updated
-	`, registration.DeviceToken, registration.AppVersion, registration.DeviceType, registration.LastUpdated)
+			last_updated = ?
+	`, registration.DeviceToken, registration.AppVersion, registration.DeviceType, now, now)
 
 	if err != nil {
 		return fmt.Errorf("failed to store device token: %v", err)
