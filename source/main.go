@@ -252,6 +252,29 @@ func main() {
 		})
 	})
 
+	// Check if device exists endpoint
+	app.Get("/api/devices/:token/exists", func(c *fiber.Ctx) error {
+		token := c.Params("token")
+		device, err := db.GetDeviceToken(token)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		if device == nil {
+			return c.JSON(fiber.Map{
+				"exists": false,
+				"message": "Device not found",
+			})
+		}
+
+		return c.JSON(fiber.Map{
+			"exists": true,
+			"device": device,
+		})
+	})
+
 	// Test endpoint to simulate a status change
 	app.Post("/api/test/status-change", func(c *fiber.Ctx) error {
 		// Create a test status change message with the provided test data

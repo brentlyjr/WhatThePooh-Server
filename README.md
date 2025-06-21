@@ -80,6 +80,30 @@ The project can also be built and run as a Docker container.
 - **Get All Devices** (`GET /api/devices`)
   Returns a list of all registered devices
 
+- **Check Device Exists** (`GET /api/devices/:token/exists`)
+  Checks if a specific device token is registered
+  
+  **Response when device exists:**
+  ```json
+  {
+    "exists": true,
+    "device": {
+      "deviceToken": "your_device_token",
+      "appVersion": "1.0.0",
+      "deviceType": "iPhone",
+      "lastUpdated": "2025-06-21T01:48:25Z"
+    }
+  }
+  ```
+  
+  **Response when device doesn't exist:**
+  ```json
+  {
+    "exists": false,
+    "message": "Device not found"
+  }
+  ```
+
 - **Delete Device** (`DELETE /api/devices/:token`)
   Removes a device token from the database
 

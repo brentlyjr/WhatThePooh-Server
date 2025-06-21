@@ -73,7 +73,7 @@ for i in "${!SECRETS[@]}"; do
 done
 
 # 3. Create secrets and grant access
-echo "Checking and creating secrets in Secret Manager..."
+echo "Checking and creating/updating secrets in Secret Manager..."
 for i in "${!SECRETS[@]}"; do
   SECRET_NAME=${SECRETS[$i]}
   SECRET_VALUE=${SECRET_VALUES[$i]}
@@ -99,7 +99,16 @@ for i in "${!SECRETS[@]}"; do
     # Add the first version of the secret with the value
     echo -n "$SECRET_VALUE" | gcloud secrets versions add "$SECRET_NAME" --data-file=- --project="$PROJECT_ID"
   else
-    echo "Secret '$SECRET_NAME' already exists. Skipping creation."
+    # Check if the current value is different from the new value
+    CURRENT_VALUE=$(gcloud secrets versions access latest --secret="$SECRET_NAME" --project="$PROJECT_ID" 2>/dev/null || echo "")
+    
+    if [ "$CURRENT_VALUE" = "$SECRET_VALUE" ]; then
+      echo "Secret '$SECRET_NAME' already exists with the same value. Skipping update."
+    else
+      echo "Secret '$SECRET_NAME' already exists. Updating with new value..."
+      # Add a new version of the secret with the updated value
+      echo -n "$SECRET_VALUE" | gcloud secrets versions add "$SECRET_NAME" --data-file=- --project="$PROJECT_ID"
+    fi
   fi
 done
 
@@ -133,7 +142,7 @@ fi
 
 # 6. Build the container image using Cloud Build
 echo "Building container image with Cloud Build..."
-gcloud builds submit --tag "$REGION-docker.pkg.dev/$PROJECT_ID/$SERVICE_NAME/$SERVICE_NAME" --project=$PROJECT_ID "$PROJECT_ROOT/source/"
+gcloud builds submit --tag "$REGION-docker.pkg.dev/$PROJECT_ID/$SERVICE_NAME/$SERVICE_NAME" --project=$PROJECT_ID "$PROJECT_ROOT/"
 
 # 7. Deploy to Cloud Run
 echo "Deploying to Cloud Run..."

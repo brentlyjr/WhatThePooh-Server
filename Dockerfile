@@ -12,11 +12,11 @@ COPY go.mod go.sum ./
 # Download dependencies
 RUN go mod download
 
-# Copy source code
-COPY . .
+# Copy source code from source/ directory
+COPY source/ ./source/
 
 # Build the application with CGO enabled
-RUN CGO_ENABLED=1 GOOS=linux go build -o main .
+RUN CGO_ENABLED=1 GOOS=linux go build -o main ./source/
 
 # Final stage
 FROM alpine:latest

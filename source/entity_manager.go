@@ -95,12 +95,13 @@ func (em *EntityManager) ProcessEntity(entity Entity) {
 
 	// Check for wait time change
 	if entity.WaitTime != existingEntity.WaitTime {
-		messageBus.PublishWaitTime(WaitTimeMessage{
-			EntityID:    entity.EntityID,
-			OldWaitTime: existingEntity.WaitTime,
-			NewWaitTime: entity.WaitTime,
-			Timestamp:   time.Now(),
-		})
+		// TODO: Re-enable when working on wait time functionality
+		// messageBus.PublishWaitTime(WaitTimeMessage{
+		// 	EntityID:    entity.EntityID,
+		// 	OldWaitTime: existingEntity.WaitTime,
+		// 	NewWaitTime: entity.WaitTime,
+		// 	Timestamp:   time.Now(),
+		// })
 		existingEntity.WaitTime = entity.WaitTime
 		existingEntity.LastWaitTimeChange = time.Now()
 	}

@@ -50,11 +50,12 @@ func StartMessageProcessors() {
 	}()
 
 	// Goroutine for handling wait time changes
-	go func() {
-		waitTimeCh := messageBus.SubscribeWaitTime()
-		for msg := range waitTimeCh {
-			log.Printf("⏰ WAIT TIME CHANGE: Entity %s changed from %d to %d minutes at %v",
-				msg.EntityID, msg.OldWaitTime, msg.NewWaitTime, msg.Timestamp)
-		}
-	}()
+	// TODO: Re-enable when working on wait time functionality
+	// go func() {
+	// 	waitTimeCh := messageBus.SubscribeWaitTime()
+	// 	for msg := range waitTimeCh {
+	// 		log.Printf("⏰ WAIT TIME CHANGE: Entity %s changed from %d to %d minutes at %v",
+	// 			msg.EntityID, msg.OldWaitTime, msg.NewWaitTime, msg.Timestamp)
+	// 	}
+	// }()
 } 
