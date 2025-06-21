@@ -1,34 +1,30 @@
-# Google Cloud Platform (GCP) Deployment
+# Scripts Directory
 
-This directory contains scripts for deploying the WhatThePooh Server to Google Cloud Platform using Cloud Run.
-
-## Quick Start
-
-1. **Prerequisites**
-   - Google Cloud CLI installed and authenticated
-   - Docker installed
-   - A Google Cloud project with billing enabled
-
-2. **Setup**
-   ```bash
-   # Copy the example config and fill in your values
-   cp gcp_config.sh.example gcp_config.sh
-   
-   # Edit the configuration file with your project details
-   nano gcp_config.sh
-   
-   # Make the deployment script executable
-   chmod +x gcp-deploy/gcp-deploy.sh
-   ```
-
-3. **Deploy**
-   ```bash
-   ./gcp-deploy/gcp-deploy.sh
-   ```
+This directory contains scripts for deploying and managing the WhatThePooh Server.
 
 ## Scripts Overview
 
-*   **`gcp-deploy.sh`**: This is the all-in-one script that orchestrates the entire deployment. It is designed to be idempotent, meaning you can run it repeatedly without causing errors. It will simply update existing resources rather than creating duplicates.
+### Local Development
+- **`run-local.sh`**: Local development script that sets up environment variables and starts the server with sandbox APNS
+
+### Google Cloud Platform (GCP) Deployment
+- **`gcp-deploy.sh`**: Main deployment script for GCP Cloud Run
+- **`gcp-destroy.sh`**: Cleanup script to remove GCP resources
+- **`gcp-logs.sh`**: Script to view GCP logs
+- **`gcp_config.sh`**: Configuration file for GCP deployment (contains secrets)
+
+## Quick Start
+
+### Local Development
+```bash
+./scripts/run-local.sh
+```
+
+### GCP Deployment
+```bash
+cd scripts
+./gcp-deploy.sh
+```
 
 ## Prerequisites
 
@@ -53,10 +49,10 @@ The deployment script uses a configuration file for all your secrets and applica
 
 *   **Copy the example config:**
     ```bash
-    cp gcp-deploy/gcp_config.sh.example gcp-deploy/gcp_config.sh
+    cp gcp_config.sh.example gcp_config.sh
     ```
 
-*   **Edit `gcp-deploy/gcp_config.sh`:**
+*   **Edit `gcp_config.sh`:**
     Open the newly created `gcp_config.sh` file and replace all placeholder values (e.g., `"your-apns-key-id"`) with your actual credentials and settings. The script will use these values to configure secrets in Secret Manager.
 
 ### 3. Make the Script Executable
@@ -64,15 +60,15 @@ The deployment script uses a configuration file for all your secrets and applica
 You only need to do this once.
 
 ```bash
-chmod +x gcp-deploy/gcp-deploy.sh
+chmod +x gcp-deploy.sh
 ```
 
 ## Deployment
 
-To deploy the application, simply run the main deployment script from the **root directory of the project**:
+To deploy the application, simply run the main deployment script from the **scripts directory**:
 
 ```bash
-./gcp-deploy/gcp-deploy.sh
+./gcp-deploy.sh
 ```
 
 This single script handles the entire deployment pipeline:

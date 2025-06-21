@@ -5,6 +5,7 @@ set -e
 # --- Script Logic ---
 # Find the directory where the script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 # Load configuration from gcp_config.sh
 CONFIG_FILE="$SCRIPT_DIR/gcp_config.sh"
@@ -20,7 +21,7 @@ source "$CONFIG_FILE"
 SERVICE_NAME="what-the-pooh-server"
 REGION="us-west1"
 PROJECT_ID="whatthepooh"
-LOCAL_APNS_KEY_PATH="keys/AuthKey_MU2W4LLRSY.p8"
+LOCAL_APNS_KEY_PATH="$PROJECT_ROOT/keys/AuthKey_AY6CCB64CG.p8"
 
 # --- Secret Configuration ---
 # Define secrets and their values from the loaded config
@@ -132,7 +133,7 @@ fi
 
 # 6. Build the container image using Cloud Build
 echo "Building container image with Cloud Build..."
-gcloud builds submit --tag "$REGION-docker.pkg.dev/$PROJECT_ID/$SERVICE_NAME/$SERVICE_NAME" --project=$PROJECT_ID source/
+gcloud builds submit --tag "$REGION-docker.pkg.dev/$PROJECT_ID/$SERVICE_NAME/$SERVICE_NAME" --project=$PROJECT_ID "$PROJECT_ROOT/source/"
 
 # 7. Deploy to Cloud Run
 echo "Deploying to Cloud Run..."
