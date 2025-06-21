@@ -34,14 +34,8 @@ To run the application on your local machine, follow these steps.
     *   **Place your APNS Key:**
         Put your `AuthKey_YOURKEYID.p8` file into the `/keys` directory.
 
-    *   **Generate the Base64 Key:**
-        The application requires your APNS key to be base64 encoded for security. Run the following command, making sure to replace `AuthKey_YOURKEYID.p8` with your actual filename.
-        ```bash
-        base64 -i keys/AuthKey_YOURKEYID.p8 | tr -d '\n'
-        ```
-
     *   **Update your `.env` file:**
-        Open the `.env` file and paste the output from the previous command as the value for `APNS_KEY_BASE64`. Fill in the other required values like your `APNS_KEY_ID`, `APNS_TEAM_ID`, etc.
+        Open the `.env` file and set the required values. The `APNS_KEY_BASE64` will be automatically generated when you run the application. Fill in the other required values like your `APNS_KEY_ID`, `APNS_TEAM_ID`, etc.
 
 4.  **Run the Application**
     ```bash
