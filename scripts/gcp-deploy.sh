@@ -21,7 +21,7 @@ source "$CONFIG_FILE"
 SERVICE_NAME="what-the-pooh-server"
 REGION="us-west1"
 PROJECT_ID="whatthepooh"
-LOCAL_APNS_KEY_PATH="$PROJECT_ROOT/keys/AuthKey_AY6CCB64CG.p8"
+# LOCAL_APNS_KEY_PATH is now loaded from gcp_config.sh
 
 # --- Secret Configuration ---
 # Define secrets and their values from the loaded config
