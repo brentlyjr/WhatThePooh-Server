@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"time"
 
 	"github.com/sideshow/apns2"
 	"github.com/sideshow/apns2/payload"
@@ -199,8 +200,28 @@ func SendPushNotification(req NotificationRequest) error {
 			Custom("newWaitTime", req.NewWaitTime),
 	}
 
+	// Create APNS message tracking record
+	apnsMessage := APNSMessage{
+		DeviceToken: req.DeviceToken,
+		Timestamp:   time.Now().UTC(),
+		EntityID:    req.EntityID,
+		ParkID:      req.ParkID,
+		OldStatus:   req.OldStatus,
+		NewStatus:   req.NewStatus,
+		OldWaitTime: req.OldWaitTime,
+		NewWaitTime: req.NewWaitTime,
+	}
+
 	res, err := apnsClient.Push(notification)
 	if err != nil {
+		// Update tracking record for failed message
+		apnsMessage.Success = false
+		apnsMessage.ErrorReason = err.Error()
+		
+		// Store failed message in database
+		if storeErr := db.StoreAPNSMessage(apnsMessage); storeErr != nil {
+			log.Printf("Failed to store APNS message record: %v", storeErr)
+		}
 		return err
 	}
 
@@ -245,6 +266,15 @@ func SendPushNotification(req NotificationRequest) error {
 			log.Printf("  - Error Type: Unknown (%s)", res.Reason)
 		}
 		
+		// Update tracking record for failed message
+		apnsMessage.Success = false
+		apnsMessage.ErrorReason = res.Reason
+		
+		// Store failed message in database
+		if storeErr := db.StoreAPNSMessage(apnsMessage); storeErr != nil {
+			log.Printf("Failed to store APNS message record: %v", storeErr)
+		}
+		
 		// If the token is invalid, remove it from the database
 		if res.Reason == apns2.ReasonBadDeviceToken || res.Reason == apns2.ReasonUnregistered {
 			log.Printf("Removing invalid device token: %s (Reason: %s, Status: %d)", req.DeviceToken, res.Reason, res.StatusCode)
@@ -254,6 +284,14 @@ func SendPushNotification(req NotificationRequest) error {
 			}
 		}
 		return fmt.Errorf("push failed: %s", res.Reason)
+	}
+
+	// Update tracking record for successful message
+	apnsMessage.Success = true
+	
+	// Store successful message in database
+	if storeErr := db.StoreAPNSMessage(apnsMessage); storeErr != nil {
+		log.Printf("Failed to store APNS message record: %v", storeErr)
 	}
 
 	return nil
@@ -312,13 +350,39 @@ func apnsSender(id int) {
 		logNotificationDetails(notification, id)
 
 		res, err := apnsClient.Push(notification)
+		
+		// Create APNS message tracking record
+		apnsMessage := APNSMessage{
+			DeviceToken: req.DeviceToken,
+			Timestamp:   time.Now().UTC(),
+			EntityID:    req.EntityID,
+			ParkID:      req.ParkID,
+			OldStatus:   req.OldStatus,
+			NewStatus:   req.NewStatus,
+			OldWaitTime: req.OldWaitTime,
+			NewWaitTime: req.NewWaitTime,
+		}
+
 		if err != nil {
 			log.Printf("[Worker %d] Push error for token %s: %v", id, req.DeviceToken, err)
+			apnsMessage.Success = false
+			apnsMessage.ErrorReason = err.Error()
+			
+			// Store failed message in database
+			if storeErr := db.StoreAPNSMessage(apnsMessage); storeErr != nil {
+				log.Printf("[Worker %d] Failed to store APNS message record: %v", id, storeErr)
+			}
 			continue
 		}
 
 		if res.Sent() {
 			log.Printf("[Worker %d] Push sent successfully to %s", id, req.DeviceToken)
+			apnsMessage.Success = true
+			
+			// Store successful message in database
+			if storeErr := db.StoreAPNSMessage(apnsMessage); storeErr != nil {
+				log.Printf("[Worker %d] Failed to store APNS message record: %v", id, storeErr)
+			}
 		} else {
 			// Enhanced logging with detailed APNS response information
 			log.Printf("[Worker %d] Push failed for token %s", id, req.DeviceToken)
@@ -360,6 +424,15 @@ func apnsSender(id int) {
 				log.Printf("[Worker %d]   - Error Type: Unknown (%s)", id, res.Reason)
 			}
 			
+			// Update tracking record for failed message
+			apnsMessage.Success = false
+			apnsMessage.ErrorReason = res.Reason
+			
+			// Store failed message in database
+			if storeErr := db.StoreAPNSMessage(apnsMessage); storeErr != nil {
+				log.Printf("[Worker %d] Failed to store APNS message record: %v", id, storeErr)
+			}
+			
 			// If the token is invalid or unregistered, remove it from our database
 			if res.Reason == apns2.ReasonBadDeviceToken || res.Reason == apns2.ReasonUnregistered {
 				log.Printf("[Worker %d] Removing invalid device token: %s (Reason: %s, Status: %d)", id, req.DeviceToken, res.Reason, res.StatusCode)
@@ -374,4 +447,9 @@ func apnsSender(id int) {
 // GetRegisteredDevices returns all registered device tokens
 func GetRegisteredDevices() ([]DeviceRegistration, error) {
 	return db.GetAllDevices()
+}
+
+// GetRecentAPNSMessages returns recent APNS messages for debugging and monitoring
+func GetRecentAPNSMessages(limit int) ([]APNSMessage, error) {
+	return db.GetAPNSMessages(limit)
 }

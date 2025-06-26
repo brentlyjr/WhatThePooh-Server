@@ -23,6 +23,11 @@ func SetupRoutes(app *fiber.App, entityManager *EntityManager, wsClient *WebSock
 	app.Get("/api/devices/:token/exists", checkDeviceExistsHandler)
 	app.Delete("/api/devices/:token", deleteDeviceHandler)
 
+	// APNS Message tracking
+	app.Get("/api/apns-messages", getAPNSMessagesHandler)
+	app.Post("/api/apns-receipt", apnsReceiptHandler)
+	app.Get("/api/apns-receipts", getAPNSReceiptsHandler)
+
 	// Metrics
 	app.Get("/api/metrics", metricsHandler(entityManager, wsClient))
 
@@ -133,6 +138,113 @@ func deleteDeviceHandler(c *fiber.Ctx) error {
 	}
 	return c.JSON(fiber.Map{
 		"status": "Device deleted successfully",
+	})
+}
+
+// getAPNSMessagesHandler returns recent APNS messages for debugging
+func getAPNSMessagesHandler(c *fiber.Ctx) error {
+	limit := 100 // Default limit
+	if limitParam := c.Query("limit"); limitParam != "" {
+		if parsedLimit := c.QueryInt("limit", 100); parsedLimit > 0 && parsedLimit <= 1000 {
+			limit = parsedLimit
+		}
+	}
+
+	messages, err := db.GetAPNSMessages(limit)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"messages": messages,
+		"count":    len(messages),
+		"limit":    limit,
+	})
+}
+
+// apnsReceiptHandler handles APNS receipt acknowledgments from clients
+func apnsReceiptHandler(c *fiber.Ctx) error {
+	var receiptData struct {
+		DeviceToken string    `json:"deviceToken"`
+		ClientTime  time.Time `json:"clientTime"`
+		EntityID    string    `json:"entityId"`
+		ParkID      string    `json:"parkId"`
+		OldStatus   string    `json:"oldStatus"`
+		NewStatus   string    `json:"newStatus"`
+		OldWaitTime int       `json:"oldWaitTime"`
+		NewWaitTime int       `json:"newWaitTime"`
+	}
+
+	if err := c.BodyParser(&receiptData); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	// Validate required fields
+	if receiptData.DeviceToken == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Device token is required",
+		})
+	}
+
+	if receiptData.EntityID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Entity ID is required",
+		})
+	}
+
+	// Create receipt record
+	receipt := APNSReceipt{
+		DeviceToken: receiptData.DeviceToken,
+		ClientTime:  receiptData.ClientTime,
+		ServerTime:  time.Now().UTC(),
+		EntityID:    receiptData.EntityID,
+		ParkID:      receiptData.ParkID,
+		OldStatus:   receiptData.OldStatus,
+		NewStatus:   receiptData.NewStatus,
+		OldWaitTime: receiptData.OldWaitTime,
+		NewWaitTime: receiptData.NewWaitTime,
+	}
+
+	// Store receipt in database
+	if err := db.StoreAPNSReceipt(receipt); err != nil {
+		log.Printf("Failed to store APNS receipt: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to store receipt",
+		})
+	}
+
+	log.Printf("APNS receipt stored for device %s, entity %s", receiptData.DeviceToken, receiptData.EntityID)
+
+	return c.JSON(fiber.Map{
+		"status":  "Receipt acknowledged successfully",
+		"receipt": receipt,
+	})
+}
+
+// getAPNSReceiptsHandler returns recent APNS receipts for debugging and monitoring
+func getAPNSReceiptsHandler(c *fiber.Ctx) error {
+	limit := 100 // Default limit
+	if limitParam := c.Query("limit"); limitParam != "" {
+		if parsedLimit := c.QueryInt("limit", 100); parsedLimit > 0 && parsedLimit <= 1000 {
+			limit = parsedLimit
+		}
+	}
+
+	receipts, err := db.GetAPNSReceipts(limit)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"receipts": receipts,
+		"count":    len(receipts),
+		"limit":    limit,
 	})
 }
 

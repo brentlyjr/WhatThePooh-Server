@@ -156,4 +156,24 @@ func (c *CachedDB) CleanupOldDevices(maxAge time.Duration) error {
 	c.mu.Unlock()
 
 	return nil
+}
+
+// StoreAPNSMessage saves an APNS message in the database (no caching for messages)
+func (c *CachedDB) StoreAPNSMessage(message APNSMessage) error {
+	return c.db.StoreAPNSMessage(message)
+}
+
+// GetAPNSMessages retrieves APNS messages from the database (no caching for messages)
+func (c *CachedDB) GetAPNSMessages(limit int) ([]APNSMessage, error) {
+	return c.db.GetAPNSMessages(limit)
+}
+
+// StoreAPNSReceipt saves an APNS receipt in the database (no caching for receipts)
+func (c *CachedDB) StoreAPNSReceipt(receipt APNSReceipt) error {
+	return c.db.StoreAPNSReceipt(receipt)
+}
+
+// GetAPNSReceipts retrieves APNS receipts from the database (no caching for receipts)
+func (c *CachedDB) GetAPNSReceipts(limit int) ([]APNSReceipt, error) {
+	return c.db.GetAPNSReceipts(limit)
 } 
