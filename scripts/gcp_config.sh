@@ -20,9 +20,9 @@ REGION="us-west1"
 
 # --- APNS Configuration ---
 # The path to your local APNS .p8 key file (PRODUCTION for GCP)
-LOCAL_APNS_KEY_PATH="keys/AuthKey_AY6CCB64CG.p8"
-APNS_KEY_ID="AY6CCB64CG"
-APNS_ENV="production"
+LOCAL_APNS_KEY_PATH="keys/AuthKey_9Q5H58H8GX.p8"
+APNS_KEY_ID="9Q5H58H8GX"
+APNS_ENV="development"
 APNS_TEAM_ID="SVFXRTGAKU"
 APNS_BUNDLE_ID="com.brentlyjr.WhatThePooh"
 
