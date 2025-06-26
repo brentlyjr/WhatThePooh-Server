@@ -161,14 +161,24 @@ func main() {
 
 	// Metrics endpoint
 	app.Get("/api/metrics", func(c *fiber.Ctx) error {
+		// Get device count
+		devices, err := db.GetAllDevices()
+		deviceCount := 0
+		if err != nil {
+			log.Printf("Error getting device count for metrics: %v", err)
+		} else {
+			deviceCount = len(devices)
+		}
+
 		return c.JSON(fiber.Map{
-			"queue_length": len(EntityQueue),
-			"entity_count": len(entityManager.GetAllEntities()),
-			"goroutines":   runtime.NumGoroutine(),
-			"restarts":     GetReconnectionTimestamps(),
-			"events":       wsClient.GetEventStats(),
-			"statuses":     wsClient.GetStatusStats(),
-			"server_start": serverStartTime,
+			"queue_length":   len(EntityQueue),
+			"entity_count":   len(entityManager.GetAllEntities()),
+			"device_count":   deviceCount,
+			"goroutines":     runtime.NumGoroutine(),
+			"restarts":       GetReconnectionTimestamps(),
+			"events":         wsClient.GetEventStats(),
+			"statuses":       wsClient.GetStatusStats(),
+			"server_start":   serverStartTime,
 		})
 	})
 

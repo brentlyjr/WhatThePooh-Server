@@ -9,7 +9,7 @@ import (
 )
 
 // SetupRoutes configures all API routes
-func SetupRoutes(app *fiber.App, entityManager *EntityManager) {
+func SetupRoutes(app *fiber.App, entityManager *EntityManager, wsClient *WebSocketClient) {
 	// Health check
 	app.Get("/health", healthHandler)
 
@@ -24,7 +24,7 @@ func SetupRoutes(app *fiber.App, entityManager *EntityManager) {
 	app.Delete("/api/devices/:token", deleteDeviceHandler)
 
 	// Metrics
-	app.Get("/api/metrics", metricsHandler(entityManager))
+	app.Get("/api/metrics", metricsHandler(entityManager, wsClient))
 
 	// Test routes
 	app.Post("/api/test/status-change", testStatusChangeHandler)
@@ -137,14 +137,26 @@ func deleteDeviceHandler(c *fiber.Ctx) error {
 }
 
 // metricsHandler returns server metrics
-func metricsHandler(entityManager *EntityManager) fiber.Handler {
+func metricsHandler(entityManager *EntityManager, wsClient *WebSocketClient) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		// Get device count
+		devices, err := db.GetAllDevices()
+		deviceCount := 0
+		if err != nil {
+			log.Printf("Error getting device count for metrics: %v", err)
+		} else {
+			deviceCount = len(devices)
+		}
+
 		return c.JSON(fiber.Map{
-			"queue_length": len(EntityQueue),
-			"entity_count": len(entityManager.GetAllEntities()),
-			"goroutines":   runtime.NumGoroutine(),
-			"restarts":     GetReconnectionTimestamps(),
-			"server_start": serverStartTime,
+			"queue_length":   len(EntityQueue),
+			"entity_count":   len(entityManager.GetAllEntities()),
+			"device_count":   deviceCount,
+			"goroutines":     runtime.NumGoroutine(),
+			"restarts":       GetReconnectionTimestamps(),
+			"events":         wsClient.GetEventStats(),
+			"statuses":       wsClient.GetStatusStats(),
+			"server_start":   serverStartTime,
 		})
 	}
 }

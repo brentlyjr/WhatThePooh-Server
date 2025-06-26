@@ -125,7 +125,7 @@ The project can also be built and run as a Docker container.
   Returns server health status
 
 - **Metrics** (`GET /api/metrics`)
-  Returns server metrics including queue length and entity count
+  Returns server metrics including queue length, entity count, and device count
 
 ## Project Structure
 
