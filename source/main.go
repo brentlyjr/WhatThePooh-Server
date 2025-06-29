@@ -111,6 +111,18 @@ func main() {
 	// Initialize entity manager
 	entityManager := NewEntityManager()
 
+	// Initialize REST client for pre-population
+	restClient := NewRestClient(apiKey)
+
+	// Pre-populate entities from REST API
+	log.Printf("Pre-populating entities from REST API...")
+	if err := restClient.PrePopulateEntities(entityManager); err != nil {
+		log.Printf("Warning: Failed to pre-populate entities: %v", err)
+	} else {
+		entityCount := restClient.GetEntityCount(entityManager)
+		log.Printf("Successfully pre-populated %d entities", entityCount)
+	}
+
 	// Start entity processing worker
 	go func() {
 		for entity := range EntityQueue {

@@ -260,9 +260,24 @@ func metricsHandler(entityManager *EntityManager, wsClient *WebSocketClient) fib
 			deviceCount = len(devices)
 		}
 
+		// Get entity statistics
+		entityStats := map[string]interface{}{
+			"total_entities": len(entityManager.GetAllEntities()),
+			"statuses":      make(map[string]int),
+		}
+		
+		// Calculate entity statistics
+		entities := entityManager.GetAllEntities()
+		for _, entity := range entities {
+			// Count by status
+			status := string(entity.Status)
+			entityStats["statuses"].(map[string]int)[status]++
+		}
+
 		return c.JSON(fiber.Map{
 			"queue_length":   len(EntityQueue),
 			"entity_count":   len(entityManager.GetAllEntities()),
+			"entity_stats":   entityStats,
 			"device_count":   deviceCount,
 			"goroutines":     runtime.NumGoroutine(),
 			"restarts":       GetReconnectionTimestamps(),
