@@ -46,11 +46,19 @@ func NewSQLiteDB() (*SQLiteDB, error) {
 			device_token TEXT PRIMARY KEY,
 			app_version TEXT,
 			device_type TEXT,
+			environment TEXT,
 			last_updated TIMESTAMP
 		)
 	`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create devices table: %v", err)
+	}
+
+	// Add environment column if it doesn't exist (for existing databases)
+	_, err = db.Exec(`ALTER TABLE devices ADD COLUMN environment TEXT DEFAULT 'development'`)
+	if err != nil {
+		// Column might already exist, which is fine
+		log.Printf("Note: environment column may already exist: %v", err)
 	}
 
 	// Create apns_messages table if it doesn't exist
@@ -102,6 +110,7 @@ type DeviceRegistration struct {
 	DeviceToken string    `json:"deviceToken"`
 	AppVersion  string    `json:"appVersion"`
 	DeviceType  string    `json:"deviceType"`
+	Environment string    `json:"environment"` // "development" or "production"
 	LastUpdated time.Time `json:"lastUpdated"`
 }
 
@@ -140,13 +149,14 @@ func (s *SQLiteDB) StoreDeviceToken(registration DeviceRegistration) error {
 	now := time.Now().UTC()
 
 	_, err := s.db.Exec(`
-		INSERT INTO devices (device_token, app_version, device_type, last_updated)
-		VALUES (?, ?, ?, ?)
+		INSERT INTO devices (device_token, app_version, device_type, environment, last_updated)
+		VALUES (?, ?, ?, ?, ?)
 		ON CONFLICT(device_token) DO UPDATE SET
 			app_version = excluded.app_version,
 			device_type = excluded.device_type,
+			environment = excluded.environment,
 			last_updated = ?
-	`, registration.DeviceToken, registration.AppVersion, registration.DeviceType, now, now)
+	`, registration.DeviceToken, registration.AppVersion, registration.DeviceType, registration.Environment, now, now)
 
 	if err != nil {
 		return fmt.Errorf("failed to store device token: %v", err)
@@ -159,10 +169,10 @@ func (s *SQLiteDB) StoreDeviceToken(registration DeviceRegistration) error {
 func (s *SQLiteDB) GetDeviceToken(token string) (*DeviceRegistration, error) {
 	var device DeviceRegistration
 	err := s.db.QueryRow(`
-		SELECT device_token, app_version, device_type, last_updated
+		SELECT device_token, app_version, device_type, environment, last_updated
 		FROM devices
 		WHERE device_token = ?
-	`, token).Scan(&device.DeviceToken, &device.AppVersion, &device.DeviceType, &device.LastUpdated)
+	`, token).Scan(&device.DeviceToken, &device.AppVersion, &device.DeviceType, &device.Environment, &device.LastUpdated)
 
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -177,7 +187,7 @@ func (s *SQLiteDB) GetDeviceToken(token string) (*DeviceRegistration, error) {
 // GetAllDevices returns all registered devices
 func (s *SQLiteDB) GetAllDevices() ([]DeviceRegistration, error) {
 	rows, err := s.db.Query(`
-		SELECT device_token, app_version, device_type, last_updated
+		SELECT device_token, app_version, device_type, environment, last_updated
 		FROM devices
 		ORDER BY last_updated DESC
 	`)
@@ -189,7 +199,7 @@ func (s *SQLiteDB) GetAllDevices() ([]DeviceRegistration, error) {
 	var devices []DeviceRegistration
 	for rows.Next() {
 		var device DeviceRegistration
-		err := rows.Scan(&device.DeviceToken, &device.AppVersion, &device.DeviceType, &device.LastUpdated)
+		err := rows.Scan(&device.DeviceToken, &device.AppVersion, &device.DeviceType, &device.Environment, &device.LastUpdated)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan device row: %v", err)
 		}

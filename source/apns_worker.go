@@ -31,9 +31,12 @@ type NotificationRequest struct {
 	NewStatus   string `json:"newStatus"`
 	OldWaitTime int    `json:"oldWaitTime"`
 	NewWaitTime int    `json:"newWaitTime"`
+	Environment string `json:"environment"` // "development" or "production"
 }
 
 var apnsClient *apns2.Client
+var apnsDevClient *apns2.Client
+var apnsProdClient *apns2.Client
 
 // ValidateAPNSConfiguration logs detailed information about the APNS configuration
 func ValidateAPNSConfiguration() {
@@ -44,12 +47,16 @@ func ValidateAPNSConfiguration() {
 	log.Printf("APNS Team ID: %s", os.Getenv("APNS_TEAM_ID"))
 	
 	// Check if we're in development or production mode
-	if apnsClient != nil {
-		// The apns2 library doesn't expose the environment directly, but we can infer it
-		// from the client configuration or log it during initialization
-		log.Printf("APNS Client: Initialized")
+	if apnsDevClient != nil {
+		log.Printf("APNS Development Client: Initialized")
 	} else {
-		log.Printf("APNS Client: NOT INITIALIZED")
+		log.Printf("APNS Development Client: NOT INITIALIZED")
+	}
+	
+	if apnsProdClient != nil {
+		log.Printf("APNS Production Client: Initialized")
+	} else {
+		log.Printf("APNS Production Client: NOT INITIALIZED")
 	}
 	log.Printf("=====================================")
 }
@@ -66,12 +73,17 @@ func InitializeAPNS(config APNSConfig) error {
 		TeamID:  config.TeamID,
 	}
 
+	// Initialize both development and production clients
+	apnsDevClient = apns2.NewTokenClient(tkn).Development()
+	apnsProdClient = apns2.NewTokenClient(tkn).Production()
+	
+	// Set the default client based on the environment variable for backward compatibility
 	if config.IsDev {
-		apnsClient = apns2.NewTokenClient(tkn).Development()
-		log.Printf("APNS initialized in DEVELOPMENT mode")
+		apnsClient = apnsDevClient
+		log.Printf("APNS initialized with DEVELOPMENT as default")
 	} else {
-		apnsClient = apns2.NewTokenClient(tkn).Production()
-		log.Printf("APNS initialized in PRODUCTION mode")
+		apnsClient = apnsProdClient
+		log.Printf("APNS initialized with PRODUCTION as default")
 	}
 
 	// Validate configuration after initialization
@@ -90,9 +102,22 @@ func ValidateDeviceToken(token string) bool {
 	return matched
 }
 
+// getAPNSClient returns the appropriate APNS client based on the device environment
+func getAPNSClient(environment string) *apns2.Client {
+	switch environment {
+	case "development":
+		return apnsDevClient
+	case "production":
+		return apnsProdClient
+	default:
+		// Default to development for backward compatibility
+		return apnsDevClient
+	}
+}
+
 // TestDeviceTokenWithDetails sends a silent notification to verify the token is valid and logs detailed information
-func TestDeviceTokenWithDetails(deviceToken string) error {
-	log.Printf("=== Testing Device Token: %s ===", deviceToken)
+func TestDeviceTokenWithDetails(deviceToken string, environment string) error {
+	log.Printf("=== Testing Device Token: %s (Environment: %s) ===", deviceToken, environment)
 	
 	// Validate token format first
 	if !ValidateDeviceToken(deviceToken) {
@@ -100,6 +125,8 @@ func TestDeviceTokenWithDetails(deviceToken string) error {
 		return fmt.Errorf("invalid device token format")
 	}
 	log.Printf("Token format validation passed")
+	
+	client := getAPNSClient(environment)
 	
 	notification := &apns2.Notification{
 		DeviceToken: deviceToken,
@@ -113,8 +140,9 @@ func TestDeviceTokenWithDetails(deviceToken string) error {
 	log.Printf("  - Topic: %s", notification.Topic)
 	log.Printf("  - Payload: %s", notification.Payload)
 	log.Printf("  - Priority: %d", notification.Priority)
+	log.Printf("  - Environment: %s", environment)
 
-	res, err := apnsClient.Push(notification)
+	res, err := client.Push(notification)
 	if err != nil {
 		log.Printf("Push error: %v", err)
 		return fmt.Errorf("failed to send test notification: %v", err)
@@ -150,14 +178,16 @@ func TestDeviceTokenWithDetails(deviceToken string) error {
 }
 
 // TestDeviceToken sends a silent notification to verify the token is valid
-func TestDeviceToken(deviceToken string) error {
+func TestDeviceToken(deviceToken string, environment string) error {
+	client := getAPNSClient(environment)
+	
 	notification := &apns2.Notification{
 		DeviceToken: deviceToken,
 		Topic:       os.Getenv("APNS_BUNDLE_ID"),
 		Payload:     payload.NewPayload().ContentAvailable(),
 	}
 
-	res, err := apnsClient.Push(notification)
+	res, err := client.Push(notification)
 	if err != nil {
 		return fmt.Errorf("failed to send test notification: %v", err)
 	}
@@ -176,8 +206,13 @@ func RegisterDevice(registration DeviceRegistration) error {
 		return fmt.Errorf("invalid device token format")
 	}
 
+	// Set default environment if not specified
+	if registration.Environment == "" {
+		registration.Environment = "development"
+	}
+
 	// Test the token with a silent notification
-	if err := TestDeviceToken(registration.DeviceToken); err != nil {
+	if err := TestDeviceToken(registration.DeviceToken, registration.Environment); err != nil {
 		return fmt.Errorf("token validation failed: %v", err)
 	}
 
@@ -186,6 +221,9 @@ func RegisterDevice(registration DeviceRegistration) error {
 }
 
 func SendPushNotification(req NotificationRequest) error {
+	// Get the appropriate APNS client based on the environment
+	client := getAPNSClient(req.Environment)
+	
 	notification := &apns2.Notification{
 		DeviceToken: req.DeviceToken,
 		Topic:       os.Getenv("APNS_BUNDLE_ID"),
@@ -212,7 +250,7 @@ func SendPushNotification(req NotificationRequest) error {
 		NewWaitTime: req.NewWaitTime,
 	}
 
-	res, err := apnsClient.Push(notification)
+	res, err := client.Push(notification)
 	if err != nil {
 		// Update tracking record for failed message
 		apnsMessage.Success = false
@@ -323,7 +361,7 @@ func apnsSender(id int) {
 	bundleID := os.Getenv("APNS_BUNDLE_ID")
 
 	for req := range PushQueue {
-		log.Printf("[Worker %d] Sending push to %s", id, req.DeviceToken)
+		log.Printf("[Worker %d] Sending push to %s (Environment: %s)", id, req.DeviceToken, req.Environment)
 
 		// Create the payload
 		payload := payload.NewPayload().
@@ -349,7 +387,10 @@ func apnsSender(id int) {
 		// Log notification details for debugging
 		logNotificationDetails(notification, id)
 
-		res, err := apnsClient.Push(notification)
+		// Get the appropriate APNS client based on the environment
+		client := getAPNSClient(req.Environment)
+		
+		res, err := client.Push(notification)
 		
 		// Create APNS message tracking record
 		apnsMessage := APNSMessage{

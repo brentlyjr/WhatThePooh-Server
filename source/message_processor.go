@@ -42,6 +42,7 @@ func StartMessageProcessors() {
 					NewStatus:   string(msg.NewStatus),
 					OldWaitTime: msg.OldWaitTime,
 					NewWaitTime: msg.NewWaitTime,
+					Environment: device.Environment,
 				}
 				// Use the non-blocking Push function
 				Push(pushReq)

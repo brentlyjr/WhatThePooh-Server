@@ -13,6 +13,7 @@ type PushRequest struct {
 	NewStatus   string
 	OldWaitTime int
 	NewWaitTime int
+	Environment string // "development" or "production"
 }
 
 // EntityQueue is a buffered channel for entity updates

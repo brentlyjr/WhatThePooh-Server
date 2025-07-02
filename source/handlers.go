@@ -34,6 +34,7 @@ func SetupRoutes(app *fiber.App, entityManager *EntityManager, wsClient *WebSock
 	// Test routes
 	app.Post("/api/test/status-change", testStatusChangeHandler)
 	app.Post("/api/test/status-change-custom", testStatusChangeCustomHandler)
+	app.Post("/api/test/device-token", testDeviceTokenHandler)
 }
 
 // healthHandler handles health check requests
@@ -74,12 +75,24 @@ func registerDeviceHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	log.Printf("Received device registration: DeviceToken=%s, AppVersion=%s, DeviceType=%s, LastUpdated=%v",
-		registration.DeviceToken, registration.AppVersion, registration.DeviceType, registration.LastUpdated)
+	// Set default environment if not provided
+	if registration.Environment == "" {
+		registration.Environment = "development"
+	}
+
+	log.Printf("Received device registration: DeviceToken=%s, AppVersion=%s, DeviceType=%s, Environment=%s, LastUpdated=%v",
+		registration.DeviceToken, registration.AppVersion, registration.DeviceType, registration.Environment, registration.LastUpdated)
 
 	if registration.DeviceToken == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Device token is required",
+		})
+	}
+
+	// Validate environment
+	if registration.Environment != "development" && registration.Environment != "production" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Environment must be 'development' or 'production'",
 		})
 	}
 
@@ -336,5 +349,51 @@ func testStatusChangeCustomHandler(c *fiber.Ctx) error {
 		"status":    "Custom test status change published",
 		"message":   msg,
 		"timestamp": time.Now(),
+	})
+}
+
+// testDeviceTokenHandler handles device token testing with environment specification
+func testDeviceTokenHandler(c *fiber.Ctx) error {
+	var testData struct {
+		DeviceToken string `json:"deviceToken"`
+		Environment string `json:"environment"` // "development" or "production"
+	}
+
+	if err := c.BodyParser(&testData); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	if testData.DeviceToken == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Device token is required",
+		})
+	}
+
+	// Set default environment if not provided
+	if testData.Environment == "" {
+		testData.Environment = "development"
+	}
+
+	// Validate environment
+	if testData.Environment != "development" && testData.Environment != "production" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Environment must be 'development' or 'production'",
+		})
+	}
+
+	// Test the device token with the specified environment
+	if err := TestDeviceTokenWithDetails(testData.DeviceToken, testData.Environment); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "Device token test failed",
+			"details": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"status":      "Device token test successful",
+		"deviceToken": testData.DeviceToken,
+		"environment": testData.Environment,
 	})
 } 
