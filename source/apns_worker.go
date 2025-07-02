@@ -350,9 +350,6 @@ func logNotificationDetails(notification *apns2.Notification, workerID int) {
 	log.Printf("[Worker %d]   - Topic: %s", workerID, notification.Topic)
 	log.Printf("[Worker %d]   - Priority: %d", workerID, notification.Priority)
 	log.Printf("[Worker %d]   - Expiration: %v", workerID, notification.Expiration)
-	log.Printf("[Worker %d]   - CollapseID: %s", workerID, notification.CollapseID)
-	log.Printf("[Worker %d]   - ApnsID: %s", workerID, notification.ApnsID)
-	log.Printf("[Worker %d]   - PushType: %s", workerID, notification.PushType)
 }
 
 // apnsSender is a single worker that consumes from the PushQueue.
