@@ -343,15 +343,6 @@ func StartAPNSWorkers(numWorkers int) {
 	}
 }
 
-// logNotificationDetails logs detailed information about a notification for debugging
-func logNotificationDetails(notification *apns2.Notification, workerID int) {
-	log.Printf("[Worker %d] Notification Details:", workerID)
-	log.Printf("[Worker %d]   - Device Token: %s", workerID, notification.DeviceToken)
-	log.Printf("[Worker %d]   - Topic: %s", workerID, notification.Topic)
-	log.Printf("[Worker %d]   - Priority: %d", workerID, notification.Priority)
-	log.Printf("[Worker %d]   - Expiration: %v", workerID, notification.Expiration)
-}
-
 // apnsSender is a single worker that consumes from the PushQueue.
 func apnsSender(id int) {
 	log.Printf("APNS Sender Worker %d started", id)
@@ -380,9 +371,6 @@ func apnsSender(id int) {
 			Topic:       bundleID,
 			Payload:     payload,
 		}
-
-		// Log notification details for debugging
-		logNotificationDetails(notification, id)
 
 		// Get the appropriate APNS client based on the environment
 		client := getAPNSClient(req.Environment)
