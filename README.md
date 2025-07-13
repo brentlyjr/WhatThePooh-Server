@@ -67,9 +67,16 @@ The project can also be built and run as a Docker container.
   {
     "deviceToken": "your_device_token",
     "appVersion": "1.0.0",
-    "deviceType": "iPhone"
+    "deviceType": "iPhone",
+    "environment": "development"
   }
   ```
+  
+  **Field Descriptions:**
+  - `deviceToken` (required): The APNS device token for push notifications
+  - `appVersion` (optional): The version of the client app
+  - `deviceType` (optional): The type of device (e.g., "iPhone", "iPad")
+  - `environment` (optional): APNS environment - must be "development" or "production". Defaults to "development" if not provided
 
 - **Get All Devices** (`GET /api/devices`)
   Returns a list of all registered devices
