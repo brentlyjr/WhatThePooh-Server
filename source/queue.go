@@ -5,15 +5,16 @@ import (
 )
 
 type PushRequest struct {
-	DeviceToken string
-	Message     string
-	EntityID    string
-	ParkID      string
-	OldStatus   string
-	NewStatus   string
-	OldWaitTime int
-	NewWaitTime int
-	Environment string // "development" or "production"
+	DeviceToken    string
+	Message        string
+	EntityID       string
+	ParkID         string
+	OldStatus      string
+	NewStatus      string
+	OldWaitTime    int
+	NewWaitTime    int
+	Environment    string // "development" or "production"
+	NotificationID string
 }
 
 // EntityQueue is a buffered channel for entity updates

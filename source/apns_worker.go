@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/sideshow/apns2"
 	"github.com/sideshow/apns2/payload"
 	"github.com/sideshow/apns2/token"
@@ -21,17 +22,17 @@ type APNSConfig struct {
 }
 
 type NotificationRequest struct {
-	DeviceToken string `json:"deviceToken"`
-	Message     string `json:"message"`
-	Title       string `json:"title"`
-	Badge       int    `json:"badge"`
-	EntityID    string `json:"entityId"`
-	ParkID      string `json:"parkId"`
-	OldStatus   string `json:"oldStatus"`
-	NewStatus   string `json:"newStatus"`
-	OldWaitTime int    `json:"oldWaitTime"`
-	NewWaitTime int    `json:"newWaitTime"`
-	Environment string `json:"environment"` // "development" or "production"
+	DeviceToken    string `json:"deviceToken"`
+	Message        string `json:"message"`
+	Title          string `json:"title"`
+	EntityID       string `json:"entityId"`
+	ParkID         string `json:"parkId"`
+	OldStatus      string `json:"oldStatus"`
+	NewStatus      string `json:"newStatus"`
+	OldWaitTime    int    `json:"oldWaitTime"`
+	NewWaitTime    int    `json:"newWaitTime"`
+	Environment    string `json:"environment"` // "development" or "production"
+	NotificationID string `json:"notificationId"`
 }
 
 var apnsClient *apns2.Client
@@ -221,6 +222,11 @@ func RegisterDevice(registration DeviceRegistration) error {
 }
 
 func SendPushNotification(req NotificationRequest) error {
+	// Generate a unique notification ID if not provided
+	if req.NotificationID == "" {
+		req.NotificationID = uuid.New().String()
+	}
+
 	// Get the appropriate APNS client based on the environment
 	client := getAPNSClient(req.Environment)
 	
@@ -229,25 +235,27 @@ func SendPushNotification(req NotificationRequest) error {
 		Topic:       os.Getenv("APNS_BUNDLE_ID"),
 		Payload: payload.NewPayload().
 			ContentAvailable().
-			Badge(req.Badge).
+			Badge(0).
 			Custom("entityId", req.EntityID).
 			Custom("parkId", req.ParkID).
 			Custom("oldStatus", req.OldStatus).
 			Custom("newStatus", req.NewStatus).
 			Custom("oldWaitTime", req.OldWaitTime).
-			Custom("newWaitTime", req.NewWaitTime),
+			Custom("newWaitTime", req.NewWaitTime).
+			Custom("notificationId", req.NotificationID),
 	}
 
 	// Create APNS message tracking record
 	apnsMessage := APNSMessage{
-		DeviceToken: req.DeviceToken,
-		Timestamp:   time.Now().UTC(),
-		EntityID:    req.EntityID,
-		ParkID:      req.ParkID,
-		OldStatus:   req.OldStatus,
-		NewStatus:   req.NewStatus,
-		OldWaitTime: req.OldWaitTime,
-		NewWaitTime: req.NewWaitTime,
+		DeviceToken:    req.DeviceToken,
+		Timestamp:      time.Now().UTC(),
+		EntityID:       req.EntityID,
+		ParkID:         req.ParkID,
+		OldStatus:      req.OldStatus,
+		NewStatus:      req.NewStatus,
+		OldWaitTime:    req.OldWaitTime,
+		NewWaitTime:    req.NewWaitTime,
+		NotificationID: req.NotificationID,
 	}
 
 	res, err := client.Push(notification)
@@ -351,20 +359,26 @@ func apnsSender(id int) {
 	for req := range PushQueue {
 		log.Printf("[Worker %d] Sending push to %s (Environment: %s)", id, req.DeviceToken, req.Environment)
 
+		// Generate a unique notification ID if not provided
+		if req.NotificationID == "" {
+			req.NotificationID = uuid.New().String()
+		}
+
 		// Create the payload
 		payload := payload.NewPayload().
 			ContentAvailable().
-			Badge(1).
+			Badge(0).
 			Custom("entityId", req.EntityID).
 			Custom("parkId", req.ParkID).
 			Custom("oldStatus", req.OldStatus).
 			Custom("newStatus", req.NewStatus).
 			Custom("oldWaitTime", req.OldWaitTime).
-			Custom("newWaitTime", req.NewWaitTime)
+			Custom("newWaitTime", req.NewWaitTime).
+			Custom("notificationId", req.NotificationID)
 
 		// Log the payload structure for debugging
-		log.Printf("[Worker %d] APNS Payload Structure: {\"aps\":{\"content-available\":1,\"badge\":1},\"entityId\":\"%s\",\"parkId\":\"%s\",\"oldStatus\":\"%s\",\"newStatus\":\"%s\",\"oldWaitTime\":%d,\"newWaitTime\":%d}", 
-			id, req.EntityID, req.ParkID, req.OldStatus, req.NewStatus, req.OldWaitTime, req.NewWaitTime)
+		log.Printf("[Worker %d] APNS Payload Structure: {\"aps\":{\"content-available\":1,\"badge\":0},\"entityId\":\"%s\",\"parkId\":\"%s\",\"oldStatus\":\"%s\",\"newStatus\":\"%s\",\"oldWaitTime\":%d,\"newWaitTime\":%d,\"notificationId\":\"%s\"}", 
+			id, req.EntityID, req.ParkID, req.OldStatus, req.NewStatus, req.OldWaitTime, req.NewWaitTime, req.NotificationID)
 
 		notification := &apns2.Notification{
 			DeviceToken: req.DeviceToken,
@@ -379,14 +393,15 @@ func apnsSender(id int) {
 		
 		// Create APNS message tracking record
 		apnsMessage := APNSMessage{
-			DeviceToken: req.DeviceToken,
-			Timestamp:   time.Now().UTC(),
-			EntityID:    req.EntityID,
-			ParkID:      req.ParkID,
-			OldStatus:   req.OldStatus,
-			NewStatus:   req.NewStatus,
-			OldWaitTime: req.OldWaitTime,
-			NewWaitTime: req.NewWaitTime,
+			DeviceToken:    req.DeviceToken,
+			Timestamp:      time.Now().UTC(),
+			EntityID:       req.EntityID,
+			ParkID:         req.ParkID,
+			OldStatus:      req.OldStatus,
+			NewStatus:      req.NewStatus,
+			OldWaitTime:    req.OldWaitTime,
+			NewWaitTime:    req.NewWaitTime,
+			NotificationID: req.NotificationID,
 		}
 
 		if err != nil {
