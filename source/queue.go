@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 )
 
 type PushRequest struct {
@@ -15,6 +16,7 @@ type PushRequest struct {
 	NewWaitTime    int
 	Environment    string // "development" or "production"
 	NotificationID string
+	Timestamp      time.Time // UTC timestamp when websocket message was received
 }
 
 // EntityQueue is a buffered channel for entity updates

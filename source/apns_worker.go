@@ -22,17 +22,18 @@ type APNSConfig struct {
 }
 
 type NotificationRequest struct {
-	DeviceToken    string `json:"deviceToken"`
-	Message        string `json:"message"`
-	Title          string `json:"title"`
-	EntityID       string `json:"entityId"`
-	ParkID         string `json:"parkId"`
-	OldStatus      string `json:"oldStatus"`
-	NewStatus      string `json:"newStatus"`
-	OldWaitTime    int    `json:"oldWaitTime"`
-	NewWaitTime    int    `json:"newWaitTime"`
-	Environment    string `json:"environment"` // "development" or "production"
-	NotificationID string `json:"notificationId"`
+	DeviceToken    string    `json:"deviceToken"`
+	Message        string    `json:"message"`
+	Title          string    `json:"title"`
+	EntityID       string    `json:"entityId"`
+	ParkID         string    `json:"parkId"`
+	OldStatus      string    `json:"oldStatus"`
+	NewStatus      string    `json:"newStatus"`
+	OldWaitTime    int       `json:"oldWaitTime"`
+	NewWaitTime    int       `json:"newWaitTime"`
+	Environment    string    `json:"environment"` // "development" or "production"
+	NotificationID string    `json:"notificationId"`
+	Timestamp      time.Time `json:"timestamp"` // UTC timestamp when websocket message was received
 }
 
 var apnsClient *apns2.Client
@@ -242,20 +243,22 @@ func SendPushNotification(req NotificationRequest) error {
 			Custom("newStatus", req.NewStatus).
 			Custom("oldWaitTime", req.OldWaitTime).
 			Custom("newWaitTime", req.NewWaitTime).
-			Custom("notificationId", req.NotificationID),
+			Custom("notificationId", req.NotificationID).
+			Custom("timestamp", req.Timestamp.Format(time.RFC3339)),
 	}
 
 	// Create APNS message tracking record
 	apnsMessage := APNSMessage{
-		DeviceToken:    req.DeviceToken,
-		Timestamp:      time.Now().UTC(),
-		EntityID:       req.EntityID,
-		ParkID:         req.ParkID,
-		OldStatus:      req.OldStatus,
-		NewStatus:      req.NewStatus,
-		OldWaitTime:    req.OldWaitTime,
-		NewWaitTime:    req.NewWaitTime,
-		NotificationID: req.NotificationID,
+		DeviceToken:        req.DeviceToken,
+		Timestamp:          time.Now().UTC(),
+		EntityID:           req.EntityID,
+		ParkID:             req.ParkID,
+		OldStatus:          req.OldStatus,
+		NewStatus:          req.NewStatus,
+		OldWaitTime:        req.OldWaitTime,
+		NewWaitTime:        req.NewWaitTime,
+		NotificationID:     req.NotificationID,
+		WebsocketTimestamp: req.Timestamp, // UTC timestamp when websocket message was received
 	}
 
 	res, err := client.Push(notification)
@@ -374,11 +377,12 @@ func apnsSender(id int) {
 			Custom("newStatus", req.NewStatus).
 			Custom("oldWaitTime", req.OldWaitTime).
 			Custom("newWaitTime", req.NewWaitTime).
-			Custom("notificationId", req.NotificationID)
+			Custom("notificationId", req.NotificationID).
+			Custom("timestamp", req.Timestamp.Format(time.RFC3339))
 
 		// Log the payload structure for debugging
-		log.Printf("[Worker %d] APNS Payload Structure: {\"aps\":{\"content-available\":1,\"badge\":0},\"entityId\":\"%s\",\"parkId\":\"%s\",\"oldStatus\":\"%s\",\"newStatus\":\"%s\",\"oldWaitTime\":%d,\"newWaitTime\":%d,\"notificationId\":\"%s\"}", 
-			id, req.EntityID, req.ParkID, req.OldStatus, req.NewStatus, req.OldWaitTime, req.NewWaitTime, req.NotificationID)
+		log.Printf("[Worker %d] APNS Payload Structure: {\"aps\":{\"content-available\":1,\"badge\":0},\"entityId\":\"%s\",\"parkId\":\"%s\",\"oldStatus\":\"%s\",\"newStatus\":\"%s\",\"oldWaitTime\":%d,\"newWaitTime\":%d,\"notificationId\":\"%s\",\"timestamp\":\"%s\"}", 
+			id, req.EntityID, req.ParkID, req.OldStatus, req.NewStatus, req.OldWaitTime, req.NewWaitTime, req.NotificationID, req.Timestamp.Format(time.RFC3339))
 
 		notification := &apns2.Notification{
 			DeviceToken: req.DeviceToken,
@@ -393,15 +397,16 @@ func apnsSender(id int) {
 		
 		// Create APNS message tracking record
 		apnsMessage := APNSMessage{
-			DeviceToken:    req.DeviceToken,
-			Timestamp:      time.Now().UTC(),
-			EntityID:       req.EntityID,
-			ParkID:         req.ParkID,
-			OldStatus:      req.OldStatus,
-			NewStatus:      req.NewStatus,
-			OldWaitTime:    req.OldWaitTime,
-			NewWaitTime:    req.NewWaitTime,
-			NotificationID: req.NotificationID,
+			DeviceToken:        req.DeviceToken,
+			Timestamp:          time.Now().UTC(),
+			EntityID:           req.EntityID,
+			ParkID:             req.ParkID,
+			OldStatus:          req.OldStatus,
+			NewStatus:          req.NewStatus,
+			OldWaitTime:        req.OldWaitTime,
+			NewWaitTime:        req.NewWaitTime,
+			NotificationID:     req.NotificationID,
+			WebsocketTimestamp: req.Timestamp, // UTC timestamp when websocket message was received
 		}
 
 		if err != nil {

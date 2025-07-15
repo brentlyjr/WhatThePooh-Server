@@ -69,6 +69,13 @@ func NewSQLiteDB() (*SQLiteDB, error) {
 		log.Printf("Note: notification_id column may already exist: %v", err)
 	}
 
+	// Add websocket_timestamp column if it doesn't exist (for existing databases)
+	_, err = db.Exec(`ALTER TABLE apns_messages ADD COLUMN websocket_timestamp TIMESTAMP`)
+	if err != nil {
+		// Column might already exist, which is fine
+		log.Printf("Note: websocket_timestamp column may already exist: %v", err)
+	}
+
 	// Create apns_messages table if it doesn't exist
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS apns_messages (
@@ -84,6 +91,7 @@ func NewSQLiteDB() (*SQLiteDB, error) {
 			success BOOLEAN NOT NULL,
 			error_reason TEXT,
 			notification_id TEXT,
+			websocket_timestamp TIMESTAMP,
 			FOREIGN KEY (device_token) REFERENCES devices(device_token)
 		)
 	`)
@@ -137,6 +145,7 @@ type APNSMessage struct {
 	Success        bool      `json:"success"`
 	ErrorReason    string    `json:"errorReason,omitempty"`
 	NotificationID string    `json:"notificationId"`
+	WebsocketTimestamp time.Time `json:"websocketTimestamp"` // UTC timestamp when websocket message was received
 }
 
 // APNSReceipt represents a client receipt of an APNS message
@@ -241,9 +250,9 @@ func (s *SQLiteDB) CleanupOldDevices(maxAge time.Duration) error {
 // StoreAPNSMessage saves an APNS message in the database
 func (s *SQLiteDB) StoreAPNSMessage(message APNSMessage) error {
 	_, err := s.db.Exec(`
-		INSERT INTO apns_messages (device_token, timestamp, entity_id, park_id, old_status, new_status, old_wait_time, new_wait_time, success, error_reason, notification_id)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, message.DeviceToken, message.Timestamp, message.EntityID, message.ParkID, message.OldStatus, message.NewStatus, message.OldWaitTime, message.NewWaitTime, message.Success, message.ErrorReason, message.NotificationID)
+		INSERT INTO apns_messages (device_token, timestamp, entity_id, park_id, old_status, new_status, old_wait_time, new_wait_time, success, error_reason, notification_id, websocket_timestamp)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, message.DeviceToken, message.Timestamp, message.EntityID, message.ParkID, message.OldStatus, message.NewStatus, message.OldWaitTime, message.NewWaitTime, message.Success, message.ErrorReason, message.NotificationID, message.WebsocketTimestamp)
 
 	if err != nil {
 		return fmt.Errorf("failed to store APNS message: %v", err)
@@ -255,7 +264,7 @@ func (s *SQLiteDB) StoreAPNSMessage(message APNSMessage) error {
 // GetAPNSMessages retrieves a limited number of APNS messages from the database
 func (s *SQLiteDB) GetAPNSMessages(limit int) ([]APNSMessage, error) {
 	rows, err := s.db.Query(`
-		SELECT id, device_token, timestamp, entity_id, park_id, old_status, new_status, old_wait_time, new_wait_time, success, error_reason, notification_id
+		SELECT id, device_token, timestamp, entity_id, park_id, old_status, new_status, old_wait_time, new_wait_time, success, error_reason, notification_id, websocket_timestamp
 		FROM apns_messages
 		ORDER BY timestamp DESC
 		LIMIT ?
@@ -268,7 +277,7 @@ func (s *SQLiteDB) GetAPNSMessages(limit int) ([]APNSMessage, error) {
 	var messages []APNSMessage
 	for rows.Next() {
 		var message APNSMessage
-		err := rows.Scan(&message.ID, &message.DeviceToken, &message.Timestamp, &message.EntityID, &message.ParkID, &message.OldStatus, &message.NewStatus, &message.OldWaitTime, &message.NewWaitTime, &message.Success, &message.ErrorReason, &message.NotificationID)
+		err := rows.Scan(&message.ID, &message.DeviceToken, &message.Timestamp, &message.EntityID, &message.ParkID, &message.OldStatus, &message.NewStatus, &message.OldWaitTime, &message.NewWaitTime, &message.Success, &message.ErrorReason, &message.NotificationID, &message.WebsocketTimestamp)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan APNS message row: %v", err)
 		}
