@@ -34,3 +34,8 @@ THEMEPARK_API_KEY="your-themepark-api-key"
 
 # The WebSocket URL for the live entity feed.
 WEBSOCKET_URL="wss://api.themeparks.wiki/v1/entity/live" 
+
+# --- Supabase Configuration ---
+# Your Supabase database connection string (contains password - will be stored as a secret)
+# Get this from your Supabase dashboard: Settings → Database → Connection pooling
+SUPABASE_DB_URL="postgresql://postgres.ghyskcyicrqkfcpblzcw:your-database-password@aws-0-us-east-2.pooler.supabase.com:5432/postgres"

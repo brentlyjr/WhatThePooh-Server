@@ -44,7 +44,8 @@ keys/*.p8
 *.db-journal
 
 # Local secrets and config files
-gcp-deploy/gcp_config.sh
+scripts/gcp_config.sh
+scripts/local_config.sh
 
 # Binaries
 main

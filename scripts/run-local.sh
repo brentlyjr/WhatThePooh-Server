@@ -13,13 +13,23 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 echo "🚀 Starting WhatThePooh Server in LOCAL DEVELOPMENT mode (Sandbox APNS)..."
 echo "📁 Project root: $PROJECT_ROOT"
 
-# Set environment variables for local development
-export APNS_ENV="development"
-export APNS_KEY_ID="MU2W4LLRSY"
-export APNS_TEAM_ID="SVFXRTGAKU"
-export APNS_BUNDLE_ID="com.brentlyjr.WhatThePooh"
-export WEBSOCKET_URL="wss://themeparkswiki.herokuapp.com/v1/live"
-export THEMEPARK_API_KEY="519dd9c1-cc1e-4d4a-906d-d628cf0250bc"
+# Load local configuration if it exists
+LOCAL_CONFIG_FILE="$SCRIPT_DIR/local_config.sh"
+if [ -f "$LOCAL_CONFIG_FILE" ]; then
+    echo "📋 Loading local configuration from $LOCAL_CONFIG_FILE"
+    source "$LOCAL_CONFIG_FILE"
+else
+    echo "⚠️  No local_config.sh found. Using default values."
+    echo "   Copy scripts/local_config.sh.example to scripts/local_config.sh and customize as needed."
+fi
+
+# Set default environment variables for local development (can be overridden by local_config.sh)
+export APNS_ENV=${APNS_ENV:-"development"}
+export APNS_KEY_ID=${APNS_KEY_ID:-"MU2W4LLRSY"}
+export APNS_TEAM_ID=${APNS_TEAM_ID:-"SVFXRTGAKU"}
+export APNS_BUNDLE_ID=${APNS_BUNDLE_ID:-"com.brentlyjr.WhatThePooh"}
+export WEBSOCKET_URL=${WEBSOCKET_URL:-"wss://themeparkswiki.herokuapp.com/v1/live"}
+export THEMEPARK_API_KEY=${THEMEPARK_API_KEY:-"519dd9c1-cc1e-4d4a-906d-d628cf0250bc"}
 
 # Set the APNS key path for local development (sandbox)
 export APNS_KEY_BASE64=$(base64 -i "$PROJECT_ROOT/keys/AuthKey_MU2W4LLRSY.p8" | tr -d '\n')

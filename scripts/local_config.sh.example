@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Local Development Configuration
+# Copy this file to local_config.sh and fill in your actual values
+
+# APNS Configuration (if different from defaults)
+# export APNS_KEY_ID="your-apns-key-id"
+# export APNS_TEAM_ID="your-apns-team-id"
+# export APNS_BUNDLE_ID="your-bundle-id"
+# export THEMEPARK_API_KEY="your-themepark-api-key"
+# export WEBSOCKET_URL="your-websocket-url"
+
+# Supabase Configuration
+export SUPABASE_DB_URL="postgresql://postgres:your-database-password"

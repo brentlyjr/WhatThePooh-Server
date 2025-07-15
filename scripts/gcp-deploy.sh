@@ -30,12 +30,14 @@ SECRETS=(
   "APNS_TEAM_ID"
   "THEMEPARK_API_KEY"
   "APNS_KEY_BASE64" # This one is handled specially below
+  "SUPABASE_DB_URL" # Supabase database connection string
 )
 SECRET_VALUES=(
   "$APNS_KEY_ID"
   "$APNS_TEAM_ID"
   "$THEMEPARK_API_KEY"
   "" # This will be populated from the key file
+  "$SUPABASE_DB_URL" # Supabase database connection string
 )
 
 # --- Script Logic ---

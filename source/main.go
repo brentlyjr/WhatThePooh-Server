@@ -75,14 +75,14 @@ func main() {
 		log.Println("No .env file found, using environment variables from system")
 	}
 
-	// Initialize SQLite database
-	sqliteDB, err := NewSQLiteDB()
+	// Initialize Supabase database
+	supabaseDB, err := NewSupabaseDB()
 	if err != nil {
-		log.Fatal("Failed to initialize SQLite database:", err)
+		log.Fatal("Failed to initialize Supabase database:", err)
 	}
 
 	// Initialize cached database
-	db = NewCachedDB(sqliteDB)
+	db = NewCachedDB(supabaseDB)
 
 	// Decode the base64-encoded APNS key from the environment variable
 	apnsKeyBase64 := getEnvOrExit("APNS_KEY_BASE64")

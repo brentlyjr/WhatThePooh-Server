@@ -32,6 +32,11 @@ APNS_BUNDLE_ID="com.brentlyjr.WhatThePooh"
 # Replace with your actual key.
 THEMEPARK_API_KEY="519dd9c1-cc1e-4d4a-906d-d628cf0250bc"
 
+
 # The WebSocket URL for the live entity feed.
 # WEBSOCKET_URL="wss://api.themeparks.wiki/v1/entity/live"
 WEBSOCKET_URL="wss://themeparkswiki.herokuapp.com/v1/live"
+
+
+# Supabase URL with password
+SUPABASE_DB_URL="postgresql://postgres:jysdo5-jocCuh-woktyq@db.ijgxtodgtqkmcsmsxbgo.supabase.co:5432/postgres"
