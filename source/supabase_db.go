@@ -236,8 +236,8 @@ func (s *SupabaseDB) StoreAPNSReceipt(receipt APNSReceipt) error {
 	query := `
 		INSERT INTO apns_receipts (
 			device_token, client_time, server_time, entity_id, park_id,
-			old_status, new_status, old_wait_time, new_wait_time
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+			old_status, new_status, old_wait_time, new_wait_time, notification_id
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	`
 
 	_, err := s.pool.Exec(context.Background(), query,
@@ -250,6 +250,7 @@ func (s *SupabaseDB) StoreAPNSReceipt(receipt APNSReceipt) error {
 		receipt.NewStatus,
 		receipt.OldWaitTime,
 		receipt.NewWaitTime,
+		receipt.NotificationID,
 	)
 
 	if err != nil {
@@ -263,7 +264,7 @@ func (s *SupabaseDB) StoreAPNSReceipt(receipt APNSReceipt) error {
 func (s *SupabaseDB) GetAPNSReceipts(limit int) ([]APNSReceipt, error) {
 	query := `
 		SELECT id, device_token, client_time, server_time, entity_id, park_id,
-		       old_status, new_status, old_wait_time, new_wait_time
+		       old_status, new_status, old_wait_time, new_wait_time, notification_id
 		FROM apns_receipts
 		ORDER BY server_time DESC
 		LIMIT $1
@@ -289,6 +290,7 @@ func (s *SupabaseDB) GetAPNSReceipts(limit int) ([]APNSReceipt, error) {
 			&receipt.NewStatus,
 			&receipt.OldWaitTime,
 			&receipt.NewWaitTime,
+			&receipt.NotificationID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan APNS receipt row: %v", err)

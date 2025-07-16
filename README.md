@@ -164,7 +164,7 @@ The project uses the following main dependencies:
 - github.com/gorilla/websocket
 - github.com/joho/godotenv
 - github.com/sideshow/apns2
-- github.com/mattn/go-sqlite3
+- github.com/jackc/pgx/v5 (for Supabase/PostgreSQL)
 
 ## License
 

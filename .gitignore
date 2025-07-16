@@ -39,9 +39,9 @@ Thumbs.db
 keys/AuthKey_*.p8
 keys/*.p8
 
-# Database files
-*.db
-*.db-journal
+# Database files (if any local databases are used)
+# *.db
+# *.db-journal
 
 # Local secrets and config files
 scripts/gcp_config.sh

@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS apns_receipts (
     new_status TEXT,
     old_wait_time INTEGER,
     new_wait_time INTEGER,
+    notification_id TEXT,
     FOREIGN KEY (device_token) REFERENCES devices(device_token) ON DELETE CASCADE
 );
 

@@ -180,14 +180,15 @@ func getAPNSMessagesHandler(c *fiber.Ctx) error {
 // apnsReceiptHandler handles APNS receipt acknowledgments from clients
 func apnsReceiptHandler(c *fiber.Ctx) error {
 	var receiptData struct {
-		DeviceToken string    `json:"deviceToken"`
-		ClientTime  time.Time `json:"clientTime"`
-		EntityID    string    `json:"entityId"`
-		ParkID      string    `json:"parkId"`
-		OldStatus   string    `json:"oldStatus"`
-		NewStatus   string    `json:"newStatus"`
-		OldWaitTime int       `json:"oldWaitTime"`
-		NewWaitTime int       `json:"newWaitTime"`
+		DeviceToken    string    `json:"deviceToken"`
+		ClientTime     time.Time `json:"clientTime"`
+		EntityID       string    `json:"entityId"`
+		ParkID         string    `json:"parkId"`
+		OldStatus      string    `json:"oldStatus"`
+		NewStatus      string    `json:"newStatus"`
+		OldWaitTime    int       `json:"oldWaitTime"`
+		NewWaitTime    int       `json:"newWaitTime"`
+		NotificationID string    `json:"notificationId"`
 	}
 
 	if err := c.BodyParser(&receiptData); err != nil {
@@ -211,15 +212,16 @@ func apnsReceiptHandler(c *fiber.Ctx) error {
 
 	// Create receipt record
 	receipt := APNSReceipt{
-		DeviceToken: receiptData.DeviceToken,
-		ClientTime:  receiptData.ClientTime,
-		ServerTime:  time.Now().UTC(),
-		EntityID:    receiptData.EntityID,
-		ParkID:      receiptData.ParkID,
-		OldStatus:   receiptData.OldStatus,
-		NewStatus:   receiptData.NewStatus,
-		OldWaitTime: receiptData.OldWaitTime,
-		NewWaitTime: receiptData.NewWaitTime,
+		DeviceToken:    receiptData.DeviceToken,
+		ClientTime:     receiptData.ClientTime,
+		ServerTime:     time.Now().UTC(),
+		EntityID:       receiptData.EntityID,
+		ParkID:         receiptData.ParkID,
+		OldStatus:      receiptData.OldStatus,
+		NewStatus:      receiptData.NewStatus,
+		OldWaitTime:    receiptData.OldWaitTime,
+		NewWaitTime:    receiptData.NewWaitTime,
+		NotificationID: receiptData.NotificationID,
 	}
 
 	// Store receipt in database

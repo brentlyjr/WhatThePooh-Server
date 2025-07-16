@@ -30,6 +30,7 @@ func NewCachedDB(db Database) *CachedDB {
 
 // LoadFromDatabase loads all devices from the database into the cache
 func (c *CachedDB) LoadFromDatabase() error {
+	log.Printf("CACHE INIT: Pre-loading devices from database into cache")
 	devices, err := c.db.GetAllDevices()
 	if err != nil {
 		return err
@@ -42,6 +43,7 @@ func (c *CachedDB) LoadFromDatabase() error {
 		c.cache.Store(device.DeviceToken, device)
 	}
 
+	log.Printf("CACHE INIT: Pre-loaded %d devices into cache", len(devices))
 	return nil
 }
 
@@ -74,10 +76,13 @@ func (c *CachedDB) GetDeviceToken(token string) (*DeviceRegistration, error) {
 	c.mu.RLock()
 	if value, ok := c.cache.Load(token); ok {
 		c.mu.RUnlock()
+		log.Printf("CACHE HIT: Device token %s found in cache", token)
 		device := value.(DeviceRegistration)
 		return &device, nil
 	}
 	c.mu.RUnlock()
+
+	log.Printf("CACHE MISS: Device token %s not in cache, querying database", token)
 
 	// If not in cache, get from database
 	device, err := c.db.GetDeviceToken(token)
@@ -90,6 +95,7 @@ func (c *CachedDB) GetDeviceToken(token string) (*DeviceRegistration, error) {
 		c.mu.Lock()
 		c.cache.Store(token, *device)
 		c.mu.Unlock()
+		log.Printf("CACHE STORE: Device token %s stored in cache", token)
 	}
 
 	return device, nil
@@ -108,6 +114,7 @@ func (c *CachedDB) GetAllDevices() ([]DeviceRegistration, error) {
 
 	// If cache is empty, load from database
 	if len(devices) == 0 {
+		log.Printf("CACHE MISS: No devices in cache, loading from database")
 		var err error
 		devices, err = c.db.GetAllDevices()
 		if err != nil {
@@ -120,6 +127,9 @@ func (c *CachedDB) GetAllDevices() ([]DeviceRegistration, error) {
 			c.cache.Store(device.DeviceToken, device)
 		}
 		c.mu.Unlock()
+		log.Printf("CACHE STORE: Loaded %d devices into cache", len(devices))
+	} else {
+		log.Printf("CACHE HIT: Returning %d devices from cache", len(devices))
 	}
 
 	return devices, nil
