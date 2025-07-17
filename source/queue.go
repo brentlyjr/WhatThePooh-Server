@@ -9,6 +9,7 @@ type PushRequest struct {
 	DeviceToken    string
 	Message        string
 	EntityID       string
+	EntityName     string
 	ParkID         string
 	OldStatus      string
 	NewStatus      string

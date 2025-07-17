@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS apns_messages (
     device_token TEXT NOT NULL,
     timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     entity_id TEXT,
+    entity_name TEXT,
     park_id TEXT,
     old_status TEXT,
     new_status TEXT,

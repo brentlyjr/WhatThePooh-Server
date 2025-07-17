@@ -161,15 +161,16 @@ func (s *SupabaseDB) CleanupOldDevices(maxAge time.Duration) error {
 func (s *SupabaseDB) StoreAPNSMessage(message APNSMessage) error {
 	query := `
 		INSERT INTO apns_messages (
-			device_token, timestamp, entity_id, park_id, old_status, new_status,
+			device_token, timestamp, entity_id, entity_name, park_id, old_status, new_status,
 			old_wait_time, new_wait_time, success, error_reason, notification_id, websocket_timestamp
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 	`
 
 	_, err := s.pool.Exec(context.Background(), query,
 		message.DeviceToken,
 		message.Timestamp,
 		message.EntityID,
+		message.EntityName,
 		message.ParkID,
 		message.OldStatus,
 		message.NewStatus,
@@ -191,7 +192,7 @@ func (s *SupabaseDB) StoreAPNSMessage(message APNSMessage) error {
 // GetAPNSMessages retrieves a limited number of APNS messages from the database
 func (s *SupabaseDB) GetAPNSMessages(limit int) ([]APNSMessage, error) {
 	query := `
-		SELECT id, device_token, timestamp, entity_id, park_id, old_status, new_status,
+		SELECT id, device_token, timestamp, entity_id, entity_name, park_id, old_status, new_status,
 		       old_wait_time, new_wait_time, success, error_reason, notification_id, websocket_timestamp
 		FROM apns_messages
 		ORDER BY timestamp DESC
@@ -212,6 +213,7 @@ func (s *SupabaseDB) GetAPNSMessages(limit int) ([]APNSMessage, error) {
 			&message.DeviceToken,
 			&message.Timestamp,
 			&message.EntityID,
+			&message.EntityName,
 			&message.ParkID,
 			&message.OldStatus,
 			&message.NewStatus,

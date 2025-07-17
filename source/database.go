@@ -32,6 +32,7 @@ type APNSMessage struct {
 	DeviceToken    string    `json:"deviceToken"`
 	Timestamp      time.Time `json:"timestamp"`
 	EntityID       string    `json:"entityId"`
+	EntityName     string    `json:"entityName"`
 	ParkID         string    `json:"parkId"`
 	OldStatus      string    `json:"oldStatus"`
 	NewStatus      string    `json:"newStatus"`

@@ -26,6 +26,7 @@ type NotificationRequest struct {
 	Message        string    `json:"message"`
 	Title          string    `json:"title"`
 	EntityID       string    `json:"entityId"`
+	EntityName     string    `json:"entityName"`
 	ParkID         string    `json:"parkId"`
 	OldStatus      string    `json:"oldStatus"`
 	NewStatus      string    `json:"newStatus"`
@@ -252,6 +253,7 @@ func SendPushNotification(req NotificationRequest) error {
 		DeviceToken:        req.DeviceToken,
 		Timestamp:          time.Now().UTC(),
 		EntityID:           req.EntityID,
+		EntityName:         req.EntityName,
 		ParkID:             req.ParkID,
 		OldStatus:          req.OldStatus,
 		NewStatus:          req.NewStatus,
@@ -400,6 +402,7 @@ func apnsSender(id int) {
 			DeviceToken:        req.DeviceToken,
 			Timestamp:          time.Now().UTC(),
 			EntityID:           req.EntityID,
+			EntityName:         req.EntityName,
 			ParkID:             req.ParkID,
 			OldStatus:          req.OldStatus,
 			NewStatus:          req.NewStatus,

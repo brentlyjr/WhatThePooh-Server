@@ -23,20 +23,21 @@ func StartMessageProcessors() {
 				continue
 			}
 
-			if len(devices) == 0 {
-				log.Printf("FAN-OUT: No devices found for entity %s", msg.EntityID)
-				continue
-			}
+			// if len(devices) == 0 {
+			// 	log.Printf("FAN-OUT: No devices found for entity %s", msg.EntityID)
+			// 	continue
+			// }
 
-			log.Printf("FAN-OUT: Found %d devices. Enqueuing APNs jobs...", len(devices))
+			// log.Printf("FAN-OUT: Found %d devices. Enqueuing APNs jobs...", len(devices))
 
 			// 2. Create and enqueue a push notification for each device.
-			notificationMsg := fmt.Sprintf("%s: %s -> %s", msg.EntityID, msg.OldStatus, msg.NewStatus)
+			notificationMsg := fmt.Sprintf("%s: %s -> %s", msg.EntityName, msg.OldStatus, msg.NewStatus)
 			for _, device := range devices {
 				pushReq := PushRequest{
 					DeviceToken:    device.DeviceToken,
 					Message:        notificationMsg,
 					EntityID:       msg.EntityID,
+					EntityName:     msg.EntityName,
 					ParkID:         msg.ParkID,
 					OldStatus:      string(msg.OldStatus),
 					NewStatus:      string(msg.NewStatus),
