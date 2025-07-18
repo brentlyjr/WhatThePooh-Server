@@ -25,7 +25,7 @@ func SetupRoutes(app *fiber.App, entityManager *EntityManager, wsClient *WebSock
 
 	// APNS Message tracking
 	app.Get("/api/apns-messages", getAPNSMessagesHandler)
-	app.Post("/api/apns-receipt", apnsReceiptHandler)
+	app.Post("/api/apns-receipt", apnsReceiptHandler(entityManager))
 	app.Get("/api/apns-receipts", getAPNSReceiptsHandler)
 
 	// Metrics
@@ -178,7 +178,8 @@ func getAPNSMessagesHandler(c *fiber.Ctx) error {
 }
 
 // apnsReceiptHandler handles APNS receipt acknowledgments from clients
-func apnsReceiptHandler(c *fiber.Ctx) error {
+func apnsReceiptHandler(entityManager *EntityManager) fiber.Handler {
+	return func(c *fiber.Ctx) error {
 	var receiptData struct {
 		DeviceToken    string    `json:"deviceToken"`
 		ClientTime     time.Time `json:"clientTime"`
@@ -232,12 +233,19 @@ func apnsReceiptHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	log.Printf("APNS receipt stored for device %s, entity %s", receiptData.DeviceToken, receiptData.EntityID)
+	// Look up entity name for logging
+	entityName := receiptData.EntityID
+	if entity, exists := entityManager.GetEntity(receiptData.EntityID); exists {
+		entityName = entity.Name
+	}
+
+	log.Printf("APNS receipt stored for device %s, entity %s", receiptData.DeviceToken, entityName)
 
 	return c.JSON(fiber.Map{
 		"status":  "Receipt acknowledged successfully",
 		"receipt": receipt,
 	})
+	}
 }
 
 // getAPNSReceiptsHandler returns recent APNS receipts for debugging and monitoring
@@ -307,11 +315,12 @@ func metricsHandler(entityManager *EntityManager, wsClient *WebSocketClient) fib
 // testStatusChangeHandler simulates a status change
 func testStatusChangeHandler(c *fiber.Ctx) error {
 	msg := StatusChangeMessage{
-		EntityID:  "f0d4b531-e291-471b-9527-00410c2bbd65",
-		ParkID:    "ca888437-ebb4-4d50-aed2-d227f7096968",
-		OldStatus: "DOWN",
-		NewStatus: "OPERATING",
-		Timestamp: time.Now(),
+		EntityID:   "f0d4b531-e291-471b-9527-00410c2bbd65",
+		EntityName: "Test Attraction",
+		ParkID:     "ca888437-ebb4-4d50-aed2-d227f7096968",
+		OldStatus:  "DOWN",
+		NewStatus:  "OPERATING",
+		Timestamp:  time.Now(),
 	}
 
 	messageBus.PublishStatus(msg)
@@ -326,10 +335,11 @@ func testStatusChangeHandler(c *fiber.Ctx) error {
 // testStatusChangeCustomHandler simulates a custom status change
 func testStatusChangeCustomHandler(c *fiber.Ctx) error {
 	var testData struct {
-		EntityID  string `json:"entityId"`
-		ParkID    string `json:"parkId"`
-		OldStatus string `json:"oldStatus"`
-		NewStatus string `json:"newStatus"`
+		EntityID   string `json:"entityId"`
+		EntityName string `json:"entityName"`
+		ParkID     string `json:"parkId"`
+		OldStatus  string `json:"oldStatus"`
+		NewStatus  string `json:"newStatus"`
 	}
 
 	if err := c.BodyParser(&testData); err != nil {
@@ -338,12 +348,18 @@ func testStatusChangeCustomHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	// Set default entity name if not provided
+	if testData.EntityName == "" {
+		testData.EntityName = "Unknown Attraction"
+	}
+
 	msg := StatusChangeMessage{
-		EntityID:  testData.EntityID,
-		ParkID:    testData.ParkID,
-		OldStatus: EntityStatus(testData.OldStatus),
-		NewStatus: EntityStatus(testData.NewStatus),
-		Timestamp: time.Now(),
+		EntityID:   testData.EntityID,
+		EntityName: testData.EntityName,
+		ParkID:     testData.ParkID,
+		OldStatus:  EntityStatus(testData.OldStatus),
+		NewStatus:  EntityStatus(testData.NewStatus),
+		Timestamp:  time.Now(),
 	}
 
 	messageBus.PublishStatus(msg)

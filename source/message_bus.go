@@ -74,7 +74,7 @@ func (mb *MessageBus) PublishStatus(msg StatusChangeMessage) {
         case ch <- msg:
             // Message sent successfully
         default:
-            log.Printf("Status subscriber channel full, dropping message for entity %s", msg.EntityID)
+            log.Printf("Status subscriber channel full, dropping message for entity %s", msg.EntityName)
         }
     }
 }

@@ -13,7 +13,7 @@ func StartMessageProcessors() {
 	go func() {
 		statusCh := messageBus.SubscribeStatus()
 		for msg := range statusCh {
-			log.Printf("🔔 STATUS CHANGE: Entity %s changed from %s to %s", msg.EntityID, msg.OldStatus, msg.NewStatus)
+			log.Printf("🔔 STATUS CHANGE: Entity %s changed from %s to %s", msg.EntityName, msg.OldStatus, msg.NewStatus)
 
 			// 1. Get all registered devices.
 			// In a future state, this would get devices subscribed to this specific entity.
