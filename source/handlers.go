@@ -298,6 +298,7 @@ func metricsHandler(entityManager *EntityManager, wsClient *WebSocketClient) fib
 			"restarts":       GetReconnectionTimestamps(),
 			"events":         wsClient.GetEventStats(),
 			"statuses":       wsClient.GetStatusStats(),
+			"apns_messages":  GetAPNSMessageStats(),
 			"server_start":   serverStartTime,
 		})
 	}

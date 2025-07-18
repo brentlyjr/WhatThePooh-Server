@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -40,6 +41,25 @@ type NotificationRequest struct {
 var apnsClient *apns2.Client
 var apnsDevClient *apns2.Client
 var apnsProdClient *apns2.Client
+
+// APNS message counters
+var apnsMessageCounts struct {
+	sync.RWMutex
+	devCount  uint64
+	prodCount uint64
+}
+
+func incrementAPNSDevCounter() {
+	apnsMessageCounts.Lock()
+	defer apnsMessageCounts.Unlock()
+	apnsMessageCounts.devCount++
+}
+
+func incrementAPNSProdCounter() {
+	apnsMessageCounts.Lock()
+	defer apnsMessageCounts.Unlock()
+	apnsMessageCounts.prodCount++
+}
 
 // ValidateAPNSConfiguration logs detailed information about the APNS configuration
 func ValidateAPNSConfiguration() {
@@ -340,6 +360,13 @@ func SendPushNotification(req NotificationRequest) error {
 	// Update tracking record for successful message
 	apnsMessage.Success = true
 	
+	// Increment APNS message counter based on environment
+	if req.Environment == "production" {
+		incrementAPNSProdCounter()
+	} else {
+		incrementAPNSDevCounter()
+	}
+	
 	// Store successful message in database
 	if storeErr := db.StoreAPNSMessage(apnsMessage); storeErr != nil {
 		log.Printf("Failed to store APNS message record: %v", storeErr)
@@ -428,6 +455,13 @@ func apnsSender(id int) {
 			log.Printf("[Worker %d] Push sent successfully to %s", id, req.DeviceToken)
 			apnsMessage.Success = true
 			
+			// Increment APNS message counter based on environment
+			if req.Environment == "production" {
+				incrementAPNSProdCounter()
+			} else {
+				incrementAPNSDevCounter()
+			}
+			
 			// Store successful message in database
 			if storeErr := db.StoreAPNSMessage(apnsMessage); storeErr != nil {
 				log.Printf("[Worker %d] Failed to store APNS message record: %v", id, storeErr)
@@ -501,4 +535,15 @@ func GetRegisteredDevices() ([]DeviceRegistration, error) {
 // GetRecentAPNSMessages returns recent APNS messages for debugging and monitoring
 func GetRecentAPNSMessages(limit int) ([]APNSMessage, error) {
 	return db.GetAPNSMessages(limit)
+}
+
+// GetAPNSMessageStats returns the count of APNS messages sent to each environment
+func GetAPNSMessageStats() map[string]uint64 {
+	apnsMessageCounts.RLock()
+	defer apnsMessageCounts.RUnlock()
+	
+	return map[string]uint64{
+		"dev":  apnsMessageCounts.devCount,
+		"prod": apnsMessageCounts.prodCount,
+	}
 }
