@@ -102,9 +102,26 @@ type ComparisonProgram struct {
 	
 	// HTTP client for REST API
 	httpClient *http.Client
+	
+	// File logging
+	websocketLogFile *os.File
+	pollingLogFile   *os.File
 }
 
 func NewComparisonProgram() *ComparisonProgram {
+	// Open log files for appending
+	websocketLogFile, err := os.OpenFile("websocket.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Printf("Warning: Could not open websocket.txt for logging: %v", err)
+		websocketLogFile = nil
+	}
+	
+	pollingLogFile, err := os.OpenFile("polling.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Printf("Warning: Could not open polling.txt for logging: %v", err)
+		pollingLogFile = nil
+	}
+	
 	return &ComparisonProgram{
 		websocketEntities: make(map[string]Entity),
 		pollingEntities:   make(map[string]Entity),
@@ -115,6 +132,8 @@ func NewComparisonProgram() *ComparisonProgram {
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
+		websocketLogFile: websocketLogFile,
+		pollingLogFile:   pollingLogFile,
 	}
 }
 
@@ -233,6 +252,15 @@ func (cp *ComparisonProgram) startWebSocket() {
 	}
 }
 
+func (cp *ComparisonProgram) writeToLogFile(file *os.File, message string) {
+	if file != nil {
+		timestamp := time.Now().Format("2006-01-02 15:04:05")
+		logEntry := fmt.Sprintf("[%s] - %s\n", timestamp, message)
+		file.WriteString(logEntry)
+		file.Sync() // Ensure data is written to disk
+	}
+}
+
 func (cp *ComparisonProgram) handleWebSocketUpdate(update LiveDataMessage) {
 	// Use current time since the websocket doesn't provide lastUpdated
 	lastUpdated := time.Now()
@@ -261,23 +289,25 @@ func (cp *ComparisonProgram) handleWebSocketUpdate(update LiveDataMessage) {
 	cp.websocketMutex.Lock()
 	defer cp.websocketMutex.Unlock()
 	
-			// Check if entity exists and if there are changes
-		if existingEntity, exists := cp.websocketEntities[update.EntityID]; exists {
-			// Check for status change
-			if existingEntity.Status != newEntity.Status {
-				fmt.Printf("[%s] Websocket connection updated ride %s from %s to %s (lastUpdated: %s)\n", 
-					time.Now().Format("15:04:05.000"), update.Name, existingEntity.Status, newEntity.Status, lastUpdated.Format("2006/01/02 15:04:05"))
-			}
-			
-			// Check for wait time change
-			if existingEntity.WaitTime != newEntity.WaitTime {
-				fmt.Printf("[%s] Websocket connection updated ride %s wait time from %d to %d (lastUpdated: %s)\n", 
-					time.Now().Format("15:04:05.000"), update.Name, existingEntity.WaitTime, newEntity.WaitTime, lastUpdated.Format("2006/01/02 15:04:05"))
-			}
-		} else {
-			fmt.Printf("[%s] Websocket connection added new ride %s (Status: %s, Wait Time: %d) (lastUpdated: %s)\n", 
-				time.Now().Format("15:04:05.000"), update.Name, newEntity.Status, newEntity.WaitTime, lastUpdated.Format("2006/01/02 15:04:05"))
+	// Check if entity exists and if there are changes
+	if existingEntity, exists := cp.websocketEntities[update.EntityID]; exists {
+		// Check for status change
+		if existingEntity.Status != newEntity.Status {
+			statusChangeMsg := fmt.Sprintf("%s status changed from \"%s\" to \"%s\"", update.Name, existingEntity.Status, newEntity.Status)
+			cp.writeToLogFile(cp.websocketLogFile, statusChangeMsg)
+			fmt.Printf("[%s] Websocket connection updated ride %s from %s to %s (lastUpdated: %s)\n", 
+				time.Now().Format("15:04:05.000"), update.Name, existingEntity.Status, newEntity.Status, lastUpdated.Format("2006/01/02 15:04:05"))
 		}
+		
+		// Check for wait time change
+		if existingEntity.WaitTime != newEntity.WaitTime {
+			fmt.Printf("[%s] Websocket connection updated ride %s wait time from %d to %d (lastUpdated: %s)\n", 
+				time.Now().Format("15:04:05.000"), update.Name, existingEntity.WaitTime, newEntity.WaitTime, lastUpdated.Format("2006/01/02 15:04:05"))
+		}
+	} else {
+		fmt.Printf("[%s] Websocket connection added new ride %s (Status: %s, Wait Time: %d) (lastUpdated: %s)\n", 
+			time.Now().Format("15:04:05.000"), update.Name, newEntity.Status, newEntity.WaitTime, lastUpdated.Format("2006/01/02 15:04:05"))
+	}
 	
 	cp.websocketEntities[update.EntityID] = newEntity
 }
@@ -381,6 +411,8 @@ func (cp *ComparisonProgram) updatePollingEntities(restEntities []LiveDataEntity
 		if existingEntity, exists := cp.pollingEntities[restEntity.ID]; exists {
 			// Check for status change
 			if existingEntity.Status != newEntity.Status {
+				statusChangeMsg := fmt.Sprintf("%s status changed from \"%s\" to \"%s\"", restEntity.Name, existingEntity.Status, newEntity.Status)
+				cp.writeToLogFile(cp.pollingLogFile, statusChangeMsg)
 				fmt.Printf("[%s] Polling updated ride %s from %s to %s (lastUpdated: %s)\n", 
 					time.Now().Format("15:04:05.000"), restEntity.Name, existingEntity.Status, newEntity.Status, lastUpdated.Format("2006/01/02 15:04:05"))
 			}
@@ -401,6 +433,15 @@ func (cp *ComparisonProgram) updatePollingEntities(restEntities []LiveDataEntity
 	log.Printf("Polling update complete. Total entities: %d", len(cp.pollingEntities))
 }
 
+func (cp *ComparisonProgram) Close() {
+	if cp.websocketLogFile != nil {
+		cp.websocketLogFile.Close()
+	}
+	if cp.pollingLogFile != nil {
+		cp.pollingLogFile.Close()
+	}
+}
+
 func main() {
 	// Set up logging
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -414,6 +455,7 @@ func main() {
 	go func() {
 		<-c
 		log.Printf("Shutting down comparison program...")
+		program.Close()
 		os.Exit(0)
 	}()
 	

@@ -410,8 +410,8 @@ func apnsSender(id int) {
 			Custom("timestamp", req.Timestamp.Format(time.RFC3339))
 
 		// Log the payload structure for debugging
-		log.Printf("[Worker %d] APNS Payload Structure: {\"aps\":{\"content-available\":1,\"badge\":0},\"entityId\":\"%s\",\"parkId\":\"%s\",\"oldStatus\":\"%s\",\"newStatus\":\"%s\",\"oldWaitTime\":%d,\"newWaitTime\":%d,\"notificationId\":\"%s\",\"timestamp\":\"%s\"}", 
-			id, req.EntityID, req.ParkID, req.OldStatus, req.NewStatus, req.OldWaitTime, req.NewWaitTime, req.NotificationID, req.Timestamp.Format(time.RFC3339))
+		// log.Printf("[Worker %d] APNS Payload Structure: {\"aps\":{\"content-available\":1,\"badge\":0},\"entityId\":\"%s\",\"parkId\":\"%s\",\"oldStatus\":\"%s\",\"newStatus\":\"%s\",\"oldWaitTime\":%d,\"newWaitTime\":%d,\"notificationId\":\"%s\",\"timestamp\":\"%s\"}", 
+		// 	id, req.EntityID, req.ParkID, req.OldStatus, req.NewStatus, req.OldWaitTime, req.NewWaitTime, req.NotificationID, req.Timestamp.Format(time.RFC3339))
 
 		notification := &apns2.Notification{
 			DeviceToken: req.DeviceToken,
