@@ -341,6 +341,213 @@ func (s *SupabaseDB) GetAPNSReceipts(limit int) ([]APNSReceipt, error) {
 	return receipts, nil
 }
 
+// GetSubscriptions retrieves all subscriptions for a specific device token
+func (s *SupabaseDB) GetSubscriptions(deviceToken string) ([]NotificationSubscription, error) {
+	query := `
+		SELECT device_token, entity_id, park_id, timestamp
+		FROM notification_subscriptions
+		WHERE device_token = $1
+		ORDER BY park_id, entity_id
+	`
+
+	rows, err := s.pool.Query(context.Background(), query, deviceToken)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query subscriptions: %v", err)
+	}
+	defer rows.Close()
+
+	var subscriptions []NotificationSubscription
+	for rows.Next() {
+		var sub NotificationSubscription
+		err := rows.Scan(
+			&sub.DeviceToken,
+			&sub.EntityID,
+			&sub.ParkID,
+			&sub.Timestamp,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan subscription row: %v", err)
+		}
+		subscriptions = append(subscriptions, sub)
+	}
+
+	return subscriptions, nil
+}
+
+// UpdateSubscriptions updates subscriptions for a device using smart diffing
+func (s *SupabaseDB) UpdateSubscriptions(deviceToken string, newSubscriptions []NotificationSubscription) error {
+	ctx := context.Background()
+
+	// Start transaction
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %v", err)
+	}
+	defer tx.Rollback(ctx)
+
+	// Get current subscriptions within transaction
+	currentSubs, err := s.getSubscriptionsInTx(tx, deviceToken)
+	if err != nil {
+		return err
+	}
+
+	// Calculate what needs to be added and removed
+	toAdd, toRemove := calculateSubscriptionDiff(currentSubs, newSubscriptions)
+
+	// Remove obsolete subscriptions
+	if len(toRemove) > 0 {
+		err = s.removeSubscriptionsInTx(tx, deviceToken, toRemove)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Add new subscriptions
+	if len(toAdd) > 0 {
+		err = s.addSubscriptionsInTx(tx, toAdd)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Commit transaction
+	err = tx.Commit(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction: %v", err)
+	}
+
+	log.Printf("Updated subscriptions for device %s: +%d -%d (total: %d)", 
+		deviceToken, len(toAdd), len(toRemove), len(newSubscriptions))
+
+	return nil
+}
+
+// Helper function to get subscriptions within a transaction
+func (s *SupabaseDB) getSubscriptionsInTx(tx pgx.Tx, deviceToken string) ([]NotificationSubscription, error) {
+	query := `
+		SELECT device_token, entity_id, park_id, timestamp
+		FROM notification_subscriptions
+		WHERE device_token = $1
+		ORDER BY park_id, entity_id
+	`
+
+	rows, err := tx.Query(context.Background(), query, deviceToken)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query subscriptions in transaction: %v", err)
+	}
+	defer rows.Close()
+
+	var subscriptions []NotificationSubscription
+	for rows.Next() {
+		var sub NotificationSubscription
+		err := rows.Scan(
+			&sub.DeviceToken,
+			&sub.EntityID,
+			&sub.ParkID,
+			&sub.Timestamp,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan subscription row in transaction: %v", err)
+		}
+		subscriptions = append(subscriptions, sub)
+	}
+
+	return subscriptions, nil
+}
+
+// Helper function to remove subscriptions within a transaction
+func (s *SupabaseDB) removeSubscriptionsInTx(tx pgx.Tx, deviceToken string, toRemove []NotificationSubscription) error {
+	if len(toRemove) == 0 {
+		return nil
+	}
+
+	// Build query to remove specific subscriptions
+	query := `
+		DELETE FROM notification_subscriptions 
+		WHERE device_token = $1 AND (park_id, entity_id) IN (
+	`
+	
+	args := []interface{}{deviceToken}
+	for i, sub := range toRemove {
+		if i > 0 {
+			query += ", "
+		}
+		query += fmt.Sprintf("($%d, $%d)", i*2+2, i*2+3)
+		args = append(args, sub.ParkID, sub.EntityID)
+	}
+	query += ")"
+
+	_, err := tx.Exec(context.Background(), query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to remove subscriptions: %v", err)
+	}
+
+	return nil
+}
+
+// Helper function to add subscriptions within a transaction
+func (s *SupabaseDB) addSubscriptionsInTx(tx pgx.Tx, toAdd []NotificationSubscription) error {
+	if len(toAdd) == 0 {
+		return nil
+	}
+
+	// Build batch insert query
+	query := `
+		INSERT INTO notification_subscriptions (device_token, entity_id, park_id, timestamp)
+		VALUES 
+	`
+	
+	args := []interface{}{}
+	for i, sub := range toAdd {
+		if i > 0 {
+			query += ", "
+		}
+		query += fmt.Sprintf("($%d, $%d, $%d, $%d)", i*4+1, i*4+2, i*4+3, i*4+4)
+		args = append(args, sub.DeviceToken, sub.EntityID, sub.ParkID, sub.Timestamp)
+	}
+
+	_, err := tx.Exec(context.Background(), query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to add subscriptions: %v", err)
+	}
+
+	return nil
+}
+
+// calculateSubscriptionDiff determines what subscriptions need to be added and removed
+func calculateSubscriptionDiff(current, new []NotificationSubscription) (toAdd, toRemove []NotificationSubscription) {
+	// Convert current subscriptions to a set for fast lookup
+	currentSet := make(map[string]bool)
+	for _, sub := range current {
+		key := sub.ParkID + "|" + sub.EntityID
+		currentSet[key] = true
+	}
+
+	// Convert new subscriptions to a set and track what's new
+	newSet := make(map[string]NotificationSubscription)
+	for _, sub := range new {
+		key := sub.ParkID + "|" + sub.EntityID
+		newSet[key] = sub
+	}
+
+	// Find additions (in new but not in current)
+	for key, sub := range newSet {
+		if !currentSet[key] {
+			toAdd = append(toAdd, sub)
+		}
+	}
+
+	// Find removals (in current but not in new)
+	for _, sub := range current {
+		key := sub.ParkID + "|" + sub.EntityID
+		if _, exists := newSet[key]; !exists {
+			toRemove = append(toRemove, sub)
+		}
+	}
+
+	return toAdd, toRemove
+}
+
 // Close closes the database connection pool
 func (s *SupabaseDB) Close() error {
 	if s.pool != nil {

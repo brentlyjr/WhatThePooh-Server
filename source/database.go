@@ -15,6 +15,8 @@ type Database interface {
 	GetAPNSMessages(limit int) ([]APNSMessage, error)
 	StoreAPNSReceipt(receipt APNSReceipt) error
 	GetAPNSReceipts(limit int) ([]APNSReceipt, error)
+	GetSubscriptions(deviceToken string) ([]NotificationSubscription, error)
+	UpdateSubscriptions(deviceToken string, subscriptions []NotificationSubscription) error
 }
 
 // DeviceRegistration represents a registered device in the database
@@ -67,4 +69,26 @@ type APNSReceipt struct {
 	OldWaitTime int       `json:"oldWaitTime"`
 	NewWaitTime int       `json:"newWaitTime"`
 	NotificationID string `json:"notificationId"`
+}
+
+// RideSubscriptionUpdate represents the incoming JSON payload for updating subscriptions
+type RideSubscriptionUpdate struct {
+	DeviceToken   string             `json:"deviceToken"`
+	SchemaVersion int                `json:"schemaVersion"`
+	Timestamp     time.Time          `json:"timestamp"`
+	Subscriptions []ParkSubscription `json:"subscriptions"`
+}
+
+// ParkSubscription represents subscriptions grouped by park
+type ParkSubscription struct {
+	ParkID    string   `json:"parkId"`
+	EntityIDs []string `json:"entityIds"`
+}
+
+// NotificationSubscription represents a database subscription record
+type NotificationSubscription struct {
+	DeviceToken string    `json:"deviceToken"`
+	EntityID    string    `json:"entityId"`
+	ParkID      string    `json:"parkId"`
+	Timestamp   time.Time `json:"timestamp"`
 } 

@@ -23,6 +23,9 @@ func SetupRoutes(app *fiber.App, entityManager *EntityManager, wsClient *WebSock
 	app.Get("/api/devices/:token/exists", checkDeviceExistsHandler)
 	app.Delete("/api/devices/:token", deleteDeviceHandler)
 
+	// Subscription routes
+	app.Post("/api/update-ride-subscriptions", updateRideSubscriptionsHandler)
+
 	// APNS Message tracking
 	app.Get("/api/apns-messages", getAPNSMessagesHandler)
 	app.Post("/api/apns-receipt", apnsReceiptHandler(entityManager))
@@ -414,5 +417,76 @@ func testDeviceTokenHandler(c *fiber.Ctx) error {
 		"status":      "Device token test successful",
 		"deviceToken": testData.DeviceToken,
 		"environment": testData.Environment,
+	})
+}
+
+// updateRideSubscriptionsHandler handles updating ride subscriptions for a device
+func updateRideSubscriptionsHandler(c *fiber.Ctx) error {
+	var updateData RideSubscriptionUpdate
+	if err := c.BodyParser(&updateData); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	// Validate required fields
+	if updateData.DeviceToken == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Device token is required",
+		})
+	}
+
+	if len(updateData.Subscriptions) == 0 {
+		// Empty subscriptions array is valid - means unsubscribe from everything
+		log.Printf("Device %s is unsubscribing from all notifications", updateData.DeviceToken)
+	}
+
+	// Verify device exists
+	device, err := db.GetDeviceToken(updateData.DeviceToken)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to verify device token",
+		})
+	}
+	if device == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Device token not found. Please register device first.",
+		})
+	}
+
+	// Convert the grouped subscriptions into individual subscription records
+	var subscriptions []NotificationSubscription
+	now := time.Now().UTC()
+	
+	for _, parkSub := range updateData.Subscriptions {
+		for _, entityID := range parkSub.EntityIDs {
+			subscription := NotificationSubscription{
+				DeviceToken: updateData.DeviceToken,
+				EntityID:    entityID,
+				ParkID:      parkSub.ParkID,
+				Timestamp:   now,
+			}
+			subscriptions = append(subscriptions, subscription)
+		}
+	}
+
+	// Update subscriptions using smart diffing
+	if err := db.UpdateSubscriptions(updateData.DeviceToken, subscriptions); err != nil {
+		log.Printf("Failed to update subscriptions for device %s: %v", updateData.DeviceToken, err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to update subscriptions",
+		})
+	}
+
+	// Log successful update
+	totalSubscriptions := len(subscriptions)
+	log.Printf("Successfully updated subscriptions for device %s: %d total subscriptions across %d parks", 
+		updateData.DeviceToken, totalSubscriptions, len(updateData.Subscriptions))
+
+	return c.JSON(fiber.Map{
+		"status": "Subscriptions updated successfully",
+		"totalSubscriptions": totalSubscriptions,
+		"parksCount": len(updateData.Subscriptions),
+		"timestamp": now,
 	})
 } 

@@ -176,4 +176,14 @@ func (c *CachedDB) StoreAPNSReceipt(receipt APNSReceipt) error {
 // GetAPNSReceipts retrieves APNS receipts from the database (no caching for receipts)
 func (c *CachedDB) GetAPNSReceipts(limit int) ([]APNSReceipt, error) {
 	return c.db.GetAPNSReceipts(limit)
+}
+
+// GetSubscriptions retrieves subscriptions from the database (no caching for subscriptions)
+func (c *CachedDB) GetSubscriptions(deviceToken string) ([]NotificationSubscription, error) {
+	return c.db.GetSubscriptions(deviceToken)
+}
+
+// UpdateSubscriptions updates subscriptions in the database (no caching for subscriptions)
+func (c *CachedDB) UpdateSubscriptions(deviceToken string, subscriptions []NotificationSubscription) error {
+	return c.db.UpdateSubscriptions(deviceToken, subscriptions)
 } 

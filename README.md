@@ -108,6 +108,65 @@ The project can also be built and run as a Docker container.
 - **Delete Device** (`DELETE /api/devices/:token`)
   Removes a device token from the database
 
+### Subscription Management
+
+- **Update Ride Subscriptions** (`POST /api/update-ride-subscriptions`)
+  Updates the complete subscription list for a device. This endpoint uses smart diffing to only change what's actually different, making it highly efficient.
+  
+  ```json
+  {
+    "deviceToken": "abc123def456...",
+    "schemaVersion": 1,
+    "timestamp": "2025-08-01T15:12:34Z",
+    "subscriptions": [
+      {
+        "parkId": "disneyland_resort",
+        "entityIds": [
+          "matterhorn_bobsleds",
+          "rise_of_resistance",
+          "haunted_mansion"
+        ]
+      },
+      {
+        "parkId": "universal_studios_orlando",
+        "entityIds": [
+          "hagrid_motorbike_adventure",
+          "transformers_the_ride"
+        ]
+      }
+    ]
+  }
+  ```
+  
+  **Field Descriptions:**
+  - `deviceToken` (required): The APNS device token (must be registered first)
+  - `schemaVersion` (required): API schema version (currently 1)
+  - `timestamp` (required): ISO 8601 UTC timestamp when snapshot was taken
+  - `subscriptions` (required): Array of park subscription objects (empty array = unsubscribe from all)
+    - `parkId` (required): Unique identifier for the theme park
+    - `entityIds` (required): Array of attraction/entity IDs within that park
+  
+  **Success Response:**
+  ```json
+  {
+    "status": "Subscriptions updated successfully",
+    "totalSubscriptions": 5,
+    "parksCount": 2,
+    "timestamp": "2025-01-01T20:30:45.123Z"
+  }
+  ```
+  
+  **Error Responses:**
+  - `400 Bad Request`: Invalid request body or missing required fields
+  - `404 Not Found`: Device token not registered (register device first)
+  - `500 Internal Server Error`: Database error during subscription update
+  
+  **Performance Notes:**
+  - Uses smart diffing algorithm with O(m + n) complexity
+  - Only executes database operations for actual changes
+  - Example: Adding 1 ride to 30 existing subscriptions = 1 INSERT operation (~1-5ms)
+  - Handles complete state replacement safely (network dead zones, missed updates)
+
 ### Push Notifications
 
 - **Send Push Notification** (`POST /api/push`)
