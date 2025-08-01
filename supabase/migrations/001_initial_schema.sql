@@ -4,7 +4,15 @@ CREATE TABLE IF NOT EXISTS devices (
     app_version TEXT,
     device_type TEXT,
     environment TEXT DEFAULT 'development',
-    last_updated TIMESTAMPTZ DEFAULT NOW()
+    last_updated TIMESTAMPTZ DEFAULT NOW(),
+    ios_version TEXT,
+    device_name TEXT,
+    system_name TEXT,
+    language TEXT,
+    region TEXT,
+    time_zone TEXT,
+    device_model TEXT,
+    device_model_identifier TEXT
 );
 
 -- Create apns_messages table

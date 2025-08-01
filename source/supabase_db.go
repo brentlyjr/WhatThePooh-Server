@@ -48,13 +48,23 @@ func (s *SupabaseDB) StoreDeviceToken(registration DeviceRegistration) error {
 	now := time.Now().UTC()
 
 	query := `
-		INSERT INTO devices (device_token, app_version, device_type, environment, last_updated)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO devices (device_token, app_version, device_type, environment, last_updated, 
+			ios_version, device_name, system_name, language, region, time_zone, 
+			device_model, device_model_identifier)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		ON CONFLICT (device_token) DO UPDATE SET
 			app_version = EXCLUDED.app_version,
 			device_type = EXCLUDED.device_type,
 			environment = EXCLUDED.environment,
-			last_updated = $5
+			last_updated = $5,
+			ios_version = EXCLUDED.ios_version,
+			device_name = EXCLUDED.device_name,
+			system_name = EXCLUDED.system_name,
+			language = EXCLUDED.language,
+			region = EXCLUDED.region,
+			time_zone = EXCLUDED.time_zone,
+			device_model = EXCLUDED.device_model,
+			device_model_identifier = EXCLUDED.device_model_identifier
 	`
 
 	_, err := s.pool.Exec(context.Background(), query,
@@ -63,6 +73,14 @@ func (s *SupabaseDB) StoreDeviceToken(registration DeviceRegistration) error {
 		registration.DeviceType,
 		registration.Environment,
 		now,
+		registration.IOSVersion,
+		registration.DeviceName,
+		registration.SystemName,
+		registration.Language,
+		registration.Region,
+		registration.TimeZone,
+		registration.DeviceModel,
+		registration.DeviceModelIdentifier,
 	)
 
 	if err != nil {
@@ -75,7 +93,9 @@ func (s *SupabaseDB) StoreDeviceToken(registration DeviceRegistration) error {
 // GetDeviceToken retrieves a specific device token
 func (s *SupabaseDB) GetDeviceToken(token string) (*DeviceRegistration, error) {
 	query := `
-		SELECT device_token, app_version, device_type, environment, last_updated
+		SELECT device_token, app_version, device_type, environment, last_updated,
+			ios_version, device_name, system_name, language, region, time_zone,
+			device_model, device_model_identifier
 		FROM devices
 		WHERE device_token = $1
 	`
@@ -87,6 +107,14 @@ func (s *SupabaseDB) GetDeviceToken(token string) (*DeviceRegistration, error) {
 		&device.DeviceType,
 		&device.Environment,
 		&device.LastUpdated,
+		&device.IOSVersion,
+		&device.DeviceName,
+		&device.SystemName,
+		&device.Language,
+		&device.Region,
+		&device.TimeZone,
+		&device.DeviceModel,
+		&device.DeviceModelIdentifier,
 	)
 
 	if err == pgx.ErrNoRows {
@@ -102,7 +130,9 @@ func (s *SupabaseDB) GetDeviceToken(token string) (*DeviceRegistration, error) {
 // GetAllDevices returns all registered devices
 func (s *SupabaseDB) GetAllDevices() ([]DeviceRegistration, error) {
 	query := `
-		SELECT device_token, app_version, device_type, environment, last_updated
+		SELECT device_token, app_version, device_type, environment, last_updated,
+			ios_version, device_name, system_name, language, region, time_zone,
+			device_model, device_model_identifier
 		FROM devices
 		ORDER BY last_updated DESC
 	`
@@ -122,6 +152,14 @@ func (s *SupabaseDB) GetAllDevices() ([]DeviceRegistration, error) {
 			&device.DeviceType,
 			&device.Environment,
 			&device.LastUpdated,
+			&device.IOSVersion,
+			&device.DeviceName,
+			&device.SystemName,
+			&device.Language,
+			&device.Region,
+			&device.TimeZone,
+			&device.DeviceModel,
+			&device.DeviceModelIdentifier,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan device row: %v", err)

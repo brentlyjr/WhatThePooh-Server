@@ -24,6 +24,16 @@ type DeviceRegistration struct {
 	DeviceType  string    `json:"deviceType"`
 	Environment string    `json:"environment"` // "development" or "production"
 	LastUpdated time.Time `json:"lastUpdated"`
+	
+	// Optional device information fields
+	IOSVersion              *string `json:"iosVersion,omitempty"`
+	DeviceName              *string `json:"deviceName,omitempty"`
+	SystemName              *string `json:"systemName,omitempty"`
+	Language                *string `json:"language,omitempty"`
+	Region                  *string `json:"region,omitempty"`
+	TimeZone                *string `json:"timeZone,omitempty"`
+	DeviceModel             *string `json:"deviceModel,omitempty"`
+	DeviceModelIdentifier   *string `json:"deviceModelIdentifier,omitempty"`
 }
 
 // APNSMessage represents a tracked APNS message in the database
