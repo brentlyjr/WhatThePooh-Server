@@ -10,23 +10,13 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type ParkType string
-
-const (
-	Disney   ParkType = "disney"
-	Universal ParkType = "universal"
-)
-
-type Park struct {
+type Resort struct {
 	ID         string
 	Name       string
-	Type       ParkType
-	IsSelected bool
-	IsVisible  bool
 }
 
-var parks = []Park{
-	// Disney Parks
+var resorts = []Resort{
+	// Disney Resorts
 	{ID: "bfc89fd6-314d-44b4-b89e-df1a89cf991e", Name: "Disneyland Resort"},
 	{ID: "e957da41-3552-4cf6-b636-5babc5cbc4e5", Name: "Walt Disney World® Resort"},
 	{ID: "abcfffe7-01f2-4f92-ae61-5093346f5a68", Name: "Hong Kong Disneyland Parks"},
@@ -34,7 +24,7 @@ var parks = []Park{
 	{ID: "6e1464ca-1e9b-49c3-8937-c5c6f6675057", Name: "Shanghai Disney Resort"},
 	{ID: "e8d0207f-da8a-4048-bec8-117aa946b2c2", Name: "Disneyland Paris"},
 
-	// Universal Parks
+	// Universal Resorts
 	{ID: "9fc68f1c-3f5e-4f09-89f2-aab2cf1a0741", Name: "Universal Studios"},
 	{ID: "89db5d43-c434-4097-b71f-f6869f495a22", Name: "Universal Orlando Resort"},
 }
@@ -147,12 +137,12 @@ func (c *WebSocketClient) Connect() {
 			AddReconnectionTimestamp()
 			log.Printf("[%s] Connected to WebSocket", time.Now().Format("2006-01-02 15:04:05 MST"))
 
-			// Subscribe to all parks
-			for _, park := range parks {
-				if err := c.subscribe(park.ID); err != nil {
-					log.Printf("Failed to subscribe to %s (%s): %v", park.Name, park.ID, err)
+			// Subscribe to all resorts
+			for _, resort := range resorts {
+				if err := c.subscribe(resort.ID); err != nil {
+					log.Printf("Failed to subscribe to %s (%s): %v", resort.Name, resort.ID, err)
 				} else {
-					log.Printf("Subscribed to %s (%s)", park.Name, park.ID)
+					log.Printf("Subscribed to %s (%s)", resort.Name, resort.ID)
 				}
 			}
 

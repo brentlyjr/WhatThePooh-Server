@@ -58,27 +58,27 @@ func NewRestClient(apiKey string) *RestClient {
 	}
 }
 
-// PrePopulateEntities fetches data from all parks and pre-populates the entity manager
+// PrePopulateEntities fetches data from all resorts and pre-populates the entity manager
 func (rc *RestClient) PrePopulateEntities(entityManager *EntityManager) error {
 	log.Printf("Starting pre-population of entities from REST API...")
 	
 	totalEntities := 0
 	
-	// Fetch data for each park
-	for _, park := range parks {
-		log.Printf("Fetching entities for park: %s (%s)", park.Name, park.ID)
+	// Fetch data for each resort
+	for _, resort := range resorts {
+		log.Printf("Fetching entities for resort: %s (%s)", resort.Name, resort.ID)
 		
-		entities, err := rc.fetchParkEntities(park.ID)
+		entities, err := rc.fetchResortEntities(resort.ID)
 		if err != nil {
-			log.Printf("Error fetching entities for park %s: %v", park.Name, err)
-			continue // Continue with other parks even if one fails
+			log.Printf("Error fetching entities for resort %s: %v", resort.Name, err)
+			continue // Continue with other resorts even if one fails
 		}
 		
 		// Convert and add entities to the manager
 		count := rc.addEntitiesToManager(entities, entityManager)
 		totalEntities += count
 		
-		log.Printf("Added %d entities for park %s", count, park.Name)
+		log.Printf("Added %d entities for resort %s", count, resort.Name)
 		
 		// Small delay between requests to be respectful to the API
 		time.Sleep(100 * time.Millisecond)
@@ -88,9 +88,9 @@ func (rc *RestClient) PrePopulateEntities(entityManager *EntityManager) error {
 	return nil
 }
 
-// fetchParkEntities fetches live data for a specific park
-func (rc *RestClient) fetchParkEntities(parkID string) ([]LiveDataEntity, error) {
-	url := fmt.Sprintf("%s/%s/live?entityType=ATTRACTION", rc.baseURL, parkID)
+// fetchResortEntities fetches live data for a specific resort
+func (rc *RestClient) fetchResortEntities(resortID string) ([]LiveDataEntity, error) {
+	url := fmt.Sprintf("%s/%s/live?entityType=ATTRACTION", rc.baseURL, resortID)
 	
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -178,33 +178,3 @@ func (rc *RestClient) GetEntityCount(entityManager *EntityManager) int {
 	entities := entityManager.GetAllEntities()
 	return len(entities)
 }
-
-// GetEntityStats returns statistics about the entities in the manager
-func (rc *RestClient) GetEntityStats(entityManager *EntityManager) map[string]interface{} {
-	entities := entityManager.GetAllEntities()
-	
-	stats := map[string]interface{}{
-		"total_entities": len(entities),
-		"parks":         make(map[string]int),
-		"statuses":      make(map[string]int),
-	}
-	
-	// Count entities by park
-	for _, entity := range entities {
-		// Count by park
-		parkName := "Unknown"
-		for _, park := range parks {
-			if park.ID == entity.ParkID {
-				parkName = park.Name
-				break
-			}
-		}
-		stats["parks"].(map[string]int)[parkName]++
-		
-		// Count by status
-		status := string(entity.Status)
-		stats["statuses"].(map[string]int)[status]++
-	}
-	
-	return stats
-} 
