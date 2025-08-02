@@ -256,8 +256,8 @@ func SendPushNotification(req NotificationRequest) error {
 		DeviceToken: req.DeviceToken,
 		Topic:       os.Getenv("APNS_BUNDLE_ID"),
 		Payload: payload.NewPayload().
-			ContentAvailable().
-			Badge(0).
+			AlertTitle(req.Title).
+			AlertBody(req.Message).
 			Custom("entityId", req.EntityID).
 			Custom("parkId", req.ParkID).
 			Custom("oldStatus", req.OldStatus).
@@ -389,7 +389,7 @@ func apnsSender(id int) {
 	bundleID := os.Getenv("APNS_BUNDLE_ID")
 
 	for req := range PushQueue {
-		log.Printf("[Worker %d] Sending push to %s (Environment: %s)", id, req.DeviceToken, req.Environment)
+		// log.Printf("[Worker %d] Sending push to %s (Environment: %s)", id, req.DeviceToken, req.Environment)
 
 		// Generate a unique notification ID if not provided
 		if req.NotificationID == "" {
@@ -398,8 +398,8 @@ func apnsSender(id int) {
 
 		// Create the payload
 		payload := payload.NewPayload().
-			ContentAvailable().
-			Badge(0).
+			AlertTitle("(W) " + getParkName(req.ParkID)).
+			AlertBody(req.EntityName + " changed from " + req.OldStatus + " to " + req.NewStatus).
 			Custom("entityId", req.EntityID).
 			Custom("parkId", req.ParkID).
 			Custom("oldStatus", req.OldStatus).
