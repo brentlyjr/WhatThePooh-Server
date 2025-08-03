@@ -147,11 +147,28 @@ func checkDeviceExistsHandler(c *fiber.Ctx) error {
 // deleteDeviceHandler deletes a device
 func deleteDeviceHandler(c *fiber.Ctx) error {
 	token := c.Params("token")
+	
+	// Check if device exists before attempting deletion
+	device, err := db.GetDeviceToken(token)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Error checking device existence",
+		})
+	}
+	
+	if device == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "No device found with that token",
+		})
+	}
+	
+	// Attempt deletion
 	if err := db.DeleteDeviceToken(token); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
+	
 	return c.JSON(fiber.Map{
 		"status": "Device deleted successfully",
 	})
