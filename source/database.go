@@ -23,11 +23,8 @@ type Database interface {
 type DeviceRegistration struct {
 	DeviceToken string    `json:"deviceToken"`
 	AppVersion  string    `json:"appVersion"`
-	DeviceType  string    `json:"deviceType"`
 	Environment string    `json:"environment"` // "development" or "production"
 	LastUpdated time.Time `json:"lastUpdated"`
-	
-	// Optional device information fields
 	IOSVersion              *string `json:"iosVersion,omitempty"`
 	DeviceName              *string `json:"deviceName,omitempty"`
 	SystemName              *string `json:"systemName,omitempty"`

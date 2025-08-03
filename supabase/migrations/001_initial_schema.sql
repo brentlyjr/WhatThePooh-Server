@@ -2,7 +2,6 @@
 CREATE TABLE IF NOT EXISTS devices (
     device_token TEXT PRIMARY KEY,
     app_version TEXT,
-    device_type TEXT,
     environment TEXT DEFAULT 'development',
     last_updated TIMESTAMPTZ DEFAULT NOW(),
     ios_version TEXT,

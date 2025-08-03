@@ -67,16 +67,32 @@ The project can also be built and run as a Docker container.
   {
     "deviceToken": "your_device_token",
     "appVersion": "1.0.0",
-    "deviceType": "iPhone",
-    "environment": "development"
+    "environment": "development",
+    "iosVersion": "17.0",
+    "deviceName": "Brent's iPhone",
+    "systemName": "iOS",
+    "language": "en",
+    "region": "US",
+    "timeZone": "America/Los_Angeles",
+    "deviceModel": "iPhone 15 Pro",
+    "deviceModelIdentifier": "iPhone16,1"
   }
   ```
   
   **Field Descriptions:**
   - `deviceToken` (required): The APNS device token for push notifications
   - `appVersion` (optional): The version of the client app
-  - `deviceType` (optional): The type of device (e.g., "iPhone", "iPad")
   - `environment` (optional): APNS environment - must be "development" or "production". Defaults to "development" if not provided
+  
+  **Optional Device Information Fields:**
+  - `iosVersion` (optional): iOS version running on the device
+  - `deviceName` (optional): User-defined device name
+  - `systemName` (optional): Operating system name (e.g., "iOS")
+  - `language` (optional): Device language setting (e.g., "en", "es")
+  - `region` (optional): Device region setting (e.g., "US", "CA")
+  - `timeZone` (optional): Device timezone (e.g., "America/Los_Angeles")
+  - `deviceModel` (optional): Human-readable device model (e.g., "iPhone 15 Pro")
+  - `deviceModelIdentifier` (optional): Device model identifier (e.g., "iPhone16,1")
 
 - **Get All Devices** (`GET /api/devices`)
   Returns a list of all registered devices
@@ -91,8 +107,16 @@ The project can also be built and run as a Docker container.
     "device": {
       "deviceToken": "your_device_token",
       "appVersion": "1.0.0",
-      "deviceType": "iPhone",
-      "lastUpdated": "2025-06-21T01:48:25Z"
+      "environment": "development",
+      "lastUpdated": "2025-06-21T01:48:25Z",
+      "iosVersion": "17.0",
+      "deviceName": "Brent's iPhone",
+      "systemName": "iOS",
+      "language": "en",
+      "region": "US",
+      "timeZone": "America/Los_Angeles",
+      "deviceModel": "iPhone 15 Pro",
+      "deviceModelIdentifier": "iPhone16,1"
     }
   }
   ```
