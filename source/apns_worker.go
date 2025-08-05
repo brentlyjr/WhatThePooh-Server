@@ -398,8 +398,9 @@ func apnsSender(id int) {
 
 		// Create the payload
 		payload := payload.NewPayload().
-			AlertTitle("(W) " + getParkName(req.ParkID)).
-			AlertBody(req.EntityName + " changed from " + req.OldStatus + " to " + req.NewStatus).
+			AlertTitle(getParkName(req.ParkID)).
+			AlertBody(req.EntityName + " is now " + req.NewStatus).
+			MutableContent().
 			Custom("entityId", req.EntityID).
 			Custom("parkId", req.ParkID).
 			Custom("oldStatus", req.OldStatus).
@@ -409,22 +410,18 @@ func apnsSender(id int) {
 			Custom("notificationId", req.NotificationID).
 			Custom("timestamp", req.Timestamp.Format(time.RFC3339))
 
-		// Log the payload structure for debugging
-		// log.Printf("[Worker %d] APNS Payload Structure: {\"aps\":{\"content-available\":1,\"badge\":0},\"entityId\":\"%s\",\"parkId\":\"%s\",\"oldStatus\":\"%s\",\"newStatus\":\"%s\",\"oldWaitTime\":%d,\"newWaitTime\":%d,\"notificationId\":\"%s\",\"timestamp\":\"%s\"}", 
-		// 	id, req.EntityID, req.ParkID, req.OldStatus, req.NewStatus, req.OldWaitTime, req.NewWaitTime, req.NotificationID, req.Timestamp.Format(time.RFC3339))
-
 		notification := &apns2.Notification{
 			DeviceToken: req.DeviceToken,
 			Topic:       bundleID,
 			Payload:     payload,
 		}
 
-		// Get the appropriate APNS client based on the environment
+		// Get the appropriate APNS client based on the environment (dev or prod)
 		client := getAPNSClient(req.Environment)
 		
 		res, err := client.Push(notification)
 		
-		// Create APNS message tracking record
+		// Create APNS message tracking record in database
 		apnsMessage := APNSMessage{
 			DeviceToken:        req.DeviceToken,
 			Timestamp:          time.Now().UTC(),
