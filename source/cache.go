@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"sync"
-	"time"
 )
 
 // CachedDB implements the Database interface with local caching
@@ -136,54 +135,34 @@ func (c *CachedDB) DeleteDeviceToken(token string) error {
 	return c.db.DeleteDeviceToken(token)
 }
 
-// CleanupOldDevices removes old devices from both cache and database
-func (c *CachedDB) CleanupOldDevices(maxAge time.Duration) error {
-	// Cleanup database
-	if err := c.db.CleanupOldDevices(maxAge); err != nil {
-		return err
-	}
-
-	// Cleanup cache
-	cutoff := time.Now().UTC().Add(-maxAge)
-	c.mu.Lock()
-	c.cache.Range(func(key, value interface{}) bool {
-		device := value.(DeviceRegistration)
-		if device.LastUpdated.Before(cutoff) {
-			c.cache.Delete(key)
-		}
-		return true
-	})
-	c.mu.Unlock()
-
-	return nil
-}
-
-// StoreAPNSMessage saves an APNS message in the database (no caching for messages)
-func (c *CachedDB) StoreAPNSMessage(message APNSMessage) error {
-	return c.db.StoreAPNSMessage(message)
-}
-
-// GetAPNSMessages retrieves APNS messages from the database (no caching for messages)
-func (c *CachedDB) GetAPNSMessages(limit int) ([]APNSMessage, error) {
-	return c.db.GetAPNSMessages(limit)
-}
-
-// StoreAPNSReceipt saves an APNS receipt in the database (no caching for receipts)
-func (c *CachedDB) StoreAPNSReceipt(receipt APNSReceipt) error {
-	return c.db.StoreAPNSReceipt(receipt)
-}
-
-// GetAPNSReceipts retrieves APNS receipts from the database (no caching for receipts)
-func (c *CachedDB) GetAPNSReceipts(limit int) ([]APNSReceipt, error) {
-	return c.db.GetAPNSReceipts(limit)
-}
-
-// GetSubscriptions retrieves subscriptions from the database (no caching for subscriptions)
-func (c *CachedDB) GetSubscriptions(deviceToken string) ([]NotificationSubscription, error) {
-	return c.db.GetSubscriptions(deviceToken)
-}
-
 // UpdateSubscriptions updates subscriptions in the database (no caching for subscriptions)
 func (c *CachedDB) UpdateSubscriptions(deviceToken string, subscriptions []NotificationSubscription) error {
 	return c.db.UpdateSubscriptions(deviceToken, subscriptions)
+} 
+
+// GetDevicesSubscribedToEntity returns devices subscribed to a specific entity/park
+func (c *CachedDB) GetDevicesSubscribedToEntity(entityID, parkID string) ([]DeviceRegistration, error) {
+	// This method requires database query with joins, so bypass cache
+	return c.db.GetDevicesSubscribedToEntity(entityID, parkID)
+}
+
+// SetDeviceNotificationState sets the notification state for a device
+func (c *CachedDB) SetDeviceNotificationState(deviceToken string, notificationsOn bool) error {
+	// Update database
+	if err := c.db.SetDeviceNotificationState(deviceToken, notificationsOn); err != nil {
+		return err
+	}
+
+	// Update cache with the new device state
+	device, err := c.db.GetDeviceToken(deviceToken)
+	if err != nil {
+		return err
+	}
+	if device != nil {
+		c.mu.Lock()
+		c.cache.Store(deviceToken, *device)
+		c.mu.Unlock()
+	}
+
+	return nil
 } 

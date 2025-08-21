@@ -63,11 +63,14 @@ The project can also be built and run as a Docker container.
 ### Device Management
 
 - **Register Device** (`POST /api/register-device`)
+  Register a device with optional initial subscriptions. This is the primary endpoint for device onboarding.
+  
   ```json
   {
     "deviceToken": "your_device_token",
     "appVersion": "1.0.0",
     "environment": "development",
+    "notificationsOn": true,
     "iosVersion": "17.0",
     "deviceName": "Brent's iPhone",
     "systemName": "iOS",
@@ -75,7 +78,13 @@ The project can also be built and run as a Docker container.
     "region": "US",
     "timeZone": "America/Los_Angeles",
     "deviceModel": "iPhone 15 Pro",
-    "deviceModelIdentifier": "iPhone16,1"
+    "deviceModelIdentifier": "iPhone16,1",
+    "subscriptions": [
+      {
+        "parkId": "7340550b-c14d-4def-80bb-acdb51d49a66",
+        "entityId": "Disneyland_SpaceMountain"
+      }
+    ]
   }
   ```
   
@@ -83,6 +92,8 @@ The project can also be built and run as a Docker container.
   - `deviceToken` (required): The APNS device token for push notifications
   - `appVersion` (optional): The version of the client app
   - `environment` (optional): APNS environment - must be "development" or "production". Defaults to "development" if not provided
+  - `notificationsOn` (optional): Whether notifications are enabled. Defaults to true
+  - `subscriptions` (optional): Initial list of subscriptions to set up
   
   **Optional Device Information Fields:**
   - `iosVersion` (optional): iOS version running on the device
@@ -94,8 +105,16 @@ The project can also be built and run as a Docker container.
   - `deviceModel` (optional): Human-readable device model (e.g., "iPhone 15 Pro")
   - `deviceModelIdentifier` (optional): Device model identifier (e.g., "iPhone16,1")
 
+  **Success Response:**
+  ```json
+  {
+    "status": "Device registered successfully",
+    "subscriptionsCount": 1
+  }
+  ```
+
 - **Get All Devices** (`GET /api/devices`)
-  Returns a list of all registered devices
+  Returns a list of all registered devices (admin endpoint)
 
 - **Check Device Exists** (`GET /api/devices/:token/exists`)
   Checks if a specific device token is registered
@@ -108,6 +127,7 @@ The project can also be built and run as a Docker container.
       "deviceToken": "your_device_token",
       "appVersion": "1.0.0",
       "environment": "development",
+      "notificationsOn": true,
       "lastUpdated": "2025-06-21T01:48:25Z",
       "iosVersion": "17.0",
       "deviceName": "Brent's iPhone",
@@ -135,27 +155,28 @@ The project can also be built and run as a Docker container.
 ### Subscription Management
 
 - **Update Ride Subscriptions** (`POST /api/update-ride-subscriptions`)
-  Updates the complete subscription list for a device. This endpoint uses smart diffing to only change what's actually different, making it highly efficient.
+  Updates the complete subscription list for a device. This endpoint uses smart diffing to only change what's actually different, making it highly efficient. Designed for client-side batching where changes are aggregated before sending.
   
   ```json
   {
-    "deviceToken": "abc123def456...",
+    "deviceToken": "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456",
     "schemaVersion": 1,
-    "timestamp": "2025-08-01T15:12:34Z",
+    "timestamp": "2025-01-27T15:42:33.123Z",
     "subscriptions": [
       {
-        "parkId": "disneyland_resort",
+        "parkId": "7340550b-c14d-4def-80bb-acdb51d49a66",
         "entityIds": [
-          "matterhorn_bobsleds",
-          "rise_of_resistance",
-          "haunted_mansion"
+          "Disneyland_DisneylandRailroad",
+          "Disneyland_HauntedMansion",
+          "Disneyland_PiratesoftheCaribbean",
+          "Disneyland_SpaceMountain"
         ]
       },
       {
-        "parkId": "universal_studios_orlando",
+        "parkId": "832fcd51-ea19-4e77-85c7-75d5843b127c",
         "entityIds": [
-          "hagrid_motorbike_adventure",
-          "transformers_the_ride"
+          "DisneyCaliforniaAdventure_GuardiansoftheGalaxyMissionBreakout",
+          "DisneyCaliforniaAdventure_RadiatorSpringsRacers"
         ]
       }
     ]
@@ -174,9 +195,9 @@ The project can also be built and run as a Docker container.
   ```json
   {
     "status": "Subscriptions updated successfully",
-    "totalSubscriptions": 5,
+    "totalSubscriptions": 6,
     "parksCount": 2,
-    "timestamp": "2025-01-01T20:30:45.123Z"
+    "timestamp": "2025-01-27T15:42:33.123Z"
   }
   ```
   
@@ -190,16 +211,71 @@ The project can also be built and run as a Docker container.
   - Only executes database operations for actual changes
   - Example: Adding 1 ride to 30 existing subscriptions = 1 INSERT operation (~1-5ms)
   - Handles complete state replacement safely (network dead zones, missed updates)
+  - Designed for client-side batching (10-second idle timer)
+
+- **Disable Subscriptions** (`POST /api/disable-subscriptions`)
+  Disables notifications for a device while preserving subscription data.
+  
+  ```json
+  {
+    "deviceToken": "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456"
+  }
+  ```
+  
+  **Success Response:**
+  ```json
+  {
+    "status": "Notifications disabled successfully",
+    "deviceToken": "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456"
+  }
+  ```
 
 ### Push Notifications
 
-- **Send Push Notification** (`POST /api/push`)
+- **Send Push Notification** (`POST /api/notifications/send`)
+  Send a direct APNS notification to a specific device. Useful for testing and admin notifications.
+  
   ```json
   {
-    "deviceToken": "your_device_token",
-    "title": "Notification Title",
-    "message": "Notification Message",
-    "badge": 1
+    "deviceToken": "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456",
+    "title": "Space Mountain Status",
+    "message": "Space Mountain is now OPEN with a 45 minute wait!",
+    "entityId": "Disneyland_SpaceMountain",
+    "entityName": "Space Mountain",
+    "parkId": "7340550b-c14d-4def-80bb-acdb51d49a66",
+    "parkName": "Disneyland",
+    "oldStatus": "CLOSED",
+    "newStatus": "OPEN",
+    "oldWaitTime": 0,
+    "newWaitTime": 45,
+    "environment": "development",
+    "timestamp": "2025-01-27T15:42:33.123Z",
+    "notificationId": "test-123"
+  }
+  ```
+  
+  **Field Descriptions:**
+  - `deviceToken` (required): The APNS device token
+  - `title` (optional): Notification title (defaults to park name)
+  - `message` (optional): Notification message (defaults to entity status change)
+  - `entityId` (optional): Entity identifier
+  - `entityName` (optional): Human-readable entity name
+  - `parkId` (optional): Park identifier
+  - `parkName` (optional): Human-readable park name
+  - `oldStatus` (optional): Previous entity status
+  - `newStatus` (optional): New entity status
+  - `oldWaitTime` (optional): Previous wait time
+  - `newWaitTime` (optional): New wait time
+  - `environment` (optional): APNS environment (defaults to device's environment)
+  - `timestamp` (optional): Notification timestamp (defaults to current time)
+  - `notificationId` (optional): Custom notification ID (auto-generated if not provided)
+  
+  **Success Response:**
+  ```json
+  {
+    "status": "Notification sent successfully",
+    "notificationId": "test-123",
+    "deviceToken": "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456"
   }
   ```
 
@@ -210,6 +286,8 @@ The project can also be built and run as a Docker container.
 
 - **Get Entity by ID** (`GET /api/entities/:id`)
   Returns a specific attraction's status
+
+### System
 
 - **Health Check** (`GET /health`)
   Returns server health status

@@ -10,13 +10,9 @@ type Database interface {
 	GetDeviceToken(token string) (*DeviceRegistration, error)
 	GetAllDevices() ([]DeviceRegistration, error)
 	DeleteDeviceToken(token string) error
-	CleanupOldDevices(maxAge time.Duration) error
-	StoreAPNSMessage(message APNSMessage) error
-	GetAPNSMessages(limit int) ([]APNSMessage, error)
-	StoreAPNSReceipt(receipt APNSReceipt) error
-	GetAPNSReceipts(limit int) ([]APNSReceipt, error)
-	GetSubscriptions(deviceToken string) ([]NotificationSubscription, error)
 	UpdateSubscriptions(deviceToken string, subscriptions []NotificationSubscription) error
+	GetDevicesSubscribedToEntity(entityID, parkID string) ([]DeviceRegistration, error)
+	SetDeviceNotificationState(deviceToken string, notificationsOn bool) error
 }
 
 // DeviceRegistration represents a registered device in the database
@@ -24,6 +20,7 @@ type DeviceRegistration struct {
 	DeviceToken string    `json:"deviceToken"`
 	AppVersion  string    `json:"appVersion"`
 	Environment string    `json:"environment"` // "development" or "production"
+	NotificationsOn bool  `json:"notificationsOn"`
 	LastUpdated time.Time `json:"lastUpdated"`
 	IOSVersion              *string `json:"iosVersion,omitempty"`
 	DeviceName              *string `json:"deviceName,omitempty"`
@@ -35,38 +32,9 @@ type DeviceRegistration struct {
 	DeviceModelIdentifier   *string `json:"deviceModelIdentifier,omitempty"`
 }
 
-// APNSMessage represents a tracked APNS message in the database
-type APNSMessage struct {
-	ID             int64     `json:"id"`
-	DeviceToken    string    `json:"deviceToken"`
-	Timestamp      time.Time `json:"timestamp"`
-	EntityID       string    `json:"entityId"`
-	EntityName     string    `json:"entityName"`
-	ParkID         string    `json:"parkId"`
-	OldStatus      string    `json:"oldStatus"`
-	NewStatus      string    `json:"newStatus"`
-	OldWaitTime    int       `json:"oldWaitTime"`
-	NewWaitTime    int       `json:"newWaitTime"`
-	Success        bool      `json:"success"`
-	ErrorReason    string    `json:"errorReason,omitempty"`
-	NotificationID string    `json:"notificationId"`
-	WebsocketTimestamp time.Time `json:"websocketTimestamp"` // UTC timestamp when websocket message was received
-}
 
-// APNSReceipt represents a client receipt of an APNS message
-type APNSReceipt struct {
-	ID          int64     `json:"id"`
-	DeviceToken string    `json:"deviceToken"`
-	ClientTime  time.Time `json:"clientTime"`
-	ServerTime  time.Time `json:"serverTime"`
-	EntityID    string    `json:"entityId"`
-	ParkID      string    `json:"parkId"`
-	OldStatus   string    `json:"oldStatus"`
-	NewStatus   string    `json:"newStatus"`
-	OldWaitTime int       `json:"oldWaitTime"`
-	NewWaitTime int       `json:"newWaitTime"`
-	NotificationID string `json:"notificationId"`
-}
+
+
 
 // RideSubscriptionUpdate represents the incoming JSON payload for updating subscriptions
 type RideSubscriptionUpdate struct {
@@ -89,3 +57,5 @@ type NotificationSubscription struct {
 	ParkID      string    `json:"parkId"`
 	Timestamp   time.Time `json:"timestamp"`
 } 
+
+ 

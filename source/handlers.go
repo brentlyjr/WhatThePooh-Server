@@ -27,11 +27,9 @@ func SetupRoutes(app *fiber.App, entityManager *EntityManager, wsClient *WebSock
 
 	// Subscription routes
 	app.Post("/api/update-ride-subscriptions", updateRideSubscriptionsHandler)
+	app.Post("/api/disable-subscriptions", disableSubscriptionsHandler)
 
-	// APNS Message tracking
-	app.Get("/api/apns-messages", getAPNSMessagesHandler)
-	app.Post("/api/apns-receipt", apnsReceiptHandler(entityManager))
-	app.Get("/api/apns-receipts", getAPNSReceiptsHandler)
+
 
 	// Metrics
 	app.Get("/api/metrics", metricsHandler(entityManager, wsClient))
@@ -69,44 +67,112 @@ func getEntityByIDHandler(entityManager *EntityManager) fiber.Handler {
 	}
 }
 
-// registerDeviceHandler handles device registration
+// registerDeviceHandler handles device registration with optional subscriptions
 func registerDeviceHandler(c *fiber.Ctx) error {
-	var registration DeviceRegistration
-	if err := c.BodyParser(&registration); err != nil {
+	var req struct {
+		DeviceRegistration
+		Subscriptions []NotificationSubscription `json:"subscriptions,omitempty"`
+	}
+	
+	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
 		})
 	}
 
 	// Set default environment if not provided
-	if registration.Environment == "" {
-		registration.Environment = "development"
+	if req.Environment == "" {
+		req.Environment = "development"
 	}
 
-	log.Printf("Received device registration: DeviceToken=%s, AppVersion=%s, Environment=%s, LastUpdated=%v",
-		registration.DeviceToken, registration.AppVersion, registration.Environment, registration.LastUpdated)
+	log.Printf("Received device registration: DeviceToken=%s, AppVersion=%s, Environment=%s, Subscriptions=%d, LastUpdated=%v",
+		req.DeviceToken, req.AppVersion, req.Environment, len(req.Subscriptions), req.LastUpdated)
 
-	if registration.DeviceToken == "" {
+	if req.DeviceToken == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Device token is required",
 		})
 	}
 
 	// Validate environment
-	if registration.Environment != "development" && registration.Environment != "production" {
+	if req.Environment != "development" && req.Environment != "production" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Environment must be 'development' or 'production'",
 		})
 	}
 
-	if err := db.StoreDeviceToken(registration); err != nil {
+	// Store the device
+	if err := db.StoreDeviceToken(req.DeviceRegistration); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
+	// If subscriptions provided, set them
+	if len(req.Subscriptions) > 0 {
+		now := time.Now().UTC()
+		for i := range req.Subscriptions {
+			req.Subscriptions[i].DeviceToken = req.DeviceToken
+			req.Subscriptions[i].Timestamp = now
+		}
+		
+		if err := db.UpdateSubscriptions(req.DeviceToken, req.Subscriptions); err != nil {
+			log.Printf("Failed to set initial subscriptions for device %s: %v", req.DeviceToken, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Device registered but failed to set subscriptions",
+			})
+		}
+	}
+
 	return c.JSON(fiber.Map{
 		"status": "Device registered successfully",
+		"subscriptionsCount": len(req.Subscriptions),
+	})
+}
+
+// disableSubscriptionsHandler disables notifications for a device
+func disableSubscriptionsHandler(c *fiber.Ctx) error {
+	var req struct {
+		DeviceToken string `json:"deviceToken"`
+	}
+	
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	if req.DeviceToken == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "deviceToken is required",
+		})
+	}
+
+	// Check if device exists
+	device, err := db.GetDeviceToken(req.DeviceToken)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to verify device",
+		})
+	}
+
+	if device == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Device not found",
+		})
+	}
+
+	// Disable notifications (keep subscriptions intact)
+	if err := db.SetDeviceNotificationState(req.DeviceToken, false); err != nil {
+		log.Printf("Failed to disable notifications for device %s: %v", req.DeviceToken, err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to disable notifications",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"status": "Notifications disabled successfully",
+		"deviceToken": req.DeviceToken,
 	})
 }
 
@@ -174,122 +240,9 @@ func deleteDeviceHandler(c *fiber.Ctx) error {
 	})
 }
 
-// getAPNSMessagesHandler returns recent APNS messages for debugging
-func getAPNSMessagesHandler(c *fiber.Ctx) error {
-	limit := 100 // Default limit
-	if limitParam := c.Query("limit"); limitParam != "" {
-		if parsedLimit := c.QueryInt("limit", 100); parsedLimit > 0 && parsedLimit <= 1000 {
-			limit = parsedLimit
-		}
-	}
 
-	messages, err := db.GetAPNSMessages(limit)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
 
-	return c.JSON(fiber.Map{
-		"messages": messages,
-		"count":    len(messages),
-		"limit":    limit,
-	})
-}
 
-// apnsReceiptHandler handles APNS receipt acknowledgments from clients
-func apnsReceiptHandler(entityManager *EntityManager) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-	var receiptData struct {
-		DeviceToken    string    `json:"deviceToken"`
-		ClientTime     time.Time `json:"clientTime"`
-		EntityID       string    `json:"entityId"`
-		ParkID         string    `json:"parkId"`
-		OldStatus      string    `json:"oldStatus"`
-		NewStatus      string    `json:"newStatus"`
-		OldWaitTime    int       `json:"oldWaitTime"`
-		NewWaitTime    int       `json:"newWaitTime"`
-		NotificationID string    `json:"notificationId"`
-	}
-
-	if err := c.BodyParser(&receiptData); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
-		})
-	}
-
-	// Validate required fields
-	if receiptData.DeviceToken == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Device token is required",
-		})
-	}
-
-	if receiptData.EntityID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Entity ID is required",
-		})
-	}
-
-	// Create receipt record
-	receipt := APNSReceipt{
-		DeviceToken:    receiptData.DeviceToken,
-		ClientTime:     receiptData.ClientTime,
-		ServerTime:     time.Now().UTC(),
-		EntityID:       receiptData.EntityID,
-		ParkID:         receiptData.ParkID,
-		OldStatus:      receiptData.OldStatus,
-		NewStatus:      receiptData.NewStatus,
-		OldWaitTime:    receiptData.OldWaitTime,
-		NewWaitTime:    receiptData.NewWaitTime,
-		NotificationID: receiptData.NotificationID,
-	}
-
-	// Store receipt in database
-	if err := db.StoreAPNSReceipt(receipt); err != nil {
-		log.Printf("Failed to store APNS receipt: %v", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to store receipt",
-		})
-	}
-
-	// Look up entity name for logging
-	entityName := receiptData.EntityID
-	if entity, exists := entityManager.GetEntity(receiptData.EntityID); exists {
-		entityName = entity.Name
-	}
-
-	log.Printf("APNS receipt stored for device %s, entity %s", receiptData.DeviceToken, entityName)
-
-	return c.JSON(fiber.Map{
-		"status":  "Receipt acknowledged successfully",
-		"receipt": receipt,
-	})
-	}
-}
-
-// getAPNSReceiptsHandler returns recent APNS receipts for debugging and monitoring
-func getAPNSReceiptsHandler(c *fiber.Ctx) error {
-	limit := 100 // Default limit
-	if limitParam := c.Query("limit"); limitParam != "" {
-		if parsedLimit := c.QueryInt("limit", 100); parsedLimit > 0 && parsedLimit <= 1000 {
-			limit = parsedLimit
-		}
-	}
-
-	receipts, err := db.GetAPNSReceipts(limit)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
-	return c.JSON(fiber.Map{
-		"receipts": receipts,
-		"count":    len(receipts),
-		"limit":    limit,
-	})
-}
 
 // metricsHandler returns server metrics
 func metricsHandler(entityManager *EntityManager, wsClient *WebSocketClient) fiber.Handler {
@@ -326,7 +279,7 @@ func metricsHandler(entityManager *EntityManager, wsClient *WebSocketClient) fib
 			"restarts":       GetReconnectionTimestamps(),
 			"events":         wsClient.GetEventStats(),
 			"statuses":       wsClient.GetStatusStats(),
-			"apns_messages":  GetAPNSMessageStats(),
+	
 			"server_start":   serverStartTime,
 		})
 	}
@@ -490,4 +443,4 @@ func updateRideSubscriptionsHandler(c *fiber.Ctx) error {
 		"parksCount": len(updateData.Subscriptions),
 		"timestamp": now,
 	})
-} 
+}

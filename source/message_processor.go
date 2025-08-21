@@ -15,13 +15,12 @@ func StartMessageProcessors() {
 		for msg := range statusCh {
 			log.Printf("🔔 STATUS CHANGE: Entity %s changed from %s to %s", msg.EntityName, msg.OldStatus, msg.NewStatus)
 
-			// 1. Get all registered devices.
-			// In a future state, this would get devices subscribed to this specific entity.
-			devices, err := db.GetAllDevices()
-			if err != nil {
-				log.Printf("Error getting devices for fan-out: %v", err)
-				continue
-			}
+					// 1. Get devices subscribed to this specific entity/park.
+		devices, err := db.GetDevicesSubscribedToEntity(msg.EntityID, msg.ParkID)
+		if err != nil {
+			log.Printf("Error getting devices subscribed to entity %s: %v", msg.EntityID, err)
+			continue
+		}
 
 			// if len(devices) == 0 {
 			// 	log.Printf("FAN-OUT: No devices found for entity %s", msg.EntityID)

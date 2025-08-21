@@ -48,14 +48,15 @@ func (s *SupabaseDB) StoreDeviceToken(registration DeviceRegistration) error {
 	now := time.Now().UTC()
 
 	query := `
-		INSERT INTO devices (device_token, app_version, environment, last_updated, 
+		INSERT INTO devices (device_token, app_version, environment, notifications_on, last_updated, 
 			ios_version, device_name, system_name, language, region, time_zone, 
 			device_model, device_model_identifier)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		ON CONFLICT (device_token) DO UPDATE SET
 			app_version = EXCLUDED.app_version,
 			environment = EXCLUDED.environment,
-			last_updated = $4,
+			notifications_on = EXCLUDED.notifications_on,
+			last_updated = $5,
 			ios_version = EXCLUDED.ios_version,
 			device_name = EXCLUDED.device_name,
 			system_name = EXCLUDED.system_name,
@@ -70,6 +71,7 @@ func (s *SupabaseDB) StoreDeviceToken(registration DeviceRegistration) error {
 		registration.DeviceToken,
 		registration.AppVersion,
 		registration.Environment,
+		registration.NotificationsOn,
 		now,
 		registration.IOSVersion,
 		registration.DeviceName,
@@ -91,7 +93,7 @@ func (s *SupabaseDB) StoreDeviceToken(registration DeviceRegistration) error {
 // GetDeviceToken retrieves a specific device token
 func (s *SupabaseDB) GetDeviceToken(token string) (*DeviceRegistration, error) {
 	query := `
-		SELECT device_token, app_version, environment, last_updated,
+		SELECT device_token, app_version, environment, notifications_on, last_updated,
 			ios_version, device_name, system_name, language, region, time_zone,
 			device_model, device_model_identifier
 		FROM devices
@@ -103,6 +105,7 @@ func (s *SupabaseDB) GetDeviceToken(token string) (*DeviceRegistration, error) {
 		&device.DeviceToken,
 		&device.AppVersion,
 		&device.Environment,
+		&device.NotificationsOn,
 		&device.LastUpdated,
 		&device.IOSVersion,
 		&device.DeviceName,
@@ -127,7 +130,7 @@ func (s *SupabaseDB) GetDeviceToken(token string) (*DeviceRegistration, error) {
 // GetAllDevices returns all registered devices
 func (s *SupabaseDB) GetAllDevices() ([]DeviceRegistration, error) {
 	query := `
-		SELECT device_token, app_version, environment, last_updated,
+		SELECT device_token, app_version, environment, notifications_on, last_updated,
 			ios_version, device_name, system_name, language, region, time_zone,
 			device_model, device_model_identifier
 		FROM devices
@@ -147,6 +150,7 @@ func (s *SupabaseDB) GetAllDevices() ([]DeviceRegistration, error) {
 			&device.DeviceToken,
 			&device.AppVersion,
 			&device.Environment,
+			&device.NotificationsOn,
 			&device.LastUpdated,
 			&device.IOSVersion,
 			&device.DeviceName,
@@ -178,197 +182,7 @@ func (s *SupabaseDB) DeleteDeviceToken(token string) error {
 	return nil
 }
 
-// CleanupOldDevices removes devices that haven't been updated in a while
-func (s *SupabaseDB) CleanupOldDevices(maxAge time.Duration) error {
-	cutoff := time.Now().UTC().Add(-maxAge)
-	query := `DELETE FROM devices WHERE last_updated < $1`
 
-	_, err := s.pool.Exec(context.Background(), query, cutoff)
-	if err != nil {
-		return fmt.Errorf("failed to cleanup old devices: %v", err)
-	}
-
-	return nil
-}
-
-// StoreAPNSMessage saves an APNS message in the database
-func (s *SupabaseDB) StoreAPNSMessage(message APNSMessage) error {
-	query := `
-		INSERT INTO apns_messages (
-			device_token, timestamp, entity_id, entity_name, park_id, old_status, new_status,
-			old_wait_time, new_wait_time, success, error_reason, notification_id, websocket_timestamp
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-	`
-
-	_, err := s.pool.Exec(context.Background(), query,
-		message.DeviceToken,
-		message.Timestamp,
-		message.EntityID,
-		message.EntityName,
-		message.ParkID,
-		message.OldStatus,
-		message.NewStatus,
-		message.OldWaitTime,
-		message.NewWaitTime,
-		message.Success,
-		message.ErrorReason,
-		message.NotificationID,
-		message.WebsocketTimestamp,
-	)
-
-	if err != nil {
-		return fmt.Errorf("failed to store APNS message: %v", err)
-	}
-
-	return nil
-}
-
-// GetAPNSMessages retrieves a limited number of APNS messages from the database
-func (s *SupabaseDB) GetAPNSMessages(limit int) ([]APNSMessage, error) {
-	query := `
-		SELECT id, device_token, timestamp, entity_id, entity_name, park_id, old_status, new_status,
-		       old_wait_time, new_wait_time, success, error_reason, notification_id, websocket_timestamp
-		FROM apns_messages
-		ORDER BY timestamp DESC
-		LIMIT $1
-	`
-
-	rows, err := s.pool.Query(context.Background(), query, limit)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query APNS messages: %v", err)
-	}
-	defer rows.Close()
-
-	var messages []APNSMessage
-	for rows.Next() {
-		var message APNSMessage
-		err := rows.Scan(
-			&message.ID,
-			&message.DeviceToken,
-			&message.Timestamp,
-			&message.EntityID,
-			&message.EntityName,
-			&message.ParkID,
-			&message.OldStatus,
-			&message.NewStatus,
-			&message.OldWaitTime,
-			&message.NewWaitTime,
-			&message.Success,
-			&message.ErrorReason,
-			&message.NotificationID,
-			&message.WebsocketTimestamp,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan APNS message row: %v", err)
-		}
-		messages = append(messages, message)
-	}
-
-	return messages, nil
-}
-
-// StoreAPNSReceipt saves an APNS receipt in the database
-func (s *SupabaseDB) StoreAPNSReceipt(receipt APNSReceipt) error {
-	query := `
-		INSERT INTO apns_receipts (
-			device_token, client_time, server_time, entity_id, park_id,
-			old_status, new_status, old_wait_time, new_wait_time, notification_id
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-	`
-
-	_, err := s.pool.Exec(context.Background(), query,
-		receipt.DeviceToken,
-		receipt.ClientTime,
-		receipt.ServerTime,
-		receipt.EntityID,
-		receipt.ParkID,
-		receipt.OldStatus,
-		receipt.NewStatus,
-		receipt.OldWaitTime,
-		receipt.NewWaitTime,
-		receipt.NotificationID,
-	)
-
-	if err != nil {
-		return fmt.Errorf("failed to store APNS receipt: %v", err)
-	}
-
-	return nil
-}
-
-// GetAPNSReceipts retrieves a limited number of APNS receipts from the database
-func (s *SupabaseDB) GetAPNSReceipts(limit int) ([]APNSReceipt, error) {
-	query := `
-		SELECT id, device_token, client_time, server_time, entity_id, park_id,
-		       old_status, new_status, old_wait_time, new_wait_time, notification_id
-		FROM apns_receipts
-		ORDER BY server_time DESC
-		LIMIT $1
-	`
-
-	rows, err := s.pool.Query(context.Background(), query, limit)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query APNS receipts: %v", err)
-	}
-	defer rows.Close()
-
-	var receipts []APNSReceipt
-	for rows.Next() {
-		var receipt APNSReceipt
-		err := rows.Scan(
-			&receipt.ID,
-			&receipt.DeviceToken,
-			&receipt.ClientTime,
-			&receipt.ServerTime,
-			&receipt.EntityID,
-			&receipt.ParkID,
-			&receipt.OldStatus,
-			&receipt.NewStatus,
-			&receipt.OldWaitTime,
-			&receipt.NewWaitTime,
-			&receipt.NotificationID,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan APNS receipt row: %v", err)
-		}
-		receipts = append(receipts, receipt)
-	}
-
-	return receipts, nil
-}
-
-// GetSubscriptions retrieves all subscriptions for a specific device token
-func (s *SupabaseDB) GetSubscriptions(deviceToken string) ([]NotificationSubscription, error) {
-	query := `
-		SELECT device_token, entity_id, park_id, timestamp
-		FROM notification_subscriptions
-		WHERE device_token = $1
-		ORDER BY park_id, entity_id
-	`
-
-	rows, err := s.pool.Query(context.Background(), query, deviceToken)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query subscriptions: %v", err)
-	}
-	defer rows.Close()
-
-	var subscriptions []NotificationSubscription
-	for rows.Next() {
-		var sub NotificationSubscription
-		err := rows.Scan(
-			&sub.DeviceToken,
-			&sub.EntityID,
-			&sub.ParkID,
-			&sub.Timestamp,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan subscription row: %v", err)
-		}
-		subscriptions = append(subscriptions, sub)
-	}
-
-	return subscriptions, nil
-}
 
 // UpdateSubscriptions updates subscriptions for a device using smart diffing
 func (s *SupabaseDB) UpdateSubscriptions(deviceToken string, newSubscriptions []NotificationSubscription) error {
@@ -542,6 +356,69 @@ func calculateSubscriptionDiff(current, new []NotificationSubscription) (toAdd, 
 	}
 
 	return toAdd, toRemove
+}
+
+// GetDevicesSubscribedToEntity returns all devices that are subscribed to a specific entity/park
+func (s *SupabaseDB) GetDevicesSubscribedToEntity(entityID, parkID string) ([]DeviceRegistration, error) {
+	query := `
+		SELECT DISTINCT d.device_token, d.app_version, d.environment, d.notifications_on, d.last_updated,
+			d.ios_version, d.device_name, d.system_name, d.language, d.region, d.time_zone,
+			d.device_model, d.device_model_identifier
+		FROM devices d
+		JOIN notification_subscriptions ns ON d.device_token = ns.device_token
+		WHERE ns.entity_id = $1 AND ns.park_id = $2 AND d.notifications_on = true
+		ORDER BY d.last_updated DESC
+	`
+
+	rows, err := s.pool.Query(context.Background(), query, entityID, parkID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query devices subscribed to entity: %v", err)
+	}
+	defer rows.Close()
+
+	var devices []DeviceRegistration
+	for rows.Next() {
+		var device DeviceRegistration
+		err := rows.Scan(
+			&device.DeviceToken,
+			&device.AppVersion,
+			&device.Environment,
+			&device.NotificationsOn,
+			&device.LastUpdated,
+			&device.IOSVersion,
+			&device.DeviceName,
+			&device.SystemName,
+			&device.Language,
+			&device.Region,
+			&device.TimeZone,
+			&device.DeviceModel,
+			&device.DeviceModelIdentifier,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan device row: %v", err)
+		}
+		devices = append(devices, device)
+	}
+
+	return devices, nil
+}
+
+
+
+// SetDeviceNotificationState sets the notification state for a device
+func (s *SupabaseDB) SetDeviceNotificationState(deviceToken string, notificationsOn bool) error {
+	query := `
+		UPDATE devices 
+		SET notifications_on = $2, last_updated = NOW()
+		WHERE device_token = $1
+	`
+
+	_, err := s.pool.Exec(context.Background(), query, deviceToken, notificationsOn)
+	if err != nil {
+		return fmt.Errorf("failed to set notification state: %v", err)
+	}
+
+	return nil
 }
 
 // Close closes the database connection pool
