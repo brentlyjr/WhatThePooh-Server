@@ -408,24 +408,15 @@ func updateRideSubscriptionsHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	// Convert the grouped subscriptions into individual subscription records
-	var subscriptions []NotificationSubscription
+	// Set timestamps for all subscriptions
 	now := time.Now().UTC()
-	
-	for _, parkSub := range updateData.Subscriptions {
-		for _, entityID := range parkSub.EntityIDs {
-			subscription := NotificationSubscription{
-				DeviceToken: updateData.DeviceToken,
-				EntityID:    entityID,
-				ParkID:      parkSub.ParkID,
-				Timestamp:   now,
-			}
-			subscriptions = append(subscriptions, subscription)
-		}
+	for i := range updateData.Subscriptions {
+		updateData.Subscriptions[i].DeviceToken = updateData.DeviceToken
+		updateData.Subscriptions[i].Timestamp = now
 	}
 
 	// Update subscriptions using smart diffing
-	if err := db.UpdateSubscriptions(updateData.DeviceToken, subscriptions); err != nil {
+	if err := db.UpdateSubscriptions(updateData.DeviceToken, updateData.Subscriptions); err != nil {
 		log.Printf("Failed to update subscriptions for device %s: %v", updateData.DeviceToken, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to update subscriptions",
@@ -433,14 +424,13 @@ func updateRideSubscriptionsHandler(c *fiber.Ctx) error {
 	}
 
 	// Log successful update
-	totalSubscriptions := len(subscriptions)
-	log.Printf("Successfully updated subscriptions for device %s: %d total subscriptions across %d parks", 
-		updateData.DeviceToken, totalSubscriptions, len(updateData.Subscriptions))
+	totalSubscriptions := len(updateData.Subscriptions)
+	log.Printf("Successfully updated subscriptions for device %s: %d total subscriptions", 
+		updateData.DeviceToken, totalSubscriptions)
 
 	return c.JSON(fiber.Map{
 		"status": "Subscriptions updated successfully",
 		"totalSubscriptions": totalSubscriptions,
-		"parksCount": len(updateData.Subscriptions),
 		"timestamp": now,
 	})
 }

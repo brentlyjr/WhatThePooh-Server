@@ -38,16 +38,10 @@ type DeviceRegistration struct {
 
 // RideSubscriptionUpdate represents the incoming JSON payload for updating subscriptions
 type RideSubscriptionUpdate struct {
-	DeviceToken   string             `json:"deviceToken"`
-	SchemaVersion int                `json:"schemaVersion"`
-	Timestamp     time.Time          `json:"timestamp"`
-	Subscriptions []ParkSubscription `json:"subscriptions"`
-}
-
-// ParkSubscription represents subscriptions grouped by park
-type ParkSubscription struct {
-	ParkID    string   `json:"parkId"`
-	EntityIDs []string `json:"entityIds"`
+	DeviceToken   string                    `json:"deviceToken"`
+	SchemaVersion int                       `json:"schemaVersion"`
+	Timestamp     time.Time                 `json:"timestamp"`
+	Subscriptions []NotificationSubscription `json:"subscriptions"`
 }
 
 // NotificationSubscription represents a database subscription record

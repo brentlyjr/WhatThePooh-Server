@@ -2,6 +2,14 @@
 
 A Go-based server application for managing theme park attraction data and notifications.
 
+## Recent Changes
+
+### API Simplification (Latest)
+- **Simplified subscription format**: Both `/api/register-device` and `/api/update-ride-subscriptions` now use a flat subscription format instead of grouping by park
+- **Before**: `{"parkId": "...", "entityIds": ["ride1", "ride2"]}`
+- **After**: `{"parkId": "...", "entityId": "ride1"}`, `{"parkId": "...", "entityId": "ride2"}`
+- This change simplifies both client and server code while maintaining the same functionality
+
 ## Prerequisites
 
 - Go 1.24.3 or later
@@ -165,19 +173,27 @@ The project can also be built and run as a Docker container.
     "subscriptions": [
       {
         "parkId": "7340550b-c14d-4def-80bb-acdb51d49a66",
-        "entityIds": [
-          "Disneyland_DisneylandRailroad",
-          "Disneyland_HauntedMansion",
-          "Disneyland_PiratesoftheCaribbean",
-          "Disneyland_SpaceMountain"
-        ]
+        "entityId": "Disneyland_DisneylandRailroad"
+      },
+      {
+        "parkId": "7340550b-c14d-4def-80bb-acdb51d49a66",
+        "entityId": "Disneyland_HauntedMansion"
+      },
+      {
+        "parkId": "7340550b-c14d-4def-80bb-acdb51d49a66",
+        "entityId": "Disneyland_PiratesoftheCaribbean"
+      },
+      {
+        "parkId": "7340550b-c14d-4def-80bb-acdb51d49a66",
+        "entityId": "Disneyland_SpaceMountain"
       },
       {
         "parkId": "832fcd51-ea19-4e77-85c7-75d5843b127c",
-        "entityIds": [
-          "DisneyCaliforniaAdventure_GuardiansoftheGalaxyMissionBreakout",
-          "DisneyCaliforniaAdventure_RadiatorSpringsRacers"
-        ]
+        "entityId": "DisneyCaliforniaAdventure_GuardiansoftheGalaxyMissionBreakout"
+      },
+      {
+        "parkId": "832fcd51-ea19-4e77-85c7-75d5843b127c",
+        "entityId": "DisneyCaliforniaAdventure_RadiatorSpringsRacers"
       }
     ]
   }
@@ -187,16 +203,15 @@ The project can also be built and run as a Docker container.
   - `deviceToken` (required): The APNS device token (must be registered first)
   - `schemaVersion` (required): API schema version (currently 1)
   - `timestamp` (required): ISO 8601 UTC timestamp when snapshot was taken
-  - `subscriptions` (required): Array of park subscription objects (empty array = unsubscribe from all)
+  - `subscriptions` (required): Array of individual subscription objects (empty array = unsubscribe from all)
     - `parkId` (required): Unique identifier for the theme park
-    - `entityIds` (required): Array of attraction/entity IDs within that park
+    - `entityId` (required): Individual attraction/entity ID within that park
   
   **Success Response:**
   ```json
   {
     "status": "Subscriptions updated successfully",
     "totalSubscriptions": 6,
-    "parksCount": 2,
     "timestamp": "2025-01-27T15:42:33.123Z"
   }
   ```
