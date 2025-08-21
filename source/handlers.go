@@ -1,11 +1,13 @@
 package main
 
 import (
+    "fmt"
 	"log"
 	"runtime"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+    "github.com/google/uuid"
 )
 
 // SetupRoutes configures all API routes
@@ -34,10 +36,8 @@ func SetupRoutes(app *fiber.App, entityManager *EntityManager, wsClient *WebSock
 	// Metrics
 	app.Get("/api/metrics", metricsHandler(entityManager, wsClient))
 
-	// Test routes
-	app.Post("/api/test/status-change", testStatusChangeHandler)
-	app.Post("/api/test/status-change-custom", testStatusChangeCustomHandler)
-	app.Post("/api/test/device-token", testDeviceTokenHandler)
+    // APNS send route
+    app.Post("/api/notifications/send", sendAPNSNotificationHandler)
 }
 
 // healthHandler handles health check requests
@@ -332,109 +332,93 @@ func metricsHandler(entityManager *EntityManager, wsClient *WebSocketClient) fib
 	}
 }
 
-// testStatusChangeHandler simulates a status change
-func testStatusChangeHandler(c *fiber.Ctx) error {
-	msg := StatusChangeMessage{
-		EntityID:   "f0d4b531-e291-471b-9527-00410c2bbd65",
-		EntityName: "Test Attraction",
-		ParkID:     "ca888437-ebb4-4d50-aed2-d227f7096968",
-		OldStatus:  "DOWN",
-		NewStatus:  "OPERATING",
-		Timestamp:  time.Now(),
-	}
+// sendAPNSNotificationHandler sends a full APNS notification to a specific device token
+func sendAPNSNotificationHandler(c *fiber.Ctx) error {
+    var req NotificationRequest
+    if err := c.BodyParser(&req); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": "Invalid request body",
+        })
+    }
 
-	messageBus.PublishStatus(msg)
+    if req.DeviceToken == "" {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": "deviceToken is required",
+        })
+    }
 
-	return c.JSON(fiber.Map{
-		"status":    "Test status change published",
-		"message":   msg,
-		"timestamp": time.Now(),
-	})
-}
+    // Validate token format
+    if !ValidateDeviceToken(req.DeviceToken) {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": "invalid device token format",
+        })
+    }
 
-// testStatusChangeCustomHandler simulates a custom status change
-func testStatusChangeCustomHandler(c *fiber.Ctx) error {
-	var testData struct {
-		EntityID   string `json:"entityId"`
-		EntityName string `json:"entityName"`
-		ParkID     string `json:"parkId"`
-		OldStatus  string `json:"oldStatus"`
-		NewStatus  string `json:"newStatus"`
-	}
+    // Default environment: from DB if present, else development
+    if req.Environment == "" {
+        if device, err := db.GetDeviceToken(req.DeviceToken); err == nil && device != nil && device.Environment != "" {
+            req.Environment = device.Environment
+        } else {
+            req.Environment = "development"
+        }
+    }
 
-	if err := c.BodyParser(&testData); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
-		})
-	}
+    // Validate environment value if provided
+    if req.Environment != "development" && req.Environment != "production" {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": "environment must be 'development' or 'production'",
+        })
+    }
 
-	// Set default entity name if not provided
-	if testData.EntityName == "" {
-		testData.EntityName = "Unknown Attraction"
-	}
+    // Ensure timestamp
+    if req.Timestamp.IsZero() {
+        req.Timestamp = time.Now().UTC()
+    }
 
-	msg := StatusChangeMessage{
-		EntityID:   testData.EntityID,
-		EntityName: testData.EntityName,
-		ParkID:     testData.ParkID,
-		OldStatus:  EntityStatus(testData.OldStatus),
-		NewStatus:  EntityStatus(testData.NewStatus),
-		Timestamp:  time.Now(),
-	}
+    // Provide sensible defaults for title/message if not supplied
+    if req.Title == "" {
+        if req.ParkID != "" {
+            req.Title = getParkName(req.ParkID)
+        } else {
+            req.Title = "Notification"
+        }
+    }
+    if req.Message == "" {
+        if req.EntityName != "" && req.NewStatus != "" {
+            req.Message = fmt.Sprintf("%s is now %s", req.EntityName, req.NewStatus)
+        } else {
+            req.Message = "Test notification"
+        }
+    }
 
-	messageBus.PublishStatus(msg)
+    // Ensure a notification ID so we can echo it back
+    if req.NotificationID == "" {
+        req.NotificationID = uuid.New().String()
+    }
 
-	return c.JSON(fiber.Map{
-		"status":    "Custom test status change published",
-		"message":   msg,
-		"timestamp": time.Now(),
-	})
-}
+    if err := SendPushNotification(req); err != nil {
+        return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{
+            "error":   "Failed to send APNS notification",
+            "details": err.Error(),
+        })
+    }
 
-// testDeviceTokenHandler handles device token testing with environment specification
-func testDeviceTokenHandler(c *fiber.Ctx) error {
-	var testData struct {
-		DeviceToken string `json:"deviceToken"`
-		Environment string `json:"environment"` // "development" or "production"
-	}
-
-	if err := c.BodyParser(&testData); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
-		})
-	}
-
-	if testData.DeviceToken == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Device token is required",
-		})
-	}
-
-	// Set default environment if not provided
-	if testData.Environment == "" {
-		testData.Environment = "development"
-	}
-
-	// Validate environment
-	if testData.Environment != "development" && testData.Environment != "production" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Environment must be 'development' or 'production'",
-		})
-	}
-
-	// Test the device token with the specified environment
-	if err := TestDeviceTokenWithDetails(testData.DeviceToken, testData.Environment); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error":   "Device token test failed",
-			"details": err.Error(),
-		})
-	}
-
-	return c.JSON(fiber.Map{
-		"status":      "Device token test successful",
-		"deviceToken": testData.DeviceToken,
-		"environment": testData.Environment,
-	})
+    return c.JSON(fiber.Map{
+        "status":          "sent",
+        "deviceToken":     req.DeviceToken,
+        "environment":     req.Environment,
+        "notificationId":  req.NotificationID,
+        "title":           req.Title,
+        "message":         req.Message,
+        "entityId":        req.EntityID,
+        "entityName":      req.EntityName,
+        "parkId":          req.ParkID,
+        "oldStatus":       req.OldStatus,
+        "newStatus":       req.NewStatus,
+        "oldWaitTime":     req.OldWaitTime,
+        "newWaitTime":     req.NewWaitTime,
+        "timestamp":       req.Timestamp,
+    })
 }
 
 // updateRideSubscriptionsHandler handles updating ride subscriptions for a device

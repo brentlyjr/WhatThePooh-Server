@@ -252,21 +252,24 @@ func SendPushNotification(req NotificationRequest) error {
 	// Get the appropriate APNS client based on the environment
 	client := getAPNSClient(req.Environment)
 	
-	notification := &apns2.Notification{
-		DeviceToken: req.DeviceToken,
-		Topic:       os.Getenv("APNS_BUNDLE_ID"),
-		Payload: payload.NewPayload().
-			AlertTitle(req.Title).
-			AlertBody(req.Message).
-			Custom("entityId", req.EntityID).
-			Custom("parkId", req.ParkID).
-			Custom("oldStatus", req.OldStatus).
-			Custom("newStatus", req.NewStatus).
-			Custom("oldWaitTime", req.OldWaitTime).
-			Custom("newWaitTime", req.NewWaitTime).
-			Custom("notificationId", req.NotificationID).
-			Custom("timestamp", req.Timestamp.Format(time.RFC3339)),
-	}
+    notification := &apns2.Notification{
+        DeviceToken: req.DeviceToken,
+        Topic:       os.Getenv("APNS_BUNDLE_ID"),
+        Payload: payload.NewPayload().
+            AlertTitle(req.Title).
+            AlertBody(req.Message).
+            MutableContent().
+            Custom("entityId", req.EntityID).
+            Custom("entityName", req.EntityName).
+            Custom("parkId", req.ParkID).
+            Custom("parkName", getParkName(req.ParkID)).
+            Custom("oldStatus", req.OldStatus).
+            Custom("newStatus", req.NewStatus).
+            Custom("oldWaitTime", req.OldWaitTime).
+            Custom("newWaitTime", req.NewWaitTime).
+            Custom("notificationId", req.NotificationID).
+            Custom("timestamp", req.Timestamp.Format(time.RFC3339)),
+    }
 
 	// Create APNS message tracking record
 	apnsMessage := APNSMessage{
@@ -397,18 +400,20 @@ func apnsSender(id int) {
 		}
 
 		// Create the payload
-		payload := payload.NewPayload().
-			AlertTitle(getParkName(req.ParkID)).
-			AlertBody(req.EntityName + " is now " + req.NewStatus).
-			MutableContent().
-			Custom("entityId", req.EntityID).
-			Custom("parkId", req.ParkID).
-			Custom("oldStatus", req.OldStatus).
-			Custom("newStatus", req.NewStatus).
-			Custom("oldWaitTime", req.OldWaitTime).
-			Custom("newWaitTime", req.NewWaitTime).
-			Custom("notificationId", req.NotificationID).
-			Custom("timestamp", req.Timestamp.Format(time.RFC3339))
+		        payload := payload.NewPayload().
+            AlertTitle(getParkName(req.ParkID)).
+            AlertBody(req.EntityName + " is now " + req.NewStatus).
+            MutableContent().
+            Custom("entityId", req.EntityID).
+            Custom("entityName", req.EntityName).
+            Custom("parkId", req.ParkID).
+            Custom("parkName", getParkName(req.ParkID)).
+            Custom("oldStatus", req.OldStatus).
+            Custom("newStatus", req.NewStatus).
+            Custom("oldWaitTime", req.OldWaitTime).
+            Custom("newWaitTime", req.NewWaitTime).
+            Custom("notificationId", req.NotificationID).
+            Custom("timestamp", req.Timestamp.Format(time.RFC3339))
 
 		notification := &apns2.Notification{
 			DeviceToken: req.DeviceToken,
