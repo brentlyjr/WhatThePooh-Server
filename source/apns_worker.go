@@ -258,6 +258,7 @@ func SendPushNotification(req NotificationRequest) error {
         Payload: payload.NewPayload().
             AlertTitle(req.Title).
             AlertBody(req.Message).
+            Sound("default").
             MutableContent().
             Custom("entityId", req.EntityID).
             Custom("entityName", req.EntityName).
@@ -367,6 +368,7 @@ func apnsSender(id int) {
 		        payload := payload.NewPayload().
             AlertTitle(getParkName(req.ParkID)).
             AlertBody(req.EntityName + " is now " + req.NewStatus).
+            Sound("default").
             MutableContent().
             Custom("entityId", req.EntityID).
             Custom("entityName", req.EntityName).

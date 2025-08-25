@@ -85,8 +85,8 @@ func registerDeviceHandler(c *fiber.Ctx) error {
 		req.Environment = "development"
 	}
 
-	log.Printf("Received device registration: DeviceToken=%s, AppVersion=%s, Environment=%s, Subscriptions=%d, LastUpdated=%v",
-		req.DeviceToken, req.AppVersion, req.Environment, len(req.Subscriptions), req.LastUpdated)
+	log.Printf("Received device registration: DeviceToken=%s, AppVersion=%s, Environment=%s, NotificationsOn=%t, Subscriptions=%d, LastUpdated=%v",
+		req.DeviceToken, req.AppVersion, req.Environment, req.NotificationsOn, len(req.Subscriptions), req.LastUpdated)
 
 	if req.DeviceToken == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
