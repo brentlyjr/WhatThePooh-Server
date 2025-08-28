@@ -24,6 +24,7 @@ func SetupRoutes(app *fiber.App, entityManager *EntityManager, wsClient *WebSock
 	app.Get("/api/devices", getAllDevicesHandler)
 	app.Get("/api/devices/:token/exists", checkDeviceExistsHandler)
 	app.Delete("/api/devices/:token", deleteDeviceHandler)
+	app.Post("/api/devices/:token/enable-notifications", enableNotificationsHandler)
 
 	// Subscription routes
 	app.Post("/api/update-ride-subscriptions", updateRideSubscriptionsHandler)
@@ -101,7 +102,7 @@ func registerDeviceHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	// Store the device
+	// Store the device (this will automatically re-enable notifications if the device was previously disabled)
 	if err := db.StoreDeviceToken(req.DeviceRegistration); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -237,6 +238,38 @@ func deleteDeviceHandler(c *fiber.Ctx) error {
 	
 	return c.JSON(fiber.Map{
 		"status": "Device deleted successfully",
+	})
+}
+
+// enableNotificationsHandler enables notifications for a device
+func enableNotificationsHandler(c *fiber.Ctx) error {
+	token := c.Params("token")
+	
+	// Check if device exists
+	device, err := db.GetDeviceToken(token)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Error checking device existence",
+		})
+	}
+	
+	if device == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "No device found with that token",
+		})
+	}
+	
+	// Enable notifications
+	if err := db.SetDeviceNotificationState(token, true); err != nil {
+		log.Printf("Failed to enable notifications for device %s: %v", token, err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to enable notifications",
+		})
+	}
+	
+	return c.JSON(fiber.Map{
+		"status": "Notifications enabled successfully",
+		"deviceToken": token,
 	})
 }
 

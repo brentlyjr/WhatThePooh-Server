@@ -120,6 +120,8 @@ The project can also be built and run as a Docker container.
     "subscriptionsCount": 1
   }
   ```
+  
+  **Note:** If a device was previously disabled due to APNS errors (e.g., 410 Unregistered), re-registering will automatically re-enable notifications and restore any existing subscriptions.
 
 - **Get All Devices** (`GET /api/devices`)
   Returns a list of all registered devices (admin endpoint)
@@ -159,6 +161,17 @@ The project can also be built and run as a Docker container.
 
 - **Delete Device** (`DELETE /api/devices/:token`)
   Removes a device token from the database
+
+- **Enable Notifications** (`POST /api/devices/:token/enable-notifications`)
+  Re-enables notifications for a device that was previously disabled due to APNS errors (e.g., 410 Unregistered)
+  
+  **Success Response:**
+  ```json
+  {
+    "status": "Notifications enabled successfully",
+    "deviceToken": "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456"
+  }
+  ```
 
 ### Subscription Management
 

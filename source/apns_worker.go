@@ -184,7 +184,7 @@ func TestDeviceTokenWithDetails(deviceToken string, environment string) error {
 		case apns2.ReasonBadDeviceToken:
 			log.Printf("  - Bad Device Token: Token format is invalid or device is not registered")
 		case apns2.ReasonUnregistered:
-			log.Printf("  - Unregistered: Device token is no longer valid for the topic")
+			log.Printf("  - Unregistered: Device token is no longer valid for the topic (would disable notifications)")
 		case apns2.ReasonBadTopic:
 			log.Printf("  - Bad Topic: Topic is invalid or not authorized")
 		case apns2.ReasonTopicDisallowed:
@@ -293,7 +293,7 @@ func SendPushNotification(req NotificationRequest) error {
 		case apns2.ReasonBadDeviceToken:
 			log.Printf("  - Error Type: Bad Device Token (Token format is invalid or device is not registered)")
 		case apns2.ReasonUnregistered:
-			log.Printf("  - Error Type: Unregistered (Device token is no longer valid for the topic)")
+			log.Printf("  - Error Type: Unregistered (Device token is no longer valid for the topic - will disable notifications)")
 		case apns2.ReasonBadTopic:
 			log.Printf("  - Error Type: Bad Topic (Topic is invalid or not authorized)")
 		case apns2.ReasonTopicDisallowed:
@@ -322,12 +322,12 @@ func SendPushNotification(req NotificationRequest) error {
 		
 
 		
-		// If the token is invalid, remove it from the database
+		// If the token is invalid or unregistered, disable notifications for the device
 		if res.Reason == apns2.ReasonBadDeviceToken || res.Reason == apns2.ReasonUnregistered {
-			log.Printf("Removing invalid device token: %s (Reason: %s, Status: %d)", req.DeviceToken, res.Reason, res.StatusCode)
-			// It's good practice to handle the error from deletion
-			if delErr := db.DeleteDeviceToken(req.DeviceToken); delErr != nil {
-				log.Printf("Error removing device token %s: %v", req.DeviceToken, delErr)
+			log.Printf("Disabling notifications for invalid device token: %s (Reason: %s, Status: %d)", req.DeviceToken, res.Reason, res.StatusCode)
+			// Disable notifications but keep the device record and subscriptions intact
+			if disableErr := db.SetDeviceNotificationState(req.DeviceToken, false); disableErr != nil {
+				log.Printf("Error disabling notifications for device token %s: %v", req.DeviceToken, disableErr)
 			}
 		}
 		return fmt.Errorf("push failed: %s", res.Reason)
@@ -422,7 +422,7 @@ func apnsSender(id int) {
 			case apns2.ReasonBadDeviceToken:
 				log.Printf("[Worker %d]   - Error Type: Bad Device Token (Token format is invalid or device is not registered)", id)
 			case apns2.ReasonUnregistered:
-				log.Printf("[Worker %d]   - Error Type: Unregistered (Device token is no longer valid for the topic)", id)
+				log.Printf("[Worker %d]   - Error Type: Unregistered (Device token is no longer valid for the topic - will disable notifications)", id)
 			case apns2.ReasonBadTopic:
 				log.Printf("[Worker %d]   - Error Type: Bad Topic (Topic is invalid or not authorized)", id)
 			case apns2.ReasonTopicDisallowed:
@@ -451,11 +451,12 @@ func apnsSender(id int) {
 			
 
 			
-			// If the token is invalid or unregistered, remove it from our database
+			// If the token is invalid or unregistered, disable notifications for the device
 			if res.Reason == apns2.ReasonBadDeviceToken || res.Reason == apns2.ReasonUnregistered {
-				log.Printf("[Worker %d] Removing invalid device token: %s (Reason: %s, Status: %d)", id, req.DeviceToken, res.Reason, res.StatusCode)
-				if delErr := db.DeleteDeviceToken(req.DeviceToken); delErr != nil {
-					log.Printf("[Worker %d] Error removing device token %s: %v", id, req.DeviceToken, delErr)
+				log.Printf("[Worker %d] Disabling notifications for invalid device token: %s (Reason: %s, Status: %d)", id, req.DeviceToken, res.Reason, res.StatusCode)
+				// Disable notifications but keep the device record and subscriptions intact
+				if disableErr := db.SetDeviceNotificationState(req.DeviceToken, false); disableErr != nil {
+					log.Printf("[Worker %d] Error disabling notifications for device token %s: %v", id, req.DeviceToken, disableErr)
 				}
 			}
 		}
