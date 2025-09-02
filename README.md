@@ -258,6 +258,29 @@ The project can also be built and run as a Docker container.
   }
   ```
 
+### Cache Management
+
+- **Expire Cache** (`POST /api/cache/expire`)
+  Expires the server's device cache, forcing it to reload all device data from the database on the next request. This is useful when you make manual changes to the devices table (e.g., updating the `notifications_on` column) and want the server to pick up those changes immediately.
+  
+  **No request body required**
+  
+  **Success Response:**
+  ```json
+  {
+    "status": "Cache expired successfully",
+    "timestamp": "2025-01-27T15:42:33.123Z"
+  }
+  ```
+  
+  **Usage Scenarios:**
+  - After manually updating `notifications_on` column in the database
+  - After bulk updates to device settings
+  - When you want to ensure the server has the latest device data
+  - Before sending APNS notifications to ensure up-to-date device states
+  
+  **Note:** This endpoint clears all cached device data and reloads from the database. The next APNS message will use the fresh data.
+
 ### Push Notifications
 
 - **Send Push Notification** (`POST /api/notifications/send`)
