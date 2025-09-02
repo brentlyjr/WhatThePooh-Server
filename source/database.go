@@ -13,6 +13,7 @@ type Database interface {
 	UpdateSubscriptions(deviceToken string, subscriptions []NotificationSubscription) error
 	GetDevicesSubscribedToEntity(entityID, parkID string) ([]DeviceRegistration, error)
 	SetDeviceNotificationState(deviceToken string, notificationsOn bool) error
+	ExpireCache() error
 }
 
 // DeviceRegistration represents a registered device in the database

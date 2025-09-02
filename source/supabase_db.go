@@ -427,4 +427,11 @@ func (s *SupabaseDB) Close() error {
 		s.pool.Close()
 	}
 	return nil
+}
+
+// ExpireCache is a no-op for direct database implementations
+func (s *SupabaseDB) ExpireCache() error {
+	// Direct database implementations don't have their own cache
+	// This method is only used by the CachedDB wrapper
+	return nil
 } 

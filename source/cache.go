@@ -19,7 +19,7 @@ func NewCachedDB(db Database) *CachedDB {
 	}
 	
 	// Pre-fill cache from database
-	if err := cachedDB.LoadFromDatabase(); err != nil {
+	if err := cachedDB.LoadFromDatabase(true); err != nil {
 		// Log error but don't fail startup
 		log.Printf("Warning: Failed to pre-fill cache from database: %v", err)
 	}
@@ -28,14 +28,17 @@ func NewCachedDB(db Database) *CachedDB {
 }
 
 // LoadFromDatabase loads all devices from the database into the cache
-func (c *CachedDB) LoadFromDatabase() error {
+// If shouldLock is true, it will acquire the lock. If false, it assumes the caller already holds the lock.
+func (c *CachedDB) LoadFromDatabase(shouldLock bool) error {
 	devices, err := c.db.GetAllDevices()
 	if err != nil {
 		return err
 	}
 
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	if shouldLock {
+		c.mu.Lock()
+		defer c.mu.Unlock()
+	}
 
 	for _, device := range devices {
 		c.cache.Store(device.DeviceToken, device)
@@ -165,4 +168,16 @@ func (c *CachedDB) SetDeviceNotificationState(deviceToken string, notificationsO
 	}
 
 	return nil
+}
+
+// ExpireCache clears all cached data and reloads from the database
+func (c *CachedDB) ExpireCache() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	
+	// Clear all cached data
+	c.cache = sync.Map{}
+	
+	// Reload from database
+	return c.LoadFromDatabase(false)
 } 

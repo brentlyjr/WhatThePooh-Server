@@ -30,7 +30,8 @@ func SetupRoutes(app *fiber.App, entityManager *EntityManager, wsClient *WebSock
 	app.Post("/api/update-ride-subscriptions", updateRideSubscriptionsHandler)
 	app.Post("/api/disable-subscriptions", disableSubscriptionsHandler)
 
-
+	// Cache management
+	app.Post("/api/cache/expire", expireCacheHandler)
 
 	// Metrics
 	app.Get("/api/metrics", metricsHandler(entityManager, wsClient))
@@ -465,5 +466,24 @@ func updateRideSubscriptionsHandler(c *fiber.Ctx) error {
 		"status": "Subscriptions updated successfully",
 		"totalSubscriptions": totalSubscriptions,
 		"timestamp": now,
+	})
+}
+
+// expireCacheHandler expires the cache by clearing all cached data and reloading from database
+func expireCacheHandler(c *fiber.Ctx) error {
+	log.Printf("Cache expiration requested")
+	
+	if err := db.ExpireCache(); err != nil {
+		log.Printf("Failed to expire cache: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to expire cache",
+			"details": err.Error(),
+		})
+	}
+	
+	log.Printf("Cache expired successfully")
+	return c.JSON(fiber.Map{
+		"status": "Cache expired successfully",
+		"timestamp": time.Now().UTC(),
 	})
 }
