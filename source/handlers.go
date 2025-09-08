@@ -110,20 +110,22 @@ func registerDeviceHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	// If subscriptions provided, set them
-	if len(req.Subscriptions) > 0 {
-		now := time.Now().UTC()
-		for i := range req.Subscriptions {
-			req.Subscriptions[i].DeviceToken = req.DeviceToken
-			req.Subscriptions[i].Timestamp = now
-		}
-		
-		if err := db.UpdateSubscriptions(req.DeviceToken, req.Subscriptions); err != nil {
-			log.Printf("Failed to set initial subscriptions for device %s: %v", req.DeviceToken, err)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Device registered but failed to set subscriptions",
-			})
-		}
+	// Process subscriptions (empty array means unsubscribe from all)
+	if len(req.Subscriptions) == 0 {
+		log.Printf("Device %s is registering with no subscriptions (unsubscribe from all)", req.DeviceToken)
+	}
+	
+	now := time.Now().UTC()
+	for i := range req.Subscriptions {
+		req.Subscriptions[i].DeviceToken = req.DeviceToken
+		req.Subscriptions[i].Timestamp = now
+	}
+	
+	if err := db.UpdateSubscriptions(req.DeviceToken, req.Subscriptions); err != nil {
+		log.Printf("Failed to set subscriptions for device %s: %v", req.DeviceToken, err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Device registered but failed to set subscriptions",
+		})
 	}
 
 	return c.JSON(fiber.Map{
@@ -201,14 +203,15 @@ func checkDeviceExistsHandler(c *fiber.Ctx) error {
 
 	if device == nil {
 		return c.JSON(fiber.Map{
-			"exists":  false,
-			"message": "Device not found",
+			"exists": false,
 		})
 	}
 
 	return c.JSON(fiber.Map{
 		"exists": true,
-		"device": device,
+		"device": fiber.Map{
+			"notificationsOn": device.NotificationsOn,
+		},
 	})
 }
 
