@@ -170,6 +170,12 @@ func (c *CachedDB) SetDeviceNotificationState(deviceToken string, notificationsO
 	return nil
 }
 
+// StoreUserFeedback stores user feedback directly to the database (no caching)
+func (c *CachedDB) StoreUserFeedback(feedback UserFeedback) error {
+	// User feedback is write-only and doesn't need caching
+	return c.db.StoreUserFeedback(feedback)
+}
+
 // ExpireCache clears all cached data and reloads from the database
 func (c *CachedDB) ExpireCache() error {
 	c.mu.Lock()

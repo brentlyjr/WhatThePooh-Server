@@ -39,9 +39,29 @@ CREATE INDEX IF NOT EXISTS idx_notification_subscriptions_device_entity_park ON 
 ALTER TABLE devices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_subscriptions ENABLE ROW LEVEL SECURITY;
 
+-- Create user_feedback table
+CREATE TABLE IF NOT EXISTS user_feedback (
+    id SERIAL PRIMARY KEY,
+    created_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    name TEXT,
+    email TEXT,
+    feedback TEXT CHECK (feedback IS NULL OR length(feedback) <= 1000),
+    logs TEXT
+);
+
+-- Create indexes for user_feedback table
+CREATE INDEX IF NOT EXISTS idx_user_feedback_created_date ON user_feedback(created_date DESC);
+CREATE INDEX IF NOT EXISTS idx_user_feedback_email ON user_feedback(email) WHERE email IS NOT NULL;
+
 -- Create policies for anonymous access (since this is a server-to-server connection)
 CREATE POLICY "Allow anonymous access to devices" ON devices
     FOR ALL USING (true);
 
 CREATE POLICY "Allow anonymous access to notification_subscriptions" ON notification_subscriptions
+    FOR ALL USING (true);
+
+-- Enable RLS and create policy for user_feedback
+ALTER TABLE user_feedback ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow anonymous access to user_feedback" ON user_feedback
     FOR ALL USING (true); 

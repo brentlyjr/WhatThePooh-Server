@@ -24,7 +24,7 @@ func SetupRoutes(app *fiber.App, entityManager *EntityManager, wsClient *WebSock
 	app.Get("/api/devices", getAllDevicesHandler)
 	app.Get("/api/devices/:token/exists", checkDeviceExistsHandler)
 	app.Delete("/api/devices/:token", deleteDeviceHandler)
-	app.Post("/api/devices/:token/enable-notifications", enableNotificationsHandler)
+	app.Post("/api/enable-notifications", enableNotificationsHandler)
 
 	// Subscription routes
 	app.Post("/api/update-ride-subscriptions", updateRideSubscriptionsHandler)
@@ -32,6 +32,9 @@ func SetupRoutes(app *fiber.App, entityManager *EntityManager, wsClient *WebSock
 
 	// Cache management
 	app.Post("/api/cache/expire", expireCacheHandler)
+
+	// User feedback
+	app.Post("/api/feedback", feedbackHandler)
 
 	// Metrics
 	app.Get("/api/metrics", metricsHandler(entityManager, wsClient))
@@ -137,7 +140,8 @@ func registerDeviceHandler(c *fiber.Ctx) error {
 // disableSubscriptionsHandler disables notifications for a device
 func disableSubscriptionsHandler(c *fiber.Ctx) error {
 	var req struct {
-		DeviceToken string `json:"deviceToken"`
+		DeviceToken   string                    `json:"deviceToken"`
+		Subscriptions []NotificationSubscription `json:"subscriptions"`
 	}
 	
 	if err := c.BodyParser(&req); err != nil {
@@ -166,7 +170,7 @@ func disableSubscriptionsHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	// Disable notifications (keep subscriptions intact)
+	// Disable notifications
 	if err := db.SetDeviceNotificationState(req.DeviceToken, false); err != nil {
 		log.Printf("Failed to disable notifications for device %s: %v", req.DeviceToken, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -174,9 +178,26 @@ func disableSubscriptionsHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	// Update subscriptions to current state (even if empty array)
+	now := time.Now().UTC()
+	for i := range req.Subscriptions {
+		req.Subscriptions[i].DeviceToken = req.DeviceToken
+		req.Subscriptions[i].Timestamp = now
+	}
+	
+	if err := db.UpdateSubscriptions(req.DeviceToken, req.Subscriptions); err != nil {
+		log.Printf("Failed to update subscriptions for device %s: %v", req.DeviceToken, err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to update subscriptions",
+		})
+	}
+
+	log.Printf("Disabled notifications for device %s with %d subscriptions", req.DeviceToken, len(req.Subscriptions))
+
 	return c.JSON(fiber.Map{
 		"status": "Notifications disabled successfully",
 		"deviceToken": req.DeviceToken,
+		"subscriptionsCount": len(req.Subscriptions),
 	})
 }
 
@@ -247,10 +268,25 @@ func deleteDeviceHandler(c *fiber.Ctx) error {
 
 // enableNotificationsHandler enables notifications for a device
 func enableNotificationsHandler(c *fiber.Ctx) error {
-	token := c.Params("token")
+	var req struct {
+		DeviceToken   string                    `json:"deviceToken"`
+		Subscriptions []NotificationSubscription `json:"subscriptions"`
+	}
+	
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	if req.DeviceToken == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "deviceToken is required",
+		})
+	}
 	
 	// Check if device exists
-	device, err := db.GetDeviceToken(token)
+	device, err := db.GetDeviceToken(req.DeviceToken)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Error checking device existence",
@@ -264,16 +300,33 @@ func enableNotificationsHandler(c *fiber.Ctx) error {
 	}
 	
 	// Enable notifications
-	if err := db.SetDeviceNotificationState(token, true); err != nil {
-		log.Printf("Failed to enable notifications for device %s: %v", token, err)
+	if err := db.SetDeviceNotificationState(req.DeviceToken, true); err != nil {
+		log.Printf("Failed to enable notifications for device %s: %v", req.DeviceToken, err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to enable notifications",
 		})
 	}
+
+	// Update subscriptions to current state
+	now := time.Now().UTC()
+	for i := range req.Subscriptions {
+		req.Subscriptions[i].DeviceToken = req.DeviceToken
+		req.Subscriptions[i].Timestamp = now
+	}
+	
+	if err := db.UpdateSubscriptions(req.DeviceToken, req.Subscriptions); err != nil {
+		log.Printf("Failed to update subscriptions for device %s: %v", req.DeviceToken, err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to update subscriptions",
+		})
+	}
+
+	log.Printf("Enabled notifications for device %s with %d subscriptions", req.DeviceToken, len(req.Subscriptions))
 	
 	return c.JSON(fiber.Map{
 		"status": "Notifications enabled successfully",
-		"deviceToken": token,
+		"deviceToken": req.DeviceToken,
+		"subscriptionsCount": len(req.Subscriptions),
 	})
 }
 
@@ -469,6 +522,52 @@ func updateRideSubscriptionsHandler(c *fiber.Ctx) error {
 		"status": "Subscriptions updated successfully",
 		"totalSubscriptions": totalSubscriptions,
 		"timestamp": now,
+	})
+}
+
+// feedbackHandler handles user feedback submissions
+func feedbackHandler(c *fiber.Ctx) error {
+	var req UserFeedback
+	
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	// Validate feedback length if provided (but not required)
+	if req.Feedback != nil && *req.Feedback != "" && len(*req.Feedback) > 1000 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Feedback must be 1000 characters or less",
+		})
+	}
+
+	// Validate name length if provided
+	if req.Name != nil && len(*req.Name) > 255 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Name must be 255 characters or less",
+		})
+	}
+
+	// Validate email length if provided (no format validation)
+	if req.Email != nil && len(*req.Email) > 255 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Email must be 255 characters or less",
+		})
+	}
+
+	// Store the feedback (even if all fields are empty)
+	if err := db.StoreUserFeedback(req); err != nil {
+		log.Printf("Failed to store user feedback: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to store feedback",
+		})
+	}
+
+	log.Printf("User feedback stored successfully")
+	return c.JSON(fiber.Map{
+		"status": "Feedback submitted successfully",
+		"timestamp": time.Now().UTC(),
 	})
 }
 

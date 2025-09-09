@@ -421,6 +421,27 @@ func (s *SupabaseDB) SetDeviceNotificationState(deviceToken string, notification
 	return nil
 }
 
+// StoreUserFeedback saves user feedback to the database
+func (s *SupabaseDB) StoreUserFeedback(feedback UserFeedback) error {
+	query := `
+		INSERT INTO user_feedback (name, email, feedback, logs)
+		VALUES ($1, $2, $3, $4)
+	`
+
+	_, err := s.pool.Exec(context.Background(), query,
+		feedback.Name,
+		feedback.Email,
+		feedback.Feedback,
+		feedback.Logs,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to store user feedback: %v", err)
+	}
+
+	return nil
+}
+
 // Close closes the database connection pool
 func (s *SupabaseDB) Close() error {
 	if s.pool != nil {

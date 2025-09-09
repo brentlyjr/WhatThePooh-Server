@@ -13,6 +13,7 @@ type Database interface {
 	UpdateSubscriptions(deviceToken string, subscriptions []NotificationSubscription) error
 	GetDevicesSubscribedToEntity(entityID, parkID string) ([]DeviceRegistration, error)
 	SetDeviceNotificationState(deviceToken string, notificationsOn bool) error
+	StoreUserFeedback(feedback UserFeedback) error
 	ExpireCache() error
 }
 
@@ -52,5 +53,15 @@ type NotificationSubscription struct {
 	ParkID      string    `json:"parkId"`
 	Timestamp   time.Time `json:"timestamp"`
 } 
+
+// UserFeedback represents user feedback data
+type UserFeedback struct {
+	ID          int       `json:"id,omitempty"`
+	CreatedDate time.Time `json:"createdDate,omitempty"`
+	Name        *string   `json:"name,omitempty"`
+	Email       *string   `json:"email,omitempty"`
+	Feedback    *string   `json:"feedback,omitempty"`
+	Logs        *string   `json:"logs,omitempty"`
+}
 
  
