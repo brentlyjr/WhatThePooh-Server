@@ -23,6 +23,7 @@ type DeviceRegistration struct {
 	AppVersion  string    `json:"appVersion"`
 	Environment string    `json:"environment"` // "development" or "production"
 	NotificationsOn bool  `json:"notificationsOn"`
+	CreatedDate time.Time `json:"createdDate"`
 	LastUpdated time.Time `json:"lastUpdated"`
 	IOSVersion              *string `json:"iosVersion,omitempty"`
 	DeviceName              *string `json:"deviceName,omitempty"`
@@ -58,6 +59,7 @@ type NotificationSubscription struct {
 type UserFeedback struct {
 	ID          int       `json:"id,omitempty"`
 	CreatedDate time.Time `json:"createdDate,omitempty"`
+	DeviceToken *string   `json:"deviceToken,omitempty"`
 	Name        *string   `json:"name,omitempty"`
 	Email       *string   `json:"email,omitempty"`
 	Feedback    *string   `json:"feedback,omitempty"`

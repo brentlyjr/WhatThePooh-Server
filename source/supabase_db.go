@@ -48,15 +48,15 @@ func (s *SupabaseDB) StoreDeviceToken(registration DeviceRegistration) error {
 	now := time.Now().UTC()
 
 	query := `
-		INSERT INTO devices (device_token, app_version, environment, notifications_on, last_updated, 
+		INSERT INTO devices (device_token, app_version, environment, notifications_on, created_date, last_updated, 
 			ios_version, device_name, system_name, language, region, time_zone, 
 			device_model, device_model_identifier)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 		ON CONFLICT (device_token) DO UPDATE SET
 			app_version = EXCLUDED.app_version,
 			environment = EXCLUDED.environment,
 			notifications_on = EXCLUDED.notifications_on,
-			last_updated = $5,
+			last_updated = $6,
 			ios_version = EXCLUDED.ios_version,
 			device_name = EXCLUDED.device_name,
 			system_name = EXCLUDED.system_name,
@@ -72,7 +72,8 @@ func (s *SupabaseDB) StoreDeviceToken(registration DeviceRegistration) error {
 		registration.AppVersion,
 		registration.Environment,
 		registration.NotificationsOn,
-		now,
+		now, // created_date (only set on INSERT)
+		now, // last_updated
 		registration.IOSVersion,
 		registration.DeviceName,
 		registration.SystemName,
@@ -93,7 +94,7 @@ func (s *SupabaseDB) StoreDeviceToken(registration DeviceRegistration) error {
 // GetDeviceToken retrieves a specific device token
 func (s *SupabaseDB) GetDeviceToken(token string) (*DeviceRegistration, error) {
 	query := `
-		SELECT device_token, app_version, environment, notifications_on, last_updated,
+		SELECT device_token, app_version, environment, notifications_on, created_date, last_updated,
 			ios_version, device_name, system_name, language, region, time_zone,
 			device_model, device_model_identifier
 		FROM devices
@@ -106,6 +107,7 @@ func (s *SupabaseDB) GetDeviceToken(token string) (*DeviceRegistration, error) {
 		&device.AppVersion,
 		&device.Environment,
 		&device.NotificationsOn,
+		&device.CreatedDate,
 		&device.LastUpdated,
 		&device.IOSVersion,
 		&device.DeviceName,
@@ -130,11 +132,11 @@ func (s *SupabaseDB) GetDeviceToken(token string) (*DeviceRegistration, error) {
 // GetAllDevices returns all registered devices
 func (s *SupabaseDB) GetAllDevices() ([]DeviceRegistration, error) {
 	query := `
-		SELECT device_token, app_version, environment, notifications_on, last_updated,
+		SELECT device_token, app_version, environment, notifications_on, created_date, last_updated,
 			ios_version, device_name, system_name, language, region, time_zone,
 			device_model, device_model_identifier
 		FROM devices
-		ORDER BY last_updated DESC
+		ORDER BY created_date DESC
 	`
 
 	rows, err := s.pool.Query(context.Background(), query)
@@ -151,6 +153,7 @@ func (s *SupabaseDB) GetAllDevices() ([]DeviceRegistration, error) {
 			&device.AppVersion,
 			&device.Environment,
 			&device.NotificationsOn,
+			&device.CreatedDate,
 			&device.LastUpdated,
 			&device.IOSVersion,
 			&device.DeviceName,
@@ -361,13 +364,13 @@ func calculateSubscriptionDiff(current, new []NotificationSubscription) (toAdd, 
 // GetDevicesSubscribedToEntity returns all devices that are subscribed to a specific entity/park
 func (s *SupabaseDB) GetDevicesSubscribedToEntity(entityID, parkID string) ([]DeviceRegistration, error) {
 	query := `
-		SELECT DISTINCT d.device_token, d.app_version, d.environment, d.notifications_on, d.last_updated,
+		SELECT DISTINCT d.device_token, d.app_version, d.environment, d.notifications_on, d.created_date, d.last_updated,
 			d.ios_version, d.device_name, d.system_name, d.language, d.region, d.time_zone,
 			d.device_model, d.device_model_identifier
 		FROM devices d
 		JOIN notification_subscriptions ns ON d.device_token = ns.device_token
 		WHERE ns.entity_id = $1 AND ns.park_id = $2 AND d.notifications_on = true
-		ORDER BY d.last_updated DESC
+		ORDER BY d.created_date DESC
 	`
 
 	rows, err := s.pool.Query(context.Background(), query, entityID, parkID)
@@ -384,6 +387,7 @@ func (s *SupabaseDB) GetDevicesSubscribedToEntity(entityID, parkID string) ([]De
 			&device.AppVersion,
 			&device.Environment,
 			&device.NotificationsOn,
+			&device.CreatedDate,
 			&device.LastUpdated,
 			&device.IOSVersion,
 			&device.DeviceName,
@@ -424,11 +428,12 @@ func (s *SupabaseDB) SetDeviceNotificationState(deviceToken string, notification
 // StoreUserFeedback saves user feedback to the database
 func (s *SupabaseDB) StoreUserFeedback(feedback UserFeedback) error {
 	query := `
-		INSERT INTO user_feedback (name, email, feedback, logs)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO user_feedback (device_token, name, email, feedback, logs)
+		VALUES ($1, $2, $3, $4, $5)
 	`
 
 	_, err := s.pool.Exec(context.Background(), query,
+		feedback.DeviceToken,
 		feedback.Name,
 		feedback.Email,
 		feedback.Feedback,

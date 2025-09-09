@@ -142,8 +142,10 @@ func main() {
 	// Start the APNS worker pool
 	StartAPNSWorkers(5) // Start 5 workers
 
-	// Create Fiber app
-	app := fiber.New()
+	// Create Fiber app with increased body size limit for feedback logs
+	app := fiber.New(fiber.Config{
+		BodyLimit: 10 * 1024 * 1024, // 10MB limit for large feedback logs
+	})
 
 	// Setup all routes using the handlers.go file
 	SetupRoutes(app, entityManager, wsClient)

@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS devices (
     app_version TEXT,
     environment TEXT DEFAULT 'development',
     notifications_on BOOLEAN NOT NULL DEFAULT FALSE,
+    created_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     last_updated TIMESTAMPTZ DEFAULT NOW(),
     ios_version TEXT,
     device_name TEXT,
@@ -27,6 +28,7 @@ CREATE TABLE IF NOT EXISTS notification_subscriptions (
 );
 
 -- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_devices_created_date ON devices(created_date DESC);
 CREATE INDEX IF NOT EXISTS idx_devices_last_updated ON devices(last_updated DESC);
 CREATE INDEX IF NOT EXISTS idx_devices_notifications_on ON devices(notifications_on) WHERE notifications_on = true;
 CREATE INDEX IF NOT EXISTS idx_notification_subscriptions_device_token ON notification_subscriptions(device_token);
@@ -43,14 +45,17 @@ ALTER TABLE notification_subscriptions ENABLE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS user_feedback (
     id SERIAL PRIMARY KEY,
     created_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    device_token TEXT,
     name TEXT,
     email TEXT,
     feedback TEXT CHECK (feedback IS NULL OR length(feedback) <= 1000),
-    logs TEXT
+    logs TEXT,
+    FOREIGN KEY (device_token) REFERENCES devices(device_token) ON DELETE SET NULL
 );
 
 -- Create indexes for user_feedback table
 CREATE INDEX IF NOT EXISTS idx_user_feedback_created_date ON user_feedback(created_date DESC);
+CREATE INDEX IF NOT EXISTS idx_user_feedback_device_token ON user_feedback(device_token) WHERE device_token IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_user_feedback_email ON user_feedback(email) WHERE email IS NOT NULL;
 
 -- Create policies for anonymous access (since this is a server-to-server connection)

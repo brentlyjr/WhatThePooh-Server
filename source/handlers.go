@@ -535,6 +535,20 @@ func feedbackHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	// Validate device token format if provided (lenient validation for feedback)
+	if req.DeviceToken != nil && *req.DeviceToken != "" {
+		// Log the device token for debugging (remove this after testing)
+		log.Printf("Feedback device token: %s (length: %d)", *req.DeviceToken, len(*req.DeviceToken))
+		
+		// For feedback, we allow any non-empty string as device token
+		// This accommodates simulator tokens and other formats
+		if len(*req.DeviceToken) < 10 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Device token must be at least 10 characters",
+			})
+		}
+	}
+
 	// Validate feedback length if provided (but not required)
 	if req.Feedback != nil && *req.Feedback != "" && len(*req.Feedback) > 1000 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -553,6 +567,13 @@ func feedbackHandler(c *fiber.Ctx) error {
 	if req.Email != nil && len(*req.Email) > 255 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Email must be 255 characters or less",
+		})
+	}
+
+	// Validate logs length if provided (allow larger logs for debugging)
+	if req.Logs != nil && len(*req.Logs) > 5*1024*1024 { // 5MB limit
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Logs must be 5MB or less",
 		})
 	}
 
