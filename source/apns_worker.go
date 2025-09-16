@@ -400,7 +400,7 @@ func apnsSender(id int) {
 		}
 
 		if res.Sent() {
-			log.Printf("[Worker %d] Push sent successfully to %s", id, req.DeviceToken)
+			log.Printf("[Worker %d] Push sent successfully to %s for %s", id, req.DeviceToken, req.EntityName)
 			
 			// Increment APNS message counter based on environment
 			if req.Environment == "production" {
