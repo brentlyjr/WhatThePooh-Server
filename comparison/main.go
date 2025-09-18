@@ -300,10 +300,10 @@ func (cp *ComparisonProgram) handleWebSocketUpdate(update LiveDataMessage) {
 		}
 		
 		// Check for wait time change
-		if existingEntity.WaitTime != newEntity.WaitTime {
-			fmt.Printf("[%s] Websocket connection updated ride %s wait time from %d to %d (lastUpdated: %s)\n", 
-				time.Now().Format("15:04:05.000"), update.Name, existingEntity.WaitTime, newEntity.WaitTime, lastUpdated.Format("2006/01/02 15:04:05"))
-		}
+		// if existingEntity.WaitTime != newEntity.WaitTime {
+		//	fmt.Printf("[%s] Websocket connection updated ride %s wait time from %d to %d (lastUpdated: %s)\n", 
+		//		time.Now().Format("15:04:05.000"), update.Name, existingEntity.WaitTime, newEntity.WaitTime, lastUpdated.Format("2006/01/02 15:04:05"))
+		//}
 	} else {
 		fmt.Printf("[%s] Websocket connection added new ride %s (Status: %s, Wait Time: %d) (lastUpdated: %s)\n", 
 			time.Now().Format("15:04:05.000"), update.Name, newEntity.Status, newEntity.WaitTime, lastUpdated.Format("2006/01/02 15:04:05"))
@@ -418,10 +418,10 @@ func (cp *ComparisonProgram) updatePollingEntities(restEntities []LiveDataEntity
 			}
 			
 			// Check for wait time change
-			if existingEntity.WaitTime != newEntity.WaitTime {
-				fmt.Printf("[%s] Polling updated ride %s wait time from %d to %d (lastUpdated: %s)\n", 
-					time.Now().Format("15:04:05.000"), restEntity.Name, existingEntity.WaitTime, newEntity.WaitTime, lastUpdated.Format("2006/01/02 15:04:05"))
-			}
+			//if existingEntity.WaitTime != newEntity.WaitTime {
+			//	fmt.Printf("[%s] Polling updated ride %s wait time from %d to %d (lastUpdated: %s)\n", 
+			//		time.Now().Format("15:04:05.000"), restEntity.Name, existingEntity.WaitTime, newEntity.WaitTime, lastUpdated.Format("2006/01/02 15:04:05"))
+			//}
 		} else {
 			fmt.Printf("[%s] Polling added new ride %s (Status: %s, Wait Time: %d) (lastUpdated: %s)\n", 
 				time.Now().Format("15:04:05.000"), restEntity.Name, newEntity.Status, newEntity.WaitTime, lastUpdated.Format("2006/01/02 15:04:05"))
