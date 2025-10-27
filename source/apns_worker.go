@@ -273,7 +273,6 @@ func SendPushNotification(req NotificationRequest) error {
     }
 
 
-
 	res, err := client.Push(notification)
 	if err != nil {
 		return err
@@ -320,8 +319,6 @@ func SendPushNotification(req NotificationRequest) error {
 			log.Printf("  - Error Type: Unknown (%s)", res.Reason)
 		}
 		
-
-		
 		// If the token is invalid or unregistered, disable notifications for the device
 		if res.Reason == apns2.ReasonBadDeviceToken || res.Reason == apns2.ReasonUnregistered {
 			log.Printf("Disabling notifications for invalid device token: %s (Reason: %s, Status: %d)", req.DeviceToken, res.Reason, res.StatusCode)
@@ -364,10 +361,25 @@ func apnsSender(id int) {
 			req.NotificationID = uuid.New().String()
 		}
 
+		// Determine which icon to use based on the new status
+		var icon string
+		switch req.NewStatus {
+		case "OPERATING":
+			icon = "🟢 "
+		case "CLOSED":
+			icon = "🚫 "
+		case "DOWN":
+			icon = "⚠️ "
+		case "REFURBISHMENT":
+			icon = "🛠️ "
+		default:
+			icon = ""
+		}
+
 		// Create the payload
-		        payload := payload.NewPayload().
+		payload := payload.NewPayload().
             AlertTitle(getParkName(req.ParkID)).
-            AlertBody(req.EntityName + " is now " + req.NewStatus).
+            AlertBody(icon + req.EntityName + " is now " + req.NewStatus).
             Sound("default").
             MutableContent().
             Custom("entityId", req.EntityID).
@@ -391,8 +403,6 @@ func apnsSender(id int) {
 		client := getAPNSClient(req.Environment)
 		
 		res, err := client.Push(notification)
-		
-
 
 		if err != nil {
 			log.Printf("[Worker %d] Push error for token %s: %v", id, req.DeviceToken, err)
@@ -450,7 +460,6 @@ func apnsSender(id int) {
 			}
 			
 
-			
 			// If the token is invalid or unregistered, disable notifications for the device
 			if res.Reason == apns2.ReasonBadDeviceToken || res.Reason == apns2.ReasonUnregistered {
 				log.Printf("[Worker %d] Disabling notifications for invalid device token: %s (Reason: %s, Status: %d)", id, req.DeviceToken, res.Reason, res.StatusCode)
