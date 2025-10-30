@@ -34,6 +34,7 @@ type WebSocketClient struct {
 	apiKey  string
 	conn    *websocket.Conn
 	done    chan struct{}
+	lastMessageTime time.Time
 	
 	// Message counters
 	messageCounts struct {
@@ -72,6 +73,7 @@ func NewWebSocketClient(url, apiKey string) *WebSocketClient {
 		url:    url,
 		apiKey: apiKey,
 		done:   make(chan struct{}),
+		lastMessageTime: time.Now(),
 	}
 	client.messageCounts.eventCounts = make(map[string]uint64)
 	client.messageCounts.statusCounts = make(map[EntityStatus]uint64)
@@ -137,6 +139,44 @@ func (c *WebSocketClient) Connect() {
 			AddReconnectionTimestamp()
 			log.Printf("[%s] Connected to WebSocket", time.Now().Format("2006-01-02 15:04:05 MST"))
 
+			// --- Start Debugging Handlers ---
+			c.conn.SetPingHandler(func(appData string) error {
+				log.Printf("Received Ping from server: %s", appData)
+				// The gorilla/websocket library automatically sends a pong back.
+				// We can extend the write deadline if we want.
+				c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+				return nil
+			})
+
+			c.conn.SetPongHandler(func(appData string) error {
+				log.Printf("Received Pong from server: %s", appData)
+				return nil
+			})
+
+			c.conn.SetCloseHandler(func(code int, text string) error {
+				log.Printf("Received graceful close from server: %d %s", code, text)
+				return nil
+			})
+			// --- End Debugging Handlers ---
+
+			// Start a ticker to send pings
+			ticker := time.NewTicker(30 * time.Second)
+			defer ticker.Stop()
+
+			go func() {
+				for {
+					select {
+					case <-ticker.C:
+						if err := c.conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+							log.Printf("Error sending ping: %v", err)
+							return
+						}
+					case <-c.done:
+						return
+					}
+				}
+			}()
+
 			// Subscribe to all resorts
 			for _, resort := range resorts {
 				if err := c.subscribe(resort.ID); err != nil {
@@ -150,9 +190,11 @@ func (c *WebSocketClient) Connect() {
 			for {
 				_, message, err := c.conn.ReadMessage()
 				if err != nil {
-					log.Printf("Read error: %v", err)
+					durationSinceLastMessage := time.Since(c.lastMessageTime)
+					log.Printf("Read error after %v since last message: %v", durationSinceLastMessage, err)
 					break
 				}
+				c.lastMessageTime = time.Now()
 				c.handleMessage(message)
 			}
 
