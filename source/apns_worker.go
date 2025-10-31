@@ -252,26 +252,59 @@ func SendPushNotification(req NotificationRequest) error {
 	// Get the appropriate APNS client based on the environment
 	client := getAPNSClient(req.Environment)
 	
-    notification := &apns2.Notification{
-        DeviceToken: req.DeviceToken,
-        Topic:       os.Getenv("APNS_BUNDLE_ID"),
-        Payload: payload.NewPayload().
-            AlertTitle(req.Title).
-            AlertBody(req.Message).
-            Sound("default").
-            MutableContent().
-            Custom("entityId", req.EntityID).
-            Custom("entityName", req.EntityName).
-            Custom("parkId", req.ParkID).
-            Custom("parkName", getParkName(req.ParkID)).
-            Custom("oldStatus", req.OldStatus).
-            Custom("newStatus", req.NewStatus).
-            Custom("oldWaitTime", req.OldWaitTime).
-            Custom("newWaitTime", req.NewWaitTime).
-            Custom("notificationId", req.NotificationID).
-            Custom("timestamp", req.Timestamp.Format(time.RFC3339)),
-    }
+    // Construct the notification message
+	var message string
+	if req.NewStatus != "" && req.OldStatus != "" {
+		message = fmt.Sprintf("%s is now %s", req.EntityName, req.NewStatus)
+		if req.NewStatus == string(StatusOperating) {
+			message += fmt.Sprintf("\n⏱️ Wait time: %d", req.NewWaitTime)
+		}
+	} else if req.Message != "" {
+		message = req.Message
+	} else {
+		// Fallback for notifications sent without status change context
+		message = fmt.Sprintf("Update for %s", req.EntityName)
+	}
 
+	// Determine which icon to use based on the new status
+	var icon string
+	switch req.NewStatus {
+	case "OPERATING":
+		icon = "🟢 "
+	case "CLOSED":
+		icon = "🚫 "
+	case "DOWN":
+		icon = "⚠️ "
+	case "REFURBISHMENT":
+		icon = "🛠️ "
+	}
+	
+	// Prepend the icon to the message body
+	if icon != "" {
+		message = icon + message
+	}
+
+	p := payload.NewPayload().
+		AlertTitle(getParkName(req.ParkID)).
+		AlertBody(message).
+		Sound("default").
+		MutableContent().
+		Custom("entityId", req.EntityID).
+		Custom("entityName", req.EntityName).
+		Custom("parkId", req.ParkID).
+		Custom("parkName", getParkName(req.ParkID)).
+		Custom("oldStatus", req.OldStatus).
+		Custom("newStatus", req.NewStatus).
+		Custom("oldWaitTime", req.OldWaitTime).
+		Custom("newWaitTime", req.NewWaitTime).
+		Custom("notificationId", req.NotificationID).
+		Custom("timestamp", req.Timestamp.Format(time.RFC3339))
+
+	notification := &apns2.Notification{
+		DeviceToken: req.DeviceToken,
+		Topic:       os.Getenv("APNS_BUNDLE_ID"),
+		Payload:     p,
+	}
 
 	res, err := client.Push(notification)
 	if err != nil {
@@ -351,123 +384,28 @@ func StartAPNSWorkers(numWorkers int) {
 // apnsSender is a single worker that consumes from the PushQueue.
 func apnsSender(id int) {
 	log.Printf("APNS Sender Worker %d started", id)
-	bundleID := os.Getenv("APNS_BUNDLE_ID")
-
 	for req := range PushQueue {
-		// log.Printf("[Worker %d] Sending push to %s (Environment: %s)", id, req.DeviceToken, req.Environment)
-
-		// Generate a unique notification ID if not provided
-		if req.NotificationID == "" {
-			req.NotificationID = uuid.New().String()
+		// Create a NotificationRequest from the PushRequest
+		notificationReq := NotificationRequest{
+			DeviceToken:    req.DeviceToken,
+			Message:        req.Message,
+			EntityID:       req.EntityID,
+			EntityName:     req.EntityName,
+			ParkID:         req.ParkID,
+			OldStatus:      req.OldStatus,
+			NewStatus:      req.NewStatus,
+			OldWaitTime:    req.OldWaitTime,
+			NewWaitTime:    req.NewWaitTime,
+			Environment:    req.Environment,
+			NotificationID: req.NotificationID,
+			Timestamp:      req.Timestamp,
 		}
 
-		// Determine which icon to use based on the new status
-		var icon string
-		switch req.NewStatus {
-		case "OPERATING":
-			icon = "🟢 "
-		case "CLOSED":
-			icon = "🚫 "
-		case "DOWN":
-			icon = "⚠️ "
-		case "REFURBISHMENT":
-			icon = "🛠️ "
-		default:
-			icon = ""
-		}
-
-		// Create the payload
-		payload := payload.NewPayload().
-            AlertTitle(getParkName(req.ParkID)).
-            AlertBody(icon + req.EntityName + " is now " + req.NewStatus).
-            Sound("default").
-            MutableContent().
-            Custom("entityId", req.EntityID).
-            Custom("entityName", req.EntityName).
-            Custom("parkId", req.ParkID).
-            Custom("parkName", getParkName(req.ParkID)).
-            Custom("oldStatus", req.OldStatus).
-            Custom("newStatus", req.NewStatus).
-            Custom("oldWaitTime", req.OldWaitTime).
-            Custom("newWaitTime", req.NewWaitTime).
-            Custom("notificationId", req.NotificationID).
-            Custom("timestamp", req.Timestamp.Format(time.RFC3339))
-
-		notification := &apns2.Notification{
-			DeviceToken: req.DeviceToken,
-			Topic:       bundleID,
-			Payload:     payload,
-		}
-
-		// Get the appropriate APNS client based on the environment (dev or prod)
-		client := getAPNSClient(req.Environment)
-		
-		res, err := client.Push(notification)
-
-		if err != nil {
-			log.Printf("[Worker %d] Push error for token %s: %v", id, req.DeviceToken, err)
-			continue
-		}
-
-		if res.Sent() {
-			log.Printf("[Worker %d] Push sent successfully to %s for %s", id, req.DeviceToken, req.EntityName)
-			
-			// Increment APNS message counter based on environment
-			if req.Environment == "production" {
-				incrementAPNSProdCounter()
-			} else {
-				incrementAPNSDevCounter()
-			}
+		// Use the centralized SendPushNotification function
+		if err := SendPushNotification(notificationReq); err != nil {
+			log.Printf("[Worker %d] Failed to send push notification for token %s: %v", id, req.DeviceToken, err)
 		} else {
-			// Enhanced logging with detailed APNS response information
-			log.Printf("[Worker %d] Push failed for token %s", id, req.DeviceToken)
-			log.Printf("[Worker %d] APNS Response Details:", id)
-			log.Printf("[Worker %d]   - Status Code: %d", id, res.StatusCode)
-			log.Printf("[Worker %d]   - Reason: %s", id, res.Reason)
-			log.Printf("[Worker %d]   - ApnsID: %s", id, res.ApnsID)
-			log.Printf("[Worker %d]   - Sent: %t", id, res.Sent())
-			
-			// Log specific error details based on the reason
-			switch res.Reason {
-			case apns2.ReasonBadDeviceToken:
-				log.Printf("[Worker %d]   - Error Type: Bad Device Token (Token format is invalid or device is not registered)", id)
-			case apns2.ReasonUnregistered:
-				log.Printf("[Worker %d]   - Error Type: Unregistered (Device token is no longer valid for the topic - will disable notifications)", id)
-			case apns2.ReasonBadTopic:
-				log.Printf("[Worker %d]   - Error Type: Bad Topic (Topic is invalid or not authorized)", id)
-			case apns2.ReasonTopicDisallowed:
-				log.Printf("[Worker %d]   - Error Type: Topic Disallowed (Topic is not allowed for this app)", id)
-			case apns2.ReasonBadExpirationDate:
-				log.Printf("[Worker %d]   - Error Type: Bad Expiration Date (Expiration date is invalid)", id)
-			case apns2.ReasonBadPriority:
-				log.Printf("[Worker %d]   - Error Type: Bad Priority (Priority value is invalid)", id)
-			case apns2.ReasonMissingDeviceToken:
-				log.Printf("[Worker %d]   - Error Type: Missing Device Token (Device token is missing)", id)
-			case apns2.ReasonMissingTopic:
-				log.Printf("[Worker %d]   - Error Type: Missing Topic (Topic is missing)", id)
-			case apns2.ReasonTooManyRequests:
-				log.Printf("[Worker %d]   - Error Type: Too Many Requests (Rate limit exceeded)", id)
-			case apns2.ReasonIdleTimeout:
-				log.Printf("[Worker %d]   - Error Type: Idle Timeout (Connection timed out)", id)
-			case apns2.ReasonShutdown:
-				log.Printf("[Worker %d]   - Error Type: Shutdown (Server is shutting down)", id)
-			case apns2.ReasonInternalServerError:
-				log.Printf("[Worker %d]   - Error Type: Internal Server Error (APNS server error)", id)
-			case apns2.ReasonServiceUnavailable:
-				log.Printf("[Worker %d]   - Error Type: Service Unavailable (APNS service unavailable)", id)
-			default:
-				log.Printf("[Worker %d]   - Error Type: Unknown (%s)", id, res.Reason)
-			}
-			
-
-			// If the token is invalid or unregistered, disable notifications for the device
-			if res.Reason == apns2.ReasonBadDeviceToken || res.Reason == apns2.ReasonUnregistered {
-				log.Printf("[Worker %d] Disabling notifications for invalid device token: %s (Reason: %s, Status: %d)", id, req.DeviceToken, res.Reason, res.StatusCode)
-				// Disable notifications but keep the device record and subscriptions intact
-				if disableErr := db.SetDeviceNotificationState(req.DeviceToken, false); disableErr != nil {
-					log.Printf("[Worker %d] Error disabling notifications for device token %s: %v", id, req.DeviceToken, disableErr)
-				}
-			}
+			log.Printf("[Worker %d] Push sent successfully to %s for %s", id, req.DeviceToken, req.EntityName)
 		}
 	}
 }
