@@ -15,21 +15,16 @@ func StartMessageProcessors() {
 		for msg := range statusCh {
 			log.Printf("🔔 STATUS CHANGE: Entity %s changed from %s to %s", msg.EntityName, msg.OldStatus, msg.NewStatus)
 
-					// 1. Get devices subscribed to this specific entity/park.
-		devices, err := db.GetDevicesSubscribedToEntity(msg.EntityID, msg.ParkID)
-		if err != nil {
-			log.Printf("Error getting devices subscribed to entity %s: %v", msg.EntityID, err)
-			continue
-		}
-
-			// if len(devices) == 0 {
-			// 	log.Printf("FAN-OUT: No devices found for entity %s", msg.EntityID)
-			// 	continue
-			// }
+			// Get devices subscribed to this specific entity/park.
+			devices, err := db.GetDevicesSubscribedToEntity(msg.EntityID, msg.ParkID)
+			if err != nil {
+				log.Printf("Error getting devices subscribed to entity %s: %v", msg.EntityID, err)
+				continue
+			}
 
 			// log.Printf("FAN-OUT: Found %d devices. Enqueuing APNs jobs...", len(devices))
 
-			// 2. Create and enqueue a push notification for each device.
+			// Create and enqueue a push notification for each device.
 			notificationMsg := fmt.Sprintf("%s: %s -> %s", msg.EntityName, msg.OldStatus, msg.NewStatus)
 			for _, device := range devices {
 				pushReq := PushRequest{

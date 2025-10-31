@@ -331,9 +331,6 @@ func enableNotificationsHandler(c *fiber.Ctx) error {
 }
 
 
-
-
-
 // metricsHandler returns server metrics
 func metricsHandler(entityManager *EntityManager, wsClient *WebSocketClient) fiber.Handler {
 	return func(c *fiber.Ctx) error {

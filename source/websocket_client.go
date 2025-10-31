@@ -161,9 +161,10 @@ func (c *WebSocketClient) Connect() {
 
 			// Start a ticker to send pings
 			ticker := time.NewTicker(30 * time.Second)
-			defer ticker.Stop()
+			pingStop := make(chan struct{})
 
 			go func() {
+				defer ticker.Stop()
 				for {
 					select {
 					case <-ticker.C:
@@ -171,6 +172,8 @@ func (c *WebSocketClient) Connect() {
 							log.Printf("Error sending ping: %v", err)
 							return
 						}
+					case <-pingStop:
+						return
 					case <-c.done:
 						return
 					}
@@ -198,6 +201,7 @@ func (c *WebSocketClient) Connect() {
 				c.handleMessage(message)
 			}
 
+			close(pingStop) // Stop the pinger when the read loop exits
 			c.conn.Close()
 			time.Sleep(5 * time.Second)
 		}
