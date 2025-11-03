@@ -166,7 +166,7 @@ func (rc *RestClient) addEntitiesToManager(restEntities []LiveDataEntity, entity
 		}
 		
 		// Add to entity manager (this will not trigger status change notifications since it's initial population)
-		entityManager.UpdateEntity(entity)
+		entityManager.ProcessEntity(entity, true)
 		count++
 	}
 	

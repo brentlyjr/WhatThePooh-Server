@@ -36,6 +36,7 @@ type NotificationRequest struct {
 	Environment    string    `json:"environment"` // "development" or "production"
 	NotificationID string    `json:"notificationId"`
 	Timestamp      time.Time `json:"timestamp"` // UTC timestamp when websocket message was received
+	TimeOfLastStatus time.Time `json:"timeOfLastStatus"`
 }
 
 var apnsClient *apns2.Client
@@ -298,7 +299,8 @@ func SendPushNotification(req NotificationRequest) error {
 		Custom("oldWaitTime", req.OldWaitTime).
 		Custom("newWaitTime", req.NewWaitTime).
 		Custom("notificationId", req.NotificationID).
-		Custom("timestamp", req.Timestamp.Format(time.RFC3339))
+		Custom("timestamp", req.Timestamp.Format(time.RFC3339)).
+		Custom("time_of_last_status", req.TimeOfLastStatus.Format(time.RFC3339))
 
 	notification := &apns2.Notification{
 		DeviceToken: req.DeviceToken,
@@ -399,6 +401,7 @@ func apnsSender(id int) {
 			Environment:    req.Environment,
 			NotificationID: req.NotificationID,
 			Timestamp:      req.Timestamp,
+			TimeOfLastStatus: req.TimeOfLastStatus,
 		}
 
 		// Use the centralized SendPushNotification function

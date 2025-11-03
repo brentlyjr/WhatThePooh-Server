@@ -69,4 +69,22 @@ CREATE POLICY "Allow anonymous access to notification_subscriptions" ON notifica
 ALTER TABLE user_feedback ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow anonymous access to user_feedback" ON user_feedback
+    FOR ALL USING (true);
+
+
+-- Create entity_status table to persist the last known status of each entity
+CREATE TABLE entity_status (
+    entity_id TEXT PRIMARY KEY,
+    entity_name TEXT,
+    status TEXT NOT NULL,
+    last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- The PRIMARY KEY on entity_id automatically creates a unique index, which is what we need for querying.
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE entity_status ENABLE ROW LEVEL SECURITY;
+
+-- Create a policy to allow anonymous access, as this table is managed by the server
+CREATE POLICY "Allow anonymous access to entity_status" ON entity_status
     FOR ALL USING (true); 

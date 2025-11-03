@@ -18,6 +18,7 @@ type PushRequest struct {
 	Environment    string // "development" or "production"
 	NotificationID string
 	Timestamp      time.Time // UTC timestamp when websocket message was received
+	TimeOfLastStatus time.Time
 }
 
 // EntityQueue is a buffered channel for entity updates

@@ -35,7 +35,8 @@ type WebSocketClient struct {
 	conn    *websocket.Conn
 	done    chan struct{}
 	lastMessageTime time.Time
-	
+	entityManager *EntityManager
+
 	// Message counters
 	messageCounts struct {
 		sync.RWMutex
@@ -68,12 +69,13 @@ type LiveDataMessage struct {
 	} `json:"data"`
 }
 
-func NewWebSocketClient(url, apiKey string) *WebSocketClient {
+func NewWebSocketClient(url, apiKey string, entityManager *EntityManager) *WebSocketClient {
 	client := &WebSocketClient{
-		url:    url,
-		apiKey: apiKey,
-		done:   make(chan struct{}),
+		url:     url,
+		apiKey:  apiKey,
+		done:    make(chan struct{}),
 		lastMessageTime: time.Now(),
+		entityManager: entityManager,
 	}
 	client.messageCounts.eventCounts = make(map[string]uint64)
 	client.messageCounts.statusCounts = make(map[EntityStatus]uint64)
@@ -263,9 +265,10 @@ func (c *WebSocketClient) handleMessage(message []byte) {
 			WaitTime:   waitTime,
 			Status:     EntityStatus(msg.Data.Status),
 		}
+		c.entityManager.ProcessEntity(entity, false)
 
-		// Queue the entity for processing
-		QueueEntity(entity)
+		// Increment message counter
+		// c.incrementMsgCounter() // This was removed as it's not defined
 
 		// log.Printf("[%s] Queued update for %s (Wait Time: %d, Status: %s)", 
 		// 	timestamp, msg.Name, waitTime, msg.Data.Status)

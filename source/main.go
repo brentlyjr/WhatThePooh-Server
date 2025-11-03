@@ -109,7 +109,7 @@ func main() {
 	apiKey := getEnvOrExit("THEMEPARK_API_KEY")
 
 	// Initialize entity manager
-	entityManager := NewEntityManager()
+	entityManager := NewEntityManager(db)
 
 	// Initialize REST client for pre-population
 	restClient := NewRestClient(apiKey)
@@ -126,14 +126,12 @@ func main() {
 	// Start entity processing worker
 	go func() {
 		for entity := range EntityQueue {
-			entityManager.ProcessEntity(entity)
+			entityManager.ProcessEntity(entity, false)
 		}
 	}()
 
 	// Initialize WebSocket client
-	wsClient := NewWebSocketClient(websocketURL, apiKey)
-
-	// Start WebSocket client
+	wsClient := NewWebSocketClient(websocketURL, apiKey, entityManager)
 	go wsClient.Connect()
 
 	// Start message processors
