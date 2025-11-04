@@ -65,9 +65,11 @@ func (s *SupabaseDB) StoreDeviceToken(registration DeviceRegistration) error {
 			time_zone = EXCLUDED.time_zone,
 			device_model = EXCLUDED.device_model,
 			device_model_identifier = EXCLUDED.device_model_identifier
+		RETURNING (xmax = 0) AS inserted
 	`
 
-	_, err := s.pool.Exec(context.Background(), query,
+	var inserted bool
+	err := s.pool.QueryRow(context.Background(), query,
 		registration.DeviceToken,
 		registration.AppVersion,
 		registration.Environment,
@@ -82,10 +84,16 @@ func (s *SupabaseDB) StoreDeviceToken(registration DeviceRegistration) error {
 		registration.TimeZone,
 		registration.DeviceModel,
 		registration.DeviceModelIdentifier,
-	)
+	).Scan(&inserted)
 
 	if err != nil {
 		return fmt.Errorf("failed to store device token: %v", err)
+	}
+
+	if inserted {
+		log.Printf("New device registered: %s", registration.DeviceToken)
+	} else {
+		log.Printf("Existing device information updated: %s", registration.DeviceToken)
 	}
 
 	return nil
