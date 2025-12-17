@@ -142,6 +142,11 @@ func (c *WebSocketClient) Connect() {
 			log.Printf("[%s] Connected to WebSocket", time.Now().Format("2006-01-02 15:04:05 MST"))
 
 			// --- Start Debugging Handlers ---
+			
+			// Set a read deadline to detect unresponsive connections
+			pongWait := 60 * time.Second
+			c.conn.SetReadDeadline(time.Now().Add(pongWait))
+
 			c.conn.SetPingHandler(func(appData string) error {
 				log.Printf("Received Ping from server: %s", appData)
 				// The gorilla/websocket library automatically sends a pong back.
@@ -151,7 +156,10 @@ func (c *WebSocketClient) Connect() {
 			})
 
 			c.conn.SetPongHandler(func(appData string) error {
-				log.Printf("Received Pong from server: %s", appData)
+				// log.Printf("Received Pong from server: %s", appData)
+				
+				// Extend the read deadline since we received a pong
+				c.conn.SetReadDeadline(time.Now().Add(pongWait))
 				return nil
 			})
 
@@ -162,7 +170,8 @@ func (c *WebSocketClient) Connect() {
 			// --- End Debugging Handlers ---
 
 			// Start a ticker to send pings
-			ticker := time.NewTicker(30 * time.Second)
+			pingPeriod := 30 * time.Second // Must be less than pongWait
+			ticker := time.NewTicker(pingPeriod)
 			pingStop := make(chan struct{})
 
 			go func() {
