@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"sync"
+	"time"
 )
 
 // CachedDB implements the Database interface with local caching
@@ -186,4 +187,19 @@ func (c *CachedDB) ExpireCache() error {
 	
 	// Reload from database
 	return c.LoadFromDatabase(false)
+} 
+
+// StoreEntityStatus passes the call directly to the underlying database
+func (c *CachedDB) StoreEntityStatus(entityID string, entityName string, status EntityStatus, lastUpdated time.Time) error {
+	return c.db.StoreEntityStatus(entityID, entityName, status, lastUpdated)
+}
+
+// GetEntityStatus passes the call directly to the underlying database
+func (c *CachedDB) GetEntityStatus(entityID string) (*Entity, error) {
+	return c.db.GetEntityStatus(entityID)
+}
+
+// GetAllEntityStatuses passes the call directly to the underlying database
+func (c *CachedDB) GetAllEntityStatuses() (map[string]Entity, error) {
+	return c.db.GetAllEntityStatuses()
 } 

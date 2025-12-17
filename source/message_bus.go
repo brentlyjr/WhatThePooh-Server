@@ -16,6 +16,7 @@ type StatusChangeMessage struct {
     OldWaitTime   int
     NewWaitTime   int
     Timestamp     time.Time
+    TimeOfLastStatus   time.Time
 }
 
 type WaitTimeMessage struct {

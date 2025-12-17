@@ -65,9 +65,11 @@ func (s *SupabaseDB) StoreDeviceToken(registration DeviceRegistration) error {
 			time_zone = EXCLUDED.time_zone,
 			device_model = EXCLUDED.device_model,
 			device_model_identifier = EXCLUDED.device_model_identifier
+		RETURNING (xmax = 0) AS inserted
 	`
 
-	_, err := s.pool.Exec(context.Background(), query,
+	var inserted bool
+	err := s.pool.QueryRow(context.Background(), query,
 		registration.DeviceToken,
 		registration.AppVersion,
 		registration.Environment,
@@ -82,10 +84,16 @@ func (s *SupabaseDB) StoreDeviceToken(registration DeviceRegistration) error {
 		registration.TimeZone,
 		registration.DeviceModel,
 		registration.DeviceModelIdentifier,
-	)
+	).Scan(&inserted)
 
 	if err != nil {
 		return fmt.Errorf("failed to store device token: %v", err)
+	}
+
+	if inserted {
+		log.Printf("New device registered: %s", registration.DeviceToken)
+	} else {
+		log.Printf("Existing device information updated: %s", registration.DeviceToken)
 	}
 
 	return nil
@@ -460,4 +468,92 @@ func (s *SupabaseDB) ExpireCache() error {
 	// Direct database implementations don't have their own cache
 	// This method is only used by the CachedDB wrapper
 	return nil
+} 
+
+// EntityStatusRecord represents the structure of a record in the entity_status table
+type EntityStatusRecord struct {
+	EntityID    string    `json:"entity_id"`
+	EntityName  string    `json:"entity_name"`
+	Status      string    `json:"status"`
+	LastUpdated time.Time `json:"last_updated"`
+}
+
+// StoreEntityStatus stores or updates the status of an entity in the database
+func (s *SupabaseDB) StoreEntityStatus(entityID string, entityName string, status EntityStatus, lastUpdated time.Time) error {
+	query := `
+		INSERT INTO entity_status (entity_id, entity_name, status, last_updated)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (entity_id) DO UPDATE SET
+			entity_name = EXCLUDED.entity_name,
+			status = EXCLUDED.status,
+			last_updated = EXCLUDED.last_updated
+	`
+	_, err := s.pool.Exec(context.Background(), query, entityID, entityName, string(status), lastUpdated)
+	if err != nil {
+		log.Printf("Error storing entity status for entityID %s: %v", entityID, err)
+		return fmt.Errorf("failed to store entity status: %w", err)
+	}
+	return nil
+}
+
+// GetEntityStatus retrieves the current status of a single entity from the database
+func (s *SupabaseDB) GetEntityStatus(entityID string) (*Entity, error) {
+	var record EntityStatusRecord
+	query := `
+		SELECT entity_id, entity_name, status, last_updated
+		FROM entity_status
+		WHERE entity_id = $1
+	`
+	err := s.pool.QueryRow(context.Background(), query, entityID).Scan(
+		&record.EntityID,
+		&record.EntityName,
+		&record.Status,
+		&record.LastUpdated,
+	)
+
+	if err == pgx.ErrNoRows {
+		return nil, nil // Not found is not an error
+	}
+	if err != nil {
+		log.Printf("Error retrieving entity status for entityID %s: %v", entityID, err)
+		return nil, fmt.Errorf("failed to retrieve entity status: %w", err)
+	}
+
+	return &Entity{
+		EntityID:         record.EntityID,
+		Name:             record.EntityName,
+		Status:           EntityStatus(record.Status),
+		LastStatusChange: record.LastUpdated,
+	}, nil
+}
+
+// GetAllEntityStatuses retrieves the current status of all entities from the database
+func (s *SupabaseDB) GetAllEntityStatuses() (map[string]Entity, error) {
+	query := `
+		SELECT entity_id, entity_name, status, last_updated
+		FROM entity_status
+	`
+	rows, err := s.pool.Query(context.Background(), query)
+	if err != nil {
+		log.Printf("Error retrieving all entity statuses: %v", err)
+		return nil, fmt.Errorf("failed to retrieve all entity statuses: %w", err)
+	}
+	defer rows.Close()
+
+	entities := make(map[string]Entity)
+	for rows.Next() {
+		var record EntityStatusRecord
+		if err := rows.Scan(&record.EntityID, &record.EntityName, &record.Status, &record.LastUpdated); err != nil {
+			log.Printf("Error scanning entity status row: %v", err)
+			continue // Or return error, depending on desired behavior
+		}
+		entities[record.EntityID] = Entity{
+			EntityID:         record.EntityID,
+			Name:             record.EntityName,
+			Status:           EntityStatus(record.Status),
+			LastStatusChange: record.LastUpdated,
+		}
+	}
+
+	return entities, nil
 } 

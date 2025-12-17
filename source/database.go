@@ -15,6 +15,9 @@ type Database interface {
 	SetDeviceNotificationState(deviceToken string, notificationsOn bool) error
 	StoreUserFeedback(feedback UserFeedback) error
 	ExpireCache() error
+	StoreEntityStatus(entityID string, entityName string, status EntityStatus, lastUpdated time.Time) error
+	GetEntityStatus(entityID string) (*Entity, error)
+	GetAllEntityStatuses() (map[string]Entity, error)
 }
 
 // DeviceRegistration represents a registered device in the database
@@ -34,10 +37,6 @@ type DeviceRegistration struct {
 	DeviceModel             *string `json:"deviceModel,omitempty"`
 	DeviceModelIdentifier   *string `json:"deviceModelIdentifier,omitempty"`
 }
-
-
-
-
 
 // RideSubscriptionUpdate represents the incoming JSON payload for updating subscriptions
 type RideSubscriptionUpdate struct {
@@ -65,5 +64,3 @@ type UserFeedback struct {
 	Feedback    *string   `json:"feedback,omitempty"`
 	Logs        *string   `json:"logs,omitempty"`
 }
-
- 
