@@ -22,7 +22,7 @@ echo "Region:  $REGION"
 echo "------------------------------------------------------"
 
 # Fetch and display the last 100 log entries for the Cloud Run service
-gcloud logging read "resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"$SERVICE_NAME\" AND resource.labels.location=\"$REGION\"" \
+gcloud run services logs read "$SERVICE_NAME" \
     --project="$PROJECT_ID" \
-    --limit=100 \
-    --format="value(timestamp.date(format='%Y-%m-%d %H:%M:%S'), textPayload)" 
+    --region="$REGION" \
+    --limit=100 

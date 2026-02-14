@@ -19,7 +19,7 @@ COPY source/ ./source/
 RUN GOOS=linux go build -o main ./source/
 
 # Final stage
-FROM alpine:latest
+FROM alpine:3.21
 
 WORKDIR /app
 

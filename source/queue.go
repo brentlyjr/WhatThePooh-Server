@@ -28,7 +28,12 @@ var EntityQueue = make(chan Entity, 1000)
 var PushQueue = make(chan PushRequest, 100)
 
 func Push(req PushRequest) {
-	PushQueue <- req
+	select {
+	case PushQueue <- req:
+		// Push queued successfully
+	default:
+		log.Printf("Push queue full, dropping notification for %s", req.EntityName)
+	}
 }
 
 // QueueEntity adds an entity to the processing queue

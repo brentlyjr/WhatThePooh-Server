@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -36,6 +38,15 @@ type WebSocketClient struct {
 	done    chan struct{}
 	lastMessageTime time.Time
 	entityManager *EntityManager
+	writeMu sync.Mutex
+
+	// Connection diagnostics
+	connectedAt   time.Time
+	lastPingRecv  time.Time
+	lastPongRecv  time.Time
+	lastPingSent  time.Time
+	messageCount  uint64
+	diagMu        sync.RWMutex
 
 	// Message counters
 	messageCounts struct {
@@ -137,37 +148,68 @@ func (c *WebSocketClient) Connect() {
 			}
 
 			c.conn = conn
+			c.connectedAt = time.Now()
 			// Record the reconnection timestamp
 			AddReconnectionTimestamp()
-			log.Printf("[%s] Connected to WebSocket", time.Now().Format("2006-01-02 15:04:05 MST"))
+			log.Printf("[WS] Connected to WebSocket at %s", c.connectedAt.Format("2006-01-02 15:04:05 MST"))
 
-			// --- Start Debugging Handlers ---
-			
 			// Set a read deadline to detect unresponsive connections
 			pongWait := 60 * time.Second
 			c.conn.SetReadDeadline(time.Now().Add(pongWait))
 
 			c.conn.SetPingHandler(func(appData string) error {
-				log.Printf("Received Ping from server: %s", appData)
-				// The gorilla/websocket library automatically sends a pong back.
-				// We can extend the write deadline if we want.
-				c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-				return nil
+				now := time.Now()
+				c.diagMu.Lock()
+				c.lastPingRecv = now
+				c.diagMu.Unlock()
+				log.Printf("[WS] Received Ping from server (appData=%q), sending Pong", appData)
+				c.writeMu.Lock()
+				defer c.writeMu.Unlock()
+				c.conn.SetWriteDeadline(now.Add(10 * time.Second))
+				err := c.conn.WriteControl(websocket.PongMessage, []byte(appData), now.Add(10*time.Second))
+				if err != nil {
+					log.Printf("[WS] Error sending Pong: %v", err)
+				}
+				return err
 			})
 
 			c.conn.SetPongHandler(func(appData string) error {
-				// log.Printf("Received Pong from server: %s", appData)
-				
+				now := time.Now()
+				c.diagMu.RLock()
+				lastPing := c.lastPingSent
+				c.diagMu.RUnlock()
+				rtt := now.Sub(lastPing)
+				c.diagMu.Lock()
+				c.lastPongRecv = now
+				c.diagMu.Unlock()
+				log.Printf("[WS] Received Pong from server (RTT=%v)", rtt)
 				// Extend the read deadline since we received a pong
-				c.conn.SetReadDeadline(time.Now().Add(pongWait))
+				c.conn.SetReadDeadline(now.Add(pongWait))
 				return nil
 			})
 
 			c.conn.SetCloseHandler(func(code int, text string) error {
-				log.Printf("Received graceful close from server: %d %s", code, text)
+				c.diagMu.RLock()
+				uptime := time.Since(c.connectedAt)
+				sinceLastMsg := time.Since(c.lastMessageTime)
+				sinceLastPing := time.Since(c.lastPingRecv)
+				sinceLastPong := time.Since(c.lastPongRecv)
+				msgCount := c.messageCount
+				c.diagMu.RUnlock()
+				log.Printf("[WS] Server closed connection: code=%d text=%q uptime=%v messages=%d sinceLastMsg=%v sinceLastPing=%v sinceLastPong=%v",
+					code, text, uptime, msgCount, sinceLastMsg, sinceLastPing, sinceLastPong)
 				return nil
 			})
-			// --- End Debugging Handlers ---
+
+			// Subscribe to all resorts before starting the ping goroutine
+			// to avoid concurrent writes on the WebSocket connection
+			for _, resort := range resorts {
+				if err := c.subscribe(resort.ID); err != nil {
+					log.Printf("Failed to subscribe to %s (%s): %v", resort.Name, resort.ID, err)
+				} else {
+					log.Printf("Subscribed to %s (%s)", resort.Name, resort.ID)
+				}
+			}
 
 			// Start a ticker to send pings
 			pingPeriod := 30 * time.Second // Must be less than pongWait
@@ -179,10 +221,17 @@ func (c *WebSocketClient) Connect() {
 				for {
 					select {
 					case <-ticker.C:
-						if err := c.conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
-							log.Printf("Error sending ping: %v", err)
+						c.writeMu.Lock()
+						err := c.conn.WriteMessage(websocket.PingMessage, []byte{})
+						c.writeMu.Unlock()
+						now := time.Now()
+						if err != nil {
+							log.Printf("[WS] Error sending ping: %v", err)
 							return
 						}
+						c.diagMu.Lock()
+						c.lastPingSent = now
+						c.diagMu.Unlock()
 					case <-pingStop:
 						return
 					case <-c.done:
@@ -191,29 +240,38 @@ func (c *WebSocketClient) Connect() {
 				}
 			}()
 
-			// Subscribe to all resorts
-			for _, resort := range resorts {
-				if err := c.subscribe(resort.ID); err != nil {
-					log.Printf("Failed to subscribe to %s (%s): %v", resort.Name, resort.ID, err)
-				} else {
-					log.Printf("Subscribed to %s (%s)", resort.Name, resort.ID)
-				}
-			}
-
 			// Start reading messages
+			c.diagMu.Lock()
+			c.messageCount = 0
+			c.diagMu.Unlock()
 			for {
 				_, message, err := c.conn.ReadMessage()
 				if err != nil {
-					durationSinceLastMessage := time.Since(c.lastMessageTime)
-					log.Printf("Read error after %v since last message: %v", durationSinceLastMessage, err)
+					c.diagMu.RLock()
+					uptime := time.Since(c.connectedAt)
+					sinceLastMsg := time.Since(c.lastMessageTime)
+					sinceLastPingSent := time.Since(c.lastPingSent)
+					sinceLastPingRecv := time.Since(c.lastPingRecv)
+					sinceLastPongRecv := time.Since(c.lastPongRecv)
+					msgCount := c.messageCount
+					c.diagMu.RUnlock()
+
+					reason := classifyDisconnect(err)
+					log.Printf("[WS] Connection lost: reason=%s error=%v", reason, err)
+					log.Printf("[WS] Diagnostics: uptime=%v messages=%d sinceLastMsg=%v sinceLastPingSent=%v sinceLastPingRecv=%v sinceLastPongRecv=%v",
+						uptime, msgCount, sinceLastMsg, sinceLastPingSent, sinceLastPingRecv, sinceLastPongRecv)
 					break
 				}
 				c.lastMessageTime = time.Now()
+				c.diagMu.Lock()
+				c.messageCount++
+				c.diagMu.Unlock()
 				c.handleMessage(message)
 			}
 
 			close(pingStop) // Stop the pinger when the read loop exits
 			c.conn.Close()
+			log.Printf("[WS] Reconnecting in 5 seconds...")
 			time.Sleep(5 * time.Second)
 		}
 	}
@@ -274,7 +332,7 @@ func (c *WebSocketClient) handleMessage(message []byte) {
 			WaitTime:   waitTime,
 			Status:     EntityStatus(msg.Data.Status),
 		}
-		c.entityManager.ProcessEntity(entity, false)
+		QueueEntity(entity)
 
 		// Increment message counter
 		// c.incrementMsgCounter() // This was removed as it's not defined
@@ -284,6 +342,37 @@ func (c *WebSocketClient) handleMessage(message []byte) {
 	} else {
 		log.Printf("[%s] Received message: %s", timestamp, string(message))
 	}
+}
+
+// classifyDisconnect returns a human-readable reason for the disconnect
+func classifyDisconnect(err error) string {
+	if websocket.IsCloseError(err,
+		websocket.CloseNormalClosure,
+		websocket.CloseGoingAway,
+		websocket.CloseNoStatusReceived) {
+		closeErr, ok := err.(*websocket.CloseError)
+		if ok {
+			return fmt.Sprintf("server-close(code=%d)", closeErr.Code)
+		}
+		return "server-close"
+	}
+	if websocket.IsUnexpectedCloseError(err) {
+		return "unexpected-close"
+	}
+	errStr := err.Error()
+	if strings.Contains(errStr, "i/o timeout") {
+		return "read-deadline-timeout"
+	}
+	if strings.Contains(errStr, "use of closed network connection") {
+		return "connection-already-closed"
+	}
+	if strings.Contains(errStr, "connection reset by peer") {
+		return "connection-reset"
+	}
+	if strings.Contains(errStr, "EOF") {
+		return "eof"
+	}
+	return "unknown"
 }
 
 func (c *WebSocketClient) Close() {

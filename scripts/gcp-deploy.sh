@@ -16,13 +16,6 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 source "$CONFIG_FILE"
 
-# --- Configuration ---
-# You can change these variables
-SERVICE_NAME="what-the-pooh-server"
-REGION="us-west1"
-PROJECT_ID="whatthepooh"
-# LOCAL_APNS_KEY_PATH is now loaded from gcp_config.sh
-
 # --- Secret Configuration ---
 # Define secrets and their values from the loaded config
 SECRETS=(

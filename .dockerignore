@@ -1,0 +1,5 @@
+.git
+scripts/
+*.md
+.gitignore
+.dockerignore

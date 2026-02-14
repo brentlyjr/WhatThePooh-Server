@@ -22,6 +22,7 @@ SECRETS=(
   "APNS_KEY_ID"
   "APNS_TEAM_ID"
   "THEMEPARK_API_KEY"
+  "SUPABASE_DB_URL"
 )
 
 # --- Script Logic ---
