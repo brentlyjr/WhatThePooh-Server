@@ -258,7 +258,7 @@ func SendPushNotification(req NotificationRequest) error {
 	if req.NewStatus != "" && req.OldStatus != "" {
 		message = fmt.Sprintf("%s is now %s", req.EntityName, req.NewStatus)
 		if req.NewStatus == string(StatusOperating) {
-			message += fmt.Sprintf("\n⏱️ Wait time: %d", req.NewWaitTime)
+			message += fmt.Sprintf("\n⏱️ Wait time: %d min", req.NewWaitTime)
 		}
 	} else if req.Message != "" {
 		message = req.Message
