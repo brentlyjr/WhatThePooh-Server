@@ -273,9 +273,9 @@ func SendPushNotification(req NotificationRequest) error {
 	case "OPERATING":
 		icon = "🟢 "
 	case "CLOSED":
-		icon = "🚫 "
+		icon = "⛔️ "
 	case "DOWN":
-		icon = "⚠️ "
+		icon = "🔻 "
 	case "REFURBISHMENT":
 		icon = "🛠️ "
 	}
