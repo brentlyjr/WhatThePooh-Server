@@ -244,6 +244,51 @@ func RegisterDevice(registration DeviceRegistration) error {
 	return db.StoreDeviceToken(registration)
 }
 
+// maxDownDurationForStatusLine — omit "Was DOWN … ago" above this (likely overnight / prior day).
+const maxDownDurationForStatusLine = 12 * time.Hour
+
+// formatDownSinceLastStatus formats how long the ride was in the previous (DOWN) state,
+// for use in "Was DOWN … ago" (see SendPushNotification).
+func formatDownSinceLastStatus(d time.Duration) string {
+	if d < 0 {
+		d = 0
+	}
+	if d < time.Minute {
+		return "<1 min"
+	}
+	if d >= 3*time.Hour {
+		h := int(d.Hours())
+		if h == 1 {
+			return "1 hr"
+		}
+		return fmt.Sprintf("%d hrs", h)
+	}
+	if d < time.Hour {
+		m := int(d.Minutes())
+		if m == 1 {
+			return "1 min"
+		}
+		return fmt.Sprintf("%d min", m)
+	}
+	h := int(d.Hours())
+	m := int(d.Minutes()) - h*60
+	if m == 0 {
+		if h == 1 {
+			return "1 hr"
+		}
+		return fmt.Sprintf("%d hrs", h)
+	}
+	hrPart := "1 hr"
+	if h != 1 {
+		hrPart = fmt.Sprintf("%d hrs", h)
+	}
+	minPart := "1 min"
+	if m != 1 {
+		minPart = fmt.Sprintf("%d min", m)
+	}
+	return hrPart + " " + minPart
+}
+
 func SendPushNotification(req NotificationRequest) error {
 	// Generate a unique notification ID if not provided
 	if req.NotificationID == "" {
@@ -259,6 +304,12 @@ func SendPushNotification(req NotificationRequest) error {
 		message = fmt.Sprintf("%s is now %s", req.EntityName, req.NewStatus)
 		if req.NewStatus == string(StatusOperating) {
 			message += fmt.Sprintf("\n⏱️ Wait time: %d min", req.NewWaitTime)
+			if req.OldStatus == string(StatusDown) && !req.TimeOfLastStatus.IsZero() {
+				downFor := req.Timestamp.Sub(req.TimeOfLastStatus)
+				if downFor > 0 && downFor <= maxDownDurationForStatusLine {
+					message += "\n📒 Was DOWN " + formatDownSinceLastStatus(downFor) + " ago"
+				}
+			}
 		}
 	} else if req.Message != "" {
 		message = req.Message
