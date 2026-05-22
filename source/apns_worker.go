@@ -289,6 +289,17 @@ func formatDownSinceLastStatus(d time.Duration) string {
 	return hrPart + " " + minPart
 }
 
+// formatStandbyWaitMinutes formats STANDBY queue wait minutes for "Wait time: …" copy.
+func formatStandbyWaitMinutes(minutes int) string {
+	if minutes <= 0 {
+		return "<1 min"
+	}
+	if minutes == 1 {
+		return "1 min"
+	}
+	return fmt.Sprintf("%d min", minutes)
+}
+
 func SendPushNotification(req NotificationRequest) error {
 	// Generate a unique notification ID if not provided
 	if req.NotificationID == "" {
@@ -303,7 +314,7 @@ func SendPushNotification(req NotificationRequest) error {
 	if req.NewStatus != "" && req.OldStatus != "" {
 		message = fmt.Sprintf("%s is now %s", req.EntityName, req.NewStatus)
 		if req.NewStatus == string(StatusOperating) {
-			message += fmt.Sprintf("\n⏱️ Wait time: %d min", req.NewWaitTime)
+			message += "\n⏱️ Wait time: " + formatStandbyWaitMinutes(req.NewWaitTime)
 			if req.OldStatus == string(StatusDown) && !req.TimeOfLastStatus.IsZero() {
 				downFor := req.Timestamp.Sub(req.TimeOfLastStatus)
 				if downFor > 0 && downFor <= maxDownDurationForStatusLine {
