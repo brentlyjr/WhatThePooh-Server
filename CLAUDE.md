@@ -83,6 +83,7 @@ EntityManager.ProcessEntity (entity_manager.go)
 Key architectural points:
 
 - **Single Go package.** All `source/*.go` files are `package main`; symbols like `db` (global), `messageBus`, `EntityQueue`, `PushQueue` are shared package-level state. There is no `internal/` layout.
+- **Ride emojis.** Per-entity emoji strings live in `source/data/ride_emojis.json`, are embedded at build time via `//go:embed` in `ride_emojis.go`, and are loaded into memory at startup with `loadRideEmojis()` (lookup via `getRideEmoji(entityID)`).
 - **`Database` interface (`database.go`) with two implementations.** `SupabaseDB` (`supabase_db.go`) is the real Postgres-backed store using `pgx`. `CachedDB` (`cache.go`) wraps it with an in-memory device cache (`sync.Map`) populated on startup and refreshed via `POST /api/cache/expire`. The cache holds only device rows — subscriptions and entity status calls pass through. The global `db` variable points to a `CachedDB` wrapping a `SupabaseDB`.
 - **WebSocket reconnect loop** (`websocket_client.go`) sends pings every 30s, expects a pong within 60s, and on disconnect appends a timestamp to a bounded `reconnectionTimestamps` slice exposed via `/api/metrics`. It subscribes to a hard-coded list of resort IDs (Disney + Universal) on every (re)connect.
 - **Subscription updates use smart diffing.** `SupabaseDB.UpdateSubscriptions` computes added/removed `(park_id, entity_id)` pairs in a transaction and only INSERTs/DELETEs the differences. An empty `subscriptions` array means "unsubscribe from everything" and is valid.

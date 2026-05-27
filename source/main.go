@@ -75,6 +75,11 @@ func main() {
 		log.Println("No .env file found, using environment variables from system")
 	}
 
+	if err := loadRideEmojis(); err != nil {
+		log.Fatalf("Failed to load ride emojis: %v", err)
+	}
+	log.Printf("Loaded %d ride emojis", len(rideEmojis))
+
 	// Initialize Supabase database
 	supabaseDB, err := NewSupabaseDB()
 	if err != nil {
