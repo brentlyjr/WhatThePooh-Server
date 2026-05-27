@@ -84,6 +84,7 @@ Key architectural points:
 
 - **Single Go package.** All `source/*.go` files are `package main`; symbols like `db` (global), `messageBus`, `EntityQueue`, `PushQueue` are shared package-level state. There is no `internal/` layout.
 - **Ride emojis.** Per-entity emoji strings live in `source/data/ride_emojis.json`, are embedded at build time via `//go:embed` in `ride_emojis.go`, and are loaded into memory at startup with `loadRideEmojis()` (lookup via `getRideEmoji(entityID)`).
+- **APNS alert copy.** Status-change pushes use title `{rideEmoji} {entityName}` (name only if no emoji in the map) and body `{statusEmoji}Now {NEW_STATUS} in {parkName}`, plus optional wait-time and was-down lines when operating. Custom payload includes `rideEmoji` when mapped.
 - **`Database` interface (`database.go`) with two implementations.** `SupabaseDB` (`supabase_db.go`) is the real Postgres-backed store using `pgx`. `CachedDB` (`cache.go`) wraps it with an in-memory device cache (`sync.Map`) populated on startup and refreshed via `POST /api/cache/expire`. The cache holds only device rows — subscriptions and entity status calls pass through. The global `db` variable points to a `CachedDB` wrapping a `SupabaseDB`.
 - **WebSocket reconnect loop** (`websocket_client.go`) sends pings every 30s, expects a pong within 60s, and on disconnect appends a timestamp to a bounded `reconnectionTimestamps` slice exposed via `/api/metrics`. It subscribes to a hard-coded list of resort IDs (Disney + Universal) on every (re)connect.
 - **Subscription updates use smart diffing.** `SupabaseDB.UpdateSubscriptions` computes added/removed `(park_id, entity_id)` pairs in a transaction and only INSERTs/DELETEs the differences. An empty `subscriptions` array means "unsubscribe from everything" and is valid.
@@ -105,7 +106,7 @@ RLS is enabled on all tables with a permissive "anonymous access" policy because
 
 ## Park ID Map
 
-`source/constants.go` hard-codes the `parkID → human-readable name` map used in APNS notification titles. `websocket_client.go` separately hard-codes the **resort** IDs (parent of parks) to subscribe to. These two lists are intentionally different — resorts are subscription targets, parks are what come back in `livedata` messages.
+`source/constants.go` hard-codes the `parkID → human-readable name` map used in APNS body copy (`Now … in {parkName}`). `websocket_client.go` separately hard-codes the **resort** IDs (parent of parks) to subscribe to. These two lists are intentionally different — resorts are subscription targets, parks are what come back in `livedata` messages.
 
 ## API Surface
 

@@ -248,7 +248,7 @@ func RegisterDevice(registration DeviceRegistration) error {
 const maxDownDurationForStatusLine = 12 * time.Hour
 
 // formatDownSinceLastStatus formats how long the ride was in the previous (DOWN) state,
-// for use in "Was DOWN … ago" (see SendPushNotification).
+// for use in "Was Down … ago" (see buildStatusChangeBody).
 func formatDownSinceLastStatus(d time.Duration) string {
 	if d < 0 {
 		d = 0
@@ -300,6 +300,55 @@ func formatStandbyWaitMinutes(minutes int) string {
 	return fmt.Sprintf("%d min", minutes)
 }
 
+func formatAlertTitle(entityID, entityName string) string {
+	if entityName == "" {
+		return "Notification"
+	}
+	if emoji := getRideEmoji(entityID); emoji != "" {
+		return emoji + " " + entityName
+	}
+	return entityName
+}
+
+func alertTitleForRequest(req NotificationRequest) string {
+	if req.EntityName != "" {
+		return formatAlertTitle(req.EntityID, req.EntityName)
+	}
+	if req.ParkID != "" {
+		return getParkName(req.ParkID)
+	}
+	return "Notification"
+}
+
+func statusEmoji(newStatus string) string {
+	switch newStatus {
+	case "OPERATING":
+		return "🟢 "
+	case "CLOSED":
+		return "⛔️ "
+	case "DOWN":
+		return "🔻 "
+	case "REFURBISHMENT":
+		return "🛠️ "
+	default:
+		return ""
+	}
+}
+
+func buildStatusChangeBody(req NotificationRequest) string {
+	message := statusEmoji(req.NewStatus) + "Now " + req.NewStatus + " in " + getParkName(req.ParkID)
+	if req.NewStatus == string(StatusOperating) {
+		message += "\n⏱️ Wait time: " + formatStandbyWaitMinutes(req.NewWaitTime)
+		if req.OldStatus == string(StatusDown) && !req.TimeOfLastStatus.IsZero() {
+			downFor := req.Timestamp.Sub(req.TimeOfLastStatus)
+			if downFor > 0 && downFor <= maxDownDurationForStatusLine {
+				message += "\n📋 Was Down " + formatDownSinceLastStatus(downFor) + " ago"
+			}
+		}
+	}
+	return message
+}
+
 func SendPushNotification(req NotificationRequest) error {
 	// Generate a unique notification ID if not provided
 	if req.NotificationID == "" {
@@ -309,46 +358,27 @@ func SendPushNotification(req NotificationRequest) error {
 	// Get the appropriate APNS client based on the environment
 	client := getAPNSClient(req.Environment)
 	
-    // Construct the notification message
 	var message string
 	if req.NewStatus != "" && req.OldStatus != "" {
-		message = fmt.Sprintf("%s is now %s", req.EntityName, req.NewStatus)
-		if req.NewStatus == string(StatusOperating) {
-			message += "\n⏱️ Wait time: " + formatStandbyWaitMinutes(req.NewWaitTime)
-			if req.OldStatus == string(StatusDown) && !req.TimeOfLastStatus.IsZero() {
-				downFor := req.Timestamp.Sub(req.TimeOfLastStatus)
-				if downFor > 0 && downFor <= maxDownDurationForStatusLine {
-					message += "\n📒 Was DOWN " + formatDownSinceLastStatus(downFor) + " ago"
-				}
-			}
-		}
+		message = buildStatusChangeBody(req)
 	} else if req.Message != "" {
 		message = req.Message
+		if req.NewStatus != "" {
+			if icon := statusEmoji(req.NewStatus); icon != "" {
+				message = icon + message
+			}
+		}
 	} else {
-		// Fallback for notifications sent without status change context
 		message = fmt.Sprintf("Update for %s", req.EntityName)
-	}
-
-	// Determine which icon to use based on the new status
-	var icon string
-	switch req.NewStatus {
-	case "OPERATING":
-		icon = "🟢 "
-	case "CLOSED":
-		icon = "⛔️ "
-	case "DOWN":
-		icon = "🔻 "
-	case "REFURBISHMENT":
-		icon = "🛠️ "
-	}
-	
-	// Prepend the icon to the message body
-	if icon != "" {
-		message = icon + message
+		if req.NewStatus != "" {
+			if icon := statusEmoji(req.NewStatus); icon != "" {
+				message = icon + message
+			}
+		}
 	}
 
 	p := payload.NewPayload().
-		AlertTitle(getParkName(req.ParkID)).
+		AlertTitle(alertTitleForRequest(req)).
 		AlertBody(message).
 		Sound("default").
 		MutableContent().
@@ -363,6 +393,10 @@ func SendPushNotification(req NotificationRequest) error {
 		Custom("notificationId", req.NotificationID).
 		Custom("timestamp", req.Timestamp.Format(time.RFC3339)).
 		Custom("time_of_last_status", req.TimeOfLastStatus.Format(time.RFC3339))
+
+	if emoji := getRideEmoji(req.EntityID); emoji != "" {
+		p = p.Custom("rideEmoji", emoji)
+	}
 
 	notification := &apns2.Notification{
 		DeviceToken: req.DeviceToken,
