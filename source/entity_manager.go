@@ -81,9 +81,9 @@ func (em *EntityManager) GetAllEntities() map[string]Entity {
 	return result
 }
 
-// ProcessEntity processes an entity update.
-// isInitial specifies if this is part of the initial data load.
-func (em *EntityManager) ProcessEntity(entity Entity, isInitial bool) {
+// ProcessEntity processes a live entity update from the WebSocket stream.
+// Startup ingestion goes through BulkLoad + ReconcileAgainst instead.
+func (em *EntityManager) ProcessEntity(entity Entity) {
 	em.mu.Lock()
 	defer em.mu.Unlock()
 
@@ -106,22 +106,17 @@ func (em *EntityManager) ProcessEntity(entity Entity, isInitial bool) {
 	// Check for status change
 	if entity.Status != existingEntity.Status {
 		now := time.Now()
-		// Only send notifications for changes that happen after initial population,
-		// or for discrepancies found during initial population.
-		if !isInitial || (isInitial && exists) {
-
-			messageBus.PublishStatus(StatusChangeMessage{
-				EntityID:         entity.EntityID,
-				EntityName:       entity.Name,
-				ParkID:           entity.ParkID,
-				OldStatus:        existingEntity.Status,
-				NewStatus:        entity.Status,
-				OldWaitTime:      existingEntity.WaitTime,
-				NewWaitTime:      entity.WaitTime,
-				Timestamp:        now,
-				TimeOfLastStatus: existingEntity.LastStatusChange,
-			})
-		}
+		messageBus.PublishStatus(StatusChangeMessage{
+			EntityID:         entity.EntityID,
+			EntityName:       entity.Name,
+			ParkID:           entity.ParkID,
+			OldStatus:        existingEntity.Status,
+			NewStatus:        entity.Status,
+			OldWaitTime:      existingEntity.WaitTime,
+			NewWaitTime:      entity.WaitTime,
+			Timestamp:        now,
+			TimeOfLastStatus: existingEntity.LastStatusChange,
+		})
 
 		existingEntity.Status = entity.Status
 		existingEntity.LastStatusChange = now
@@ -131,12 +126,6 @@ func (em *EntityManager) ProcessEntity(entity Entity, isInitial bool) {
 		if err != nil {
 			log.Printf("Failed to store entity status for %s: %v", existingEntity.EntityID, err)
 		}
-	} else if isInitial {
-		// If it's the initial load and status is the same, ensure other details are up-to-date.
-		// We trust the database's LastStatusChange timestamp.
-		existingEntity.Name = entity.Name
-		existingEntity.EntityType = entity.EntityType
-		existingEntity.ParkID = entity.ParkID
 	}
 
 	// Check for wait time change
@@ -153,4 +142,77 @@ func (em *EntityManager) ProcessEntity(entity Entity, isInitial bool) {
 	}
 
 	em.entities.Store(entity.EntityID, existingEntity)
-} 
+}
+
+// BulkLoad stores REST entities into the manager without publishing notifications
+// or writing to the database. Use during startup, before subscribers attach to
+// the message bus. ReconcileAgainst is responsible for emitting status-change
+// notifications and persisting any new state.
+func (em *EntityManager) BulkLoad(entities []Entity) {
+	em.mu.Lock()
+	defer em.mu.Unlock()
+
+	for _, entity := range entities {
+		em.entities.Store(entity.EntityID, entity)
+	}
+}
+
+// ReconcileAgainst compares the manager's current state (loaded from REST via
+// BulkLoad) against a snapshot of the database's last-known state and emits a
+// StatusChangeMessage for each entity whose status differs. New entities (in
+// REST but not in the snapshot) are persisted without notification. For
+// unchanged entities, the snapshot's LastStatusChange is copied forward so the
+// "time in current status" duration survives the restart.
+func (em *EntityManager) ReconcileAgainst(snapshot map[string]Entity) {
+	em.mu.Lock()
+	defer em.mu.Unlock()
+
+	var discrepancies, newEntities, unchanged int
+	now := time.Now()
+
+	em.entities.Range(func(key, value interface{}) bool {
+		current := value.(Entity)
+		prior, existedInDB := snapshot[current.EntityID]
+
+		if !existedInDB {
+			current.LastStatusChange = now
+			current.LastWaitTimeChange = now
+			em.entities.Store(current.EntityID, current)
+			if err := em.db.StoreEntityStatus(current.EntityID, current.Name, current.Status, now); err != nil {
+				log.Printf("Failed to persist new entity %s during reconciliation: %v", current.EntityID, err)
+			}
+			newEntities++
+			return true
+		}
+
+		if current.Status != prior.Status {
+			messageBus.PublishStatus(StatusChangeMessage{
+				EntityID:         current.EntityID,
+				EntityName:       current.Name,
+				ParkID:           current.ParkID,
+				OldStatus:        prior.Status,
+				NewStatus:        current.Status,
+				OldWaitTime:      prior.WaitTime,
+				NewWaitTime:      current.WaitTime,
+				Timestamp:        now,
+				TimeOfLastStatus: prior.LastStatusChange,
+			})
+			current.LastStatusChange = now
+			em.entities.Store(current.EntityID, current)
+			if err := em.db.StoreEntityStatus(current.EntityID, current.Name, current.Status, now); err != nil {
+				log.Printf("Failed to persist reconciled status for %s: %v", current.EntityID, err)
+			}
+			discrepancies++
+			return true
+		}
+
+		// Status unchanged: preserve the DB's LastStatusChange so the duration counter stays accurate.
+		current.LastStatusChange = prior.LastStatusChange
+		em.entities.Store(current.EntityID, current)
+		unchanged++
+		return true
+	})
+
+	log.Printf("[STARTUP] Reconciliation complete: %d checked, %d discrepancies published, %d new entities persisted, %d unchanged",
+		discrepancies+newEntities+unchanged, discrepancies, newEntities, unchanged)
+}

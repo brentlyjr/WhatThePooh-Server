@@ -58,34 +58,43 @@ func NewRestClient(apiKey string) *RestClient {
 	}
 }
 
-// PrePopulateEntities fetches data from all resorts and pre-populates the entity manager
-func (rc *RestClient) PrePopulateEntities(entityManager *EntityManager) error {
-	log.Printf("Starting pre-population of entities from REST API...")
-	
-	totalEntities := 0
-	
-	// Fetch data for each resort
+// FetchAllEntities fetches live data for every configured resort and returns a
+// flat slice of Entity records. It does not touch the EntityManager or the
+// database — callers (typically startup in main.go) feed the result into
+// EntityManager.BulkLoad, then run EntityManager.ReconcileAgainst once
+// subscribers are attached to the message bus.
+func (rc *RestClient) FetchAllEntities() ([]Entity, error) {
+	log.Printf("Starting REST fetch of entities from %d resorts...", len(resorts))
+
+	var allEntities []Entity
+
 	for _, resort := range resorts {
 		log.Printf("Fetching entities for resort: %s (%s)", resort.Name, resort.ID)
-		
-		entities, err := rc.fetchResortEntities(resort.ID)
+
+		restEntities, err := rc.fetchResortEntities(resort.ID)
 		if err != nil {
 			log.Printf("Error fetching entities for resort %s: %v", resort.Name, err)
 			continue // Continue with other resorts even if one fails
 		}
-		
-		// Convert and add entities to the manager
-		count := rc.addEntitiesToManager(entities, entityManager)
-		totalEntities += count
-		
-		log.Printf("Added %d entities for resort %s", count, resort.Name)
-		
+
+		count := 0
+		for _, re := range restEntities {
+			entity, ok := convertRestEntity(re)
+			if !ok {
+				continue
+			}
+			allEntities = append(allEntities, entity)
+			count++
+		}
+
+		log.Printf("Fetched %d entities for resort %s", count, resort.Name)
+
 		// Small delay between requests to be respectful to the API
 		time.Sleep(100 * time.Millisecond)
 	}
-	
-	log.Printf("Pre-population complete! Added %d total entities", totalEntities)
-	return nil
+
+	log.Printf("REST fetch complete! Total entities: %d", len(allEntities))
+	return allEntities, nil
 }
 
 // fetchResortEntities fetches live data for a specific resort
@@ -125,56 +134,35 @@ func (rc *RestClient) fetchResortEntities(resortID string) ([]LiveDataEntity, er
 	return response.LiveData, nil
 }
 
-// addEntitiesToManager converts REST API entities to our Entity format and adds them to the manager
-func (rc *RestClient) addEntitiesToManager(restEntities []LiveDataEntity, entityManager *EntityManager) int {
-	count := 0
-	
-	for _, restEntity := range restEntities {
-		// Only process ATTRACTION entities
-		if restEntity.EntityType != "ATTRACTION" {
-			continue
-		}
-		
-		// Parse last updated time
-		lastUpdated, err := time.Parse(time.RFC3339, restEntity.LastUpdated)
-		if err != nil {
-			log.Printf("Warning: Could not parse lastUpdated for entity %s: %v", restEntity.ID, err)
-			lastUpdated = time.Now()
-		}
-		
-		// Extract wait time from queue data
-		waitTime := 0
-		if restEntity.Queue != nil {
-			if standby, exists := restEntity.Queue["STANDBY"]; exists && standby.WaitTime != nil {
-				waitTime = *standby.WaitTime
-			}
-		}
-		
-		// Convert status string to EntityStatus
-		status := EntityStatus(restEntity.Status)
-		
-		// Create our Entity format
-		entity := Entity{
-			EntityID:           restEntity.ID,
-			Name:              restEntity.Name,
-			EntityType:        restEntity.EntityType,
-			ParkID:            restEntity.ParkID,
-			WaitTime:          waitTime,
-			Status:            status,
-			LastStatusChange:  lastUpdated,
-			LastWaitTimeChange: lastUpdated,
-		}
-		
-		// Add to entity manager (this will not trigger status change notifications since it's initial population)
-		entityManager.ProcessEntity(entity, true)
-		count++
+// convertRestEntity converts a single LiveDataEntity from the REST response
+// into our Entity format. Returns (entity, false) for entities that should be
+// skipped (e.g., non-ATTRACTION types).
+func convertRestEntity(restEntity LiveDataEntity) (Entity, bool) {
+	if restEntity.EntityType != "ATTRACTION" {
+		return Entity{}, false
 	}
-	
-	return count
-}
 
-// GetEntityCount returns the current number of entities in the manager
-func (rc *RestClient) GetEntityCount(entityManager *EntityManager) int {
-	entities := entityManager.GetAllEntities()
-	return len(entities)
+	lastUpdated, err := time.Parse(time.RFC3339, restEntity.LastUpdated)
+	if err != nil {
+		log.Printf("Warning: Could not parse lastUpdated for entity %s: %v", restEntity.ID, err)
+		lastUpdated = time.Now()
+	}
+
+	waitTime := 0
+	if restEntity.Queue != nil {
+		if standby, exists := restEntity.Queue["STANDBY"]; exists && standby.WaitTime != nil {
+			waitTime = *standby.WaitTime
+		}
+	}
+
+	return Entity{
+		EntityID:           restEntity.ID,
+		Name:               restEntity.Name,
+		EntityType:         restEntity.EntityType,
+		ParkID:             restEntity.ParkID,
+		WaitTime:           waitTime,
+		Status:             EntityStatus(restEntity.Status),
+		LastStatusChange:   lastUpdated,
+		LastWaitTimeChange: lastUpdated,
+	}, true
 }

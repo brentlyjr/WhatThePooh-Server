@@ -113,37 +113,43 @@ func main() {
 	websocketURL := getEnvWithDefault("WEBSOCKET_URL", "wss://api.themeparks.wiki/v1/entity/live")
 	apiKey := getEnvOrExit("THEMEPARK_API_KEY")
 
-	// Initialize entity manager
+	// Phase 1 — Load DB state.
+	// EntityManager constructor hydrates em.entities from the entity_status table.
 	entityManager := NewEntityManager(db)
+	dbSnapshot := entityManager.GetAllEntities()
+	log.Printf("[STARTUP] Loaded %d entity statuses from DB", len(dbSnapshot))
 
-	// Initialize REST client for pre-population
+	// Phase 2 — Fetch the current REST snapshot and load it silently.
+	// No messages are published yet; subscribers haven't attached to the bus.
 	restClient := NewRestClient(apiKey)
-
-	// Pre-populate entities from REST API
-	log.Printf("Pre-populating entities from REST API...")
-	if err := restClient.PrePopulateEntities(entityManager); err != nil {
-		log.Printf("Warning: Failed to pre-populate entities: %v", err)
-	} else {
-		entityCount := restClient.GetEntityCount(entityManager)
-		log.Printf("Successfully pre-populated %d entities", entityCount)
+	restEntities, err := restClient.FetchAllEntities()
+	if err != nil {
+		log.Printf("Warning: Failed to fetch entities from REST: %v", err)
 	}
+	entityManager.BulkLoad(restEntities)
+	log.Printf("[STARTUP] Fetched %d entities from REST and loaded into memory", len(restEntities))
 
-	// Start entity processing worker
+	// Phase 3 — Wire up the message bus subscribers and APNS workers BEFORE
+	// reconciliation. This is the critical ordering: ReconcileAgainst publishes
+	// StatusChangeMessages, and MessageBus drops messages when no subscriber is
+	// attached.
+	StartMessageProcessors()
+	StartAPNSWorkers(5)
+
+	// Phase 4 — Start the EntityQueue consumer for live WS updates.
 	go func() {
 		for entity := range EntityQueue {
-			entityManager.ProcessEntity(entity, false)
+			entityManager.ProcessEntity(entity)
 		}
 	}()
 
-	// Initialize WebSocket client
+	// Phase 5 — Reconcile DB snapshot vs REST snapshot. Any entity whose status
+	// changed while the server was offline gets a push fan-out here.
+	entityManager.ReconcileAgainst(dbSnapshot)
+
+	// Phase 6 — Connect the WebSocket for live updates.
 	wsClient := NewWebSocketClient(websocketURL, apiKey, entityManager)
 	go wsClient.Connect()
-
-	// Start message processors
-	StartMessageProcessors()
-
-	// Start the APNS worker pool
-	StartAPNSWorkers(5) // Start 5 workers
 
 	// Create Fiber app with increased body size limit for feedback logs
 	app := fiber.New(fiber.Config{
