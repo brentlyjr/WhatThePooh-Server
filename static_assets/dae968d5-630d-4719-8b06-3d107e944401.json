@@ -1,0 +1,202 @@
+{
+  "schemaVersion": 1,
+  "parkVersion": 1,
+  "generatedAt": "2026-05-27T04:08:58Z",
+  "park": {
+    "id": "dae968d5-630d-4719-8b06-3d107e944401",
+    "name": "Disneyland Paris",
+    "polygon": null
+  },
+  "rides": [
+    {
+      "id": "03871aa6-a0b5-41ee-8fd3-b2f4b8dccc79",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Frontierland Playground"
+    },
+    {
+      "id": "03992704-698d-474b-a721-a5ac3498edb9",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Buzz Lightyear Laser Blast"
+    },
+    {
+      "id": "07782089-5e83-4bee-8a39-735818551844",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Le Passage Enchanté d'Aladdin"
+    },
+    {
+      "id": "0d822af0-bf02-47a7-bc29-672d2fa4f7ab",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Pirates of the Caribbean"
+    },
+    {
+      "id": "0d9296c0-a76c-4578-b0f9-2ff4b4e385b5",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Disneyland Railroad Main Street Station"
+    },
+    {
+      "id": "14f756d6-d6fa-4200-8b41-db84ba294fa6",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Phantom Manor"
+    },
+    {
+      "id": "252b9b03-f770-4979-b3b2-f4ffecc3894d",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Alice's Curious Labyrinth"
+    },
+    {
+      "id": "2aa73e46-8dcf-4201-b334-db31e6e6ca06",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Pirates' Beach"
+    },
+    {
+      "id": "323bec06-fef7-4a60-989d-e3fcf9d3db7e",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Thunder Mesa Riverboat Landing"
+    },
+    {
+      "id": "38bafc85-cb48-488e-aa68-3e2d01ae6a10",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "La Galerie de la Belle au Bois Dormant"
+    },
+    {
+      "id": "3a1cd3f7-9c42-4f9b-90fa-dab7ba113862",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Autopia, presented by Avis"
+    },
+    {
+      "id": "46406e4a-4a02-4d30-89bc-ef1ed63c1ff9",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Dumbo the Flying Elephant"
+    },
+    {
+      "id": "53895b6d-d25d-4e08-a489-0c3d47dd183f",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Disneyland Railroad Frontierland Depot"
+    },
+    {
+      "id": "594dabd8-ddc1-4835-aafa-f654e10ed2db",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Les Voyages de Pinocchio"
+    },
+    {
+      "id": "5d0ce227-7ad0-4402-a95b-6cf56f25a8ec",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Indiana Jones™ and the Temple of Peril"
+    },
+    {
+      "id": "5d10b8b2-7d34-4794-8857-76688e5864bc",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Star Tours: The Adventures Continue*"
+    },
+    {
+      "id": "63dfcdab-86c2-4185-99b1-5a353d81bb52",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Adventure Isle"
+    },
+    {
+      "id": "6bb88973-80d0-45cf-bffe-433f1c551362",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Horse-Drawn Streetcars"
+    },
+    {
+      "id": "76e9e917-fe07-49d5-b604-f65d831210fa",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Pirate Galleon"
+    },
+    {
+      "id": "7c5b2c2d-1082-4e5c-b155-dc492db16e6e",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Peter Pan's Flight"
+    },
+    {
+      "id": "7d90d4e6-8c15-44ee-9e94-feb07788f02f",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Discovery Arcade"
+    },
+    {
+      "id": "7e426533-7727-47e5-8c8e-0dcd46198e57",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "La Cabane des Robinson"
+    },
+    {
+      "id": "7ff5d512-aed5-479a-8b3d-9bd1efb4177b",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Casey Jr. – le Petit Train du Cirque"
+    },
+    {
+      "id": "83fa9e7f-4a25-4bee-8e61-4fb8c59cd350",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "La Tanière du Dragon"
+    },
+    {
+      "id": "852d957c-382e-4afb-bb74-70c9a79055df",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Big Thunder Mountain"
+    },
+    {
+      "id": "8ed1472a-4d2e-47f1-b848-353de0bc3670",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Blanche-Neige et les Sept Nains®"
+    },
+    {
+      "id": "9056906c-0030-4951-be5e-44ac1f273491",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Le Pays des Contes de Fées, presented by Vittel"
+    },
+    {
+      "id": "a5afa85c-ee58-4f47-8626-fa4057e7d266",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Disneyland Railroad Main Street Station"
+    },
+    {
+      "id": "a61aeee6-bed5-4890-8209-5249e689b1a1",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Liberty Arcade"
+    },
+    {
+      "id": "a620015d-091d-4f82-b8b2-a97bc8641f07",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Sleeping Beauty Castle"
+    },
+    {
+      "id": "bcbd2214-0f75-4cae-8cff-087adf621330",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Rustler Roundup Shootin' Gallery"
+    },
+    {
+      "id": "bcc5567f-f00b-4a7d-8ee6-526cc8d3d5de",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Mad Hatter's Tea Cups"
+    },
+    {
+      "id": "ce87a0fe-c644-475e-abb6-9727e05cebff",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "\"it's a small world\""
+    },
+    {
+      "id": "ced30c44-9b79-45de-a8c9-6347298756c1",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Le Carrousel de Lancelot"
+    },
+    {
+      "id": "d6c61231-8f9b-40fa-943a-fe1454e185e7",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Main Street Vehicles"
+    },
+    {
+      "id": "d8d9f62a-9fa3-4aae-a568-4225afc35924",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Les Mystères du Nautilus"
+    },
+    {
+      "id": "ddca340c-7ba1-4f23-89eb-0d3d52c84bda",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Star Wars Hyperspace Mountain"
+    },
+    {
+      "id": "f0525c25-4ea2-49b7-aab5-150b27658fb6",
+      "parkId": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Orbitron®"
+    }
+  ]
+}

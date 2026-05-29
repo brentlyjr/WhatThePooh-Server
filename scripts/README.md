@@ -11,6 +11,7 @@ This directory contains scripts for deploying and managing the WhatThePooh Serve
 - **`gcp-deploy.sh`**: Main deployment script for GCP Cloud Run
 - **`gcp-destroy.sh`**: Cleanup script to remove GCP resources
 - **`gcp-logs.sh`**: Script to view GCP logs
+- **`gcs-deploy.sh`**: Syncs the `static_assets/` directory to a public GCS bucket for iOS client consumption
 - **`gcp_config.sh`**: Configuration file for GCP deployment (contains secrets)
 
 ## Quick Start
@@ -24,6 +25,17 @@ This directory contains scripts for deploying and managing the WhatThePooh Serve
 ```bash
 cd scripts
 ./gcp-deploy.sh
+```
+
+### Static Asset Deployment (GCS)
+```bash
+./scripts/gcs-deploy.sh
+```
+Uploads the contents of `static_assets/` (in the repo root) to the public GCS bucket defined by `STATIC_BUCKET_NAME` in `gcp_config.sh`. The bucket is created on first run with uniform bucket-level access and `allUsers` granted Storage Object Viewer. `.json` files are stored gzipped (served with `Content-Encoding: gzip`), and `manifest.json` is published with `Cache-Control: no-cache, max-age=0` so iOS clients always fetch a fresh copy on launch.
+
+After a successful run, files are reachable at:
+```
+https://storage.googleapis.com/<STATIC_BUCKET_NAME>/<filename>
 ```
 
 ## Prerequisites

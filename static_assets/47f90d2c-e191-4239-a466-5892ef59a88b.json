@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "parkVersion": 1,
+  "generatedAt": "2026-05-27T04:08:58Z",
+  "park": {
+    "id": "47f90d2c-e191-4239-a466-5892ef59a88b",
+    "name": "EPCOT",
+    "polygon": null
+  },
+  "rides": [
+    {
+      "id": "00666fe9-7774-4b53-9fb7-3d333f8aa503",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Impressions de France"
+    },
+    {
+      "id": "07dbeaea-85fa-45f2-872f-02f9e7510419",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Gallery of Arts and History"
+    },
+    {
+      "id": "0f40274d-420a-425a-9377-29fd6e49484f",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "House of the Whispering Willows"
+    },
+    {
+      "id": "18c533d6-a395-4ae4-9488-80fce9c497fe",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Palais du Cinéma"
+    },
+    {
+      "id": "1e735ffb-4868-47f1-b2cd-2ac1156cd5f0",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Remy's Ratatouille Adventure"
+    },
+    {
+      "id": "1f542745-cda1-4786-a536-5fff373e5964",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "The American Adventure"
+    },
+    {
+      "id": "22f48b73-01df-460e-8969-9eb2b4ae836c",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Gran Fiesta Tour Starring The Three Caballeros"
+    },
+    {
+      "id": "2ecc4fff-2994-476f-9926-24a4af173838",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Bruce's Shark World"
+    },
+    {
+      "id": "35ed719b-f7f0-488f-8346-4fbf8055d373",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Disney and Pixar Short Film Festival"
+    },
+    {
+      "id": "37ae57c5-feaf-4e47-8f27-4b385be200f0",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Test Track"
+    },
+    {
+      "id": "3ace01d1-15fc-4fbb-99e4-81a696cb2d05",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Kidcot Fun Stops"
+    },
+    {
+      "id": "3d8f8f8f-f984-4d2e-8dea-5a79432bdf05",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Advanced Training Lab"
+    },
+    {
+      "id": "3e5f26ee-c02d-47fd-891e-5e4479073444",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "ImageWorks - The \"What If\" Labs"
+    },
+    {
+      "id": "480fde8f-fe58-4bfb-b3ab-052a39d4db7c",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Spaceship Earth"
+    },
+    {
+      "id": "482169b9-2889-4747-8aef-f9d13a37d940",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Awesome Planet"
+    },
+    {
+      "id": "4f0df9e7-d4c1-45b5-93e2-4a7bc92547b0",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "American Heritage Gallery"
+    },
+    {
+      "id": "57acb522-a6fc-4aa4-a80e-21f21f317250",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Turtle Talk With Crush"
+    },
+    {
+      "id": "5b6475ad-4e9a-4793-b841-501aa382c9c0",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Mission: SPACE"
+    },
+    {
+      "id": "61fb49f8-e62f-4e1c-ae0e-8ab9929037bc",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Canada Far and Wide in Circle-Vision 360"
+    },
+    {
+      "id": "66ff36de-9cb3-4d9a-b891-1665d19ffb3e",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Stave Church Gallery"
+    },
+    {
+      "id": "6f1d3b25-42c9-4e99-9dce-6c20d7a5deea",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Bijutsu-kan Gallery"
+    },
+    {
+      "id": "75449e85-c410-4cef-a368-9d2ea5d52b58",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Journey Into Imagination With Figment"
+    },
+    {
+      "id": "7969166f-feef-4350-b26e-6a6c745528f4",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "SeaBase Aquarium"
+    },
+    {
+      "id": "81b15dfd-cf6a-466f-be59-3dd65d2a2807",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Soarin' Around the World"
+    },
+    {
+      "id": "8c8cd77d-97f6-4309-b285-42aad90e9f15",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Beauty and the Beast Sing-Along"
+    },
+    {
+      "id": "8d7ccdb1-a22b-4e26-8dc8-65b1938ed5f0",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Frozen Ever After"
+    },
+    {
+      "id": "8f353879-d6ac-4211-9352-4029efb47c18",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Living with the Land"
+    },
+    {
+      "id": "8f8746cb-c714-4c60-848d-e2dc4e6f586b",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Mexico Folk Art Gallery"
+    },
+    {
+      "id": "9053240b-7f7f-44fe-970b-bd7956cd5d4f",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Project Tomorrow: Inventing the Wonders of the Future"
+    },
+    {
+      "id": "dae68dee-dfba-4128-b594-6aa12add1070",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Journey of Water, Inspired by Moana"
+    },
+    {
+      "id": "e3549451-b284-453d-9c31-e3b1207abd79",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Guardians of the Galaxy: Cosmic Rewind"
+    },
+    {
+      "id": "ee070d46-6a64-41c0-9f12-69dcfcca10a0",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "Reflections of China"
+    },
+    {
+      "id": "fb076275-0570-4d62-b2a9-4d6515130fa3",
+      "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "The Seas with Nemo & Friends"
+    }
+  ]
+}

@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "parkVersion": 1,
+  "generatedAt": "2026-05-27T04:08:58Z",
+  "park": {
+    "id": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+    "name": "Hong Kong Disneyland",
+    "polygon": null
+  },
+  "rides": [
+    {
+      "id": "08ce8f03-1391-43ba-9326-970134159fc7",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Toy Soldier Parachute Drop"
+    },
+    {
+      "id": "0da45ebe-49bf-461d-b915-3b2b27f0bb7e",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Iron Man Tech Showcase - Presented by Stark Industries"
+    },
+    {
+      "id": "0eec6d76-28d8-43db-86b5-dabb511fc927",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Tarzan's Treehouse"
+    },
+    {
+      "id": "0fc7ef9c-6230-47de-a12c-3c463a76f6ae",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Mickey's PhilharMagic"
+    },
+    {
+      "id": "0fc85ba4-75c8-445a-8040-17cb52d5c9da",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Mad Hatter Tea Cups"
+    },
+    {
+      "id": "1e643036-b7bb-415f-a646-92e1a9b59174",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Meet StellaLou at Duffy and Friends Play House"
+    },
+    {
+      "id": "207d3ec6-ebe0-4240-8dbc-e87f305654f9",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Hyperspace Mountain"
+    },
+    {
+      "id": "208cdd42-6755-45e4-98f2-e39ccbc6f9f5",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Wandering Oaken’s Sliding Sleighs"
+    },
+    {
+      "id": "242c0403-c7d4-4efc-b640-bfaddc67207f",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Barrel of Fun"
+    },
+    {
+      "id": "24c640cc-74f3-445d-88bd-f24e66121ec3",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "The Many Adventures of Winnie the Pooh"
+    },
+    {
+      "id": "2884d12b-e322-413c-953b-093f17839db3",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Mystic Point Freight Depot"
+    },
+    {
+      "id": "34315274-ca4d-4aba-bc8d-a4f1b3de51f0",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Big Grizzly Mountain Runaway Mine Cars"
+    },
+    {
+      "id": "39aa849c-7125-4d94-b52c-796902c88ab1",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Orbitron"
+    },
+    {
+      "id": "3c3b92c7-2108-48f7-ab44-e3e6d4bbd91c",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Meet LinaBell at Duffy and Friends Play House"
+    },
+    {
+      "id": "3f7755e1-cc4e-4253-91d6-c5b132b702af",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Meet ShellieMay at Duffy and Friends Play House"
+    },
+    {
+      "id": "46b472b3-f852-402a-ba6c-744097db7b9c",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Slinky Dog Spin"
+    },
+    {
+      "id": "48395fff-2902-4aab-a7b9-480bfdd5ab72",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "\"it's a small world\""
+    },
+    {
+      "id": "55de9d19-97e7-45da-8200-5545670a207f",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "The Royal Reception Hall"
+    },
+    {
+      "id": "5af0cb5f-933c-4292-8c0b-497416b6a15a",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Fantasy Gardens"
+    },
+    {
+      "id": "5c2fa68e-05f7-4ffc-ad21-89575328c4ba",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Geyser Gulch"
+    },
+    {
+      "id": "5e0be75e-0c91-4115-9efa-db4ed9d6bd40",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Rafts to Tarzan's Treehouse"
+    },
+    {
+      "id": "5e72b607-2d3f-404c-aec1-9f71c81bbae2",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Playhouse in the Woods"
+    },
+    {
+      "id": "5e9e0608-f902-454a-9ac6-a731b2690077",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Garden of Wonders"
+    },
+    {
+      "id": "6f17b733-bd59-4942-ae80-ddb8083ed92d",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Dumbo the Flying Elephant"
+    },
+    {
+      "id": "7894683a-cedf-457f-a985-7b70aa22cd27",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Ant-Man and The Wasp: Nano Battle!"
+    },
+    {
+      "id": "7e1c918b-9a0c-4160-a49c-bf5a1ab263b1",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Hong Kong Disneyland Railroad - Main Street Station"
+    },
+    {
+      "id": "7fe4d143-69ed-4c41-b22b-bb76201896c4",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Animation Academy"
+    },
+    {
+      "id": "8121aef4-4ab4-4691-ac62-842eee6e51e9",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Frozen Ever After – Presented by Blue Cross"
+    },
+    {
+      "id": "84186a60-fe47-42ab-b9f7-769dc0239018",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Meet ‘Olu Mel at Duffy and Friends Play House"
+    },
+    {
+      "id": "8483a3f9-89fb-4760-8142-bf62e604cd6f",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Iron Man Experience - Presented by AIA"
+    },
+    {
+      "id": "86f671f7-f03e-4b9f-b097-4b0801acc880",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Cinderella Carousel"
+    },
+    {
+      "id": "89009464-fa59-4684-a0fa-8abef17ef494",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Wild West Photo Fun"
+    },
+    {
+      "id": "8f086466-3a29-48dd-80db-5c0387ee0199",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Jungle River Cruise"
+    },
+    {
+      "id": "96711f82-1735-4234-89c5-6366f066dbd9",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Meet CookieAnn at Duffy and Friends Play House"
+    },
+    {
+      "id": "a4364fb2-ad97-45d1-823f-453701f53c04",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Meet Duffy at Duffy and Friends Play House"
+    },
+    {
+      "id": "a531cfa9-411e-485f-9c0c-9b1920f89f72",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "RC Racer"
+    },
+    {
+      "id": "ae44057d-1f76-40e3-bd05-7dd59c53eb04",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Meet Gelatoni at Duffy and Friends Play House"
+    },
+    {
+      "id": "c31b3af5-b6e1-4e05-a002-ba250ecfa39b",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Hong Kong Disneyland Railroad – Fantasyland Station"
+    },
+    {
+      "id": "d0a93222-d878-468b-b52d-6822ceaa3b76",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Duffy and Friends Play House"
+    },
+    {
+      "id": "d3485c69-53b1-4178-8ad7-773139e7256f",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Castle of Magical Dreams"
+    },
+    {
+      "id": "e41de87c-22ba-4269-a0bc-9ba496dfb0c1",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Liki Tikis"
+    },
+    {
+      "id": "f0a5db15-3701-4bf9-a181-961b1ff1b832",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Fairy Tale Forest"
+    },
+    {
+      "id": "f11f10e6-051a-4df7-b51d-2aba941bab54",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Main Street Vehicles"
+    },
+    {
+      "id": "f4e15f21-c32a-45bf-a536-5b6cd2480e5e",
+      "parkId": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Mystic Manor"
+    }
+  ]
+}

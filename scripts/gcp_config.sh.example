@@ -41,3 +41,7 @@ WEBSOCKET_URL="wss://api.themeparks.wiki/v1/entity/live"
 # Your Supabase database connection string (contains password - will be stored as a secret)
 # Get this from your Supabase dashboard: Settings → Database → Connection pooling
 SUPABASE_DB_URL="postgresql://postgres.ghyskcyicrqkfcpblzcw:your-database-password@aws-0-us-east-2.pooler.supabase.com:5432/postgres"
+
+# --- Static Asset Bucket ---
+# GCS bucket for static JSON assets (manifest.json, etc.). Must be globally unique across all of GCS.
+STATIC_BUCKET_NAME="your-static-bucket-name"

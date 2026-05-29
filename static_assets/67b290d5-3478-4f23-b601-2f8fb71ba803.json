@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "parkVersion": 1,
+  "generatedAt": "2026-05-27T04:08:58Z",
+  "park": {
+    "id": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+    "name": "Tokyo DisneySea",
+    "polygon": null
+  },
+  "rides": [
+    {
+      "id": "10b5b89e-02a6-4456-9ddd-69e06c2bded4",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Rapunzel's Lantern Festival"
+    },
+    {
+      "id": "179e4e82-26ed-4b04-bf21-f03808b61df4",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Nemo & Friends SeaRider"
+    },
+    {
+      "id": "2159960b-4f42-4974-93be-7519816de45d",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Aquatopia"
+    },
+    {
+      "id": "2ca8f848-b8e2-4ba5-aa6e-e0fb37e85d0b",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Venetian Gondolas"
+    },
+    {
+      "id": "2d56558a-d4d2-4f79-898c-178c2c20cf67",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Flounder's Flying Fish Coaster"
+    },
+    {
+      "id": "2daf12ac-21fd-4bfd-bbf6-0c98bed03e8f",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "DisneySea Electric Railway (American Waterfront)"
+    },
+    {
+      "id": "3407ebac-c575-4c31-b794-1d271014d303",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Soaring: Fantastic Flight"
+    },
+    {
+      "id": "44df35ec-28cb-4465-9ae1-95a4d6445a82",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "The Leonardo Challenge"
+    },
+    {
+      "id": "4ca7254c-7abc-4e52-82e0-9c562c096494",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Tower of Terror"
+    },
+    {
+      "id": "5449e9da-ee4c-47d8-a60a-8a964b94c32d",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Big City Vehicles"
+    },
+    {
+      "id": "58815e8e-7c01-4a42-8a00-1bd1c82a0252",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Scuttle's Scooters"
+    },
+    {
+      "id": "63ef07eb-9bfb-4782-885e-cfd08ced82f0",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Sindbad's Storybook Voyage"
+    },
+    {
+      "id": "6e44f5c0-f996-45ad-aa7e-9738df6a6047",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Fortress Explorations"
+    },
+    {
+      "id": "70c16669-c9ba-4f83-bd25-3cd9ea5a0b0c",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Mermaid Lagoon Theater"
+    },
+    {
+      "id": "71943126-e4ac-49c5-ac61-ac1687ad33af",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Turtle Talk"
+    },
+    {
+      "id": "7594d3f2-b3d1-47a0-b64f-8bc01d373830",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "The Whirlpool"
+    },
+    {
+      "id": "76aed95a-dce8-4d03-8c2a-8ad69b3d0d4a",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Caravan Carousel"
+    },
+    {
+      "id": "7afc3143-befb-4a61-9c86-8d6869eb2ce3",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "DisneySea Transit Steamer Line (Mediterranean Harbor)"
+    },
+    {
+      "id": "8dbc5d52-ef41-406d-aaad-eb2e6bb3eaea",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "DisneySea Transit Steamer Line (American Waterfront)"
+    },
+    {
+      "id": "9fb0c97c-ebf7-4c25-8ea7-a3f4fe2aa9ec",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Anna and Elsa's Frozen Journey"
+    },
+    {
+      "id": "a674e149-8ae3-4338-b1e3-c9f6b804f475",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Ariel's Playground"
+    },
+    {
+      "id": "abb5d6ec-469e-4ab0-8685-5f04e9749653",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Toy Story Mania!"
+    },
+    {
+      "id": "abbf5b3e-94e5-420a-8257-34594cd9d590",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Jasmine's Flying Carpets"
+    },
+    {
+      "id": "c0224e78-abf6-4f89-b0d4-38647a98dd4d",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Fairy Tinker Bell's Busy Buggies"
+    },
+    {
+      "id": "c15da0f5-9668-48ee-b93a-8b737b6acf5b",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "20,000 Leagues Under the Sea"
+    },
+    {
+      "id": "c6c0d34d-531a-40d9-b711-3497fd53c28b",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Jumpin' Jellyfish"
+    },
+    {
+      "id": "c8526be3-e82c-4692-ae44-e8f2d1142c8a",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Journey to the Center of the Earth"
+    },
+    {
+      "id": "c8744918-42c0-427d-8947-c3dbd1abf8d5",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "DisneySea Electric Railway (Port Discovery)"
+    },
+    {
+      "id": "dcad67fe-76bb-4df2-bf5b-aaf70e8efc12",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "The Magic Lamp Theater"
+    },
+    {
+      "id": "dd942cd2-b364-4262-af12-ca1a5012528b",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Raging Spirits"
+    },
+    {
+      "id": "de24aae5-66b9-469f-91f6-ef6c3f3b665c",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "DisneySea Transit Steamer Line (Lost River Delta)"
+    },
+    {
+      "id": "e8c15bc6-aaab-44ef-8285-1d92ebd2c47d",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Peter Pan's Never Land Adventure"
+    },
+    {
+      "id": "f37d7fe8-169f-459d-86f3-4843655358bd",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Blowfish Balloon Race"
+    },
+    {
+      "id": "f66e072d-8bab-48e5-b8cf-6d1947bd291b",
+      "parkId": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Indiana Jones Adventure®: Temple of the Crystal Skull"
+    }
+  ]
+}

@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 1,
+  "parkVersion": 1,
+  "generatedAt": "2026-05-27T04:37:11Z",
+  "park": {
+    "id": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+    "name": "Universal Studios Florida",
+    "polygon": null
+  },
+  "rides": [
+    {
+      "id": "0e644068-ade1-44c2-b823-76e35338daaa",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Gálkn: Monsters of the North"
+    },
+    {
+      "id": "10649dd3-c197-4ede-9108-020c5c404d1f",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "WWE Presents: The Horrors of the Wyatt Sicks"
+    },
+    {
+      "id": "1e16afdd-15e3-4e4a-b3af-8aeebd7534f8",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "E.T. Adventure™"
+    },
+    {
+      "id": "2178ad39-1bc2-4f8f-a2a0-42012a5ec709",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Five Nights At Freddy’s"
+    },
+    {
+      "id": "25d47d04-a917-405a-9904-9be2b499b2dd",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Illumination's Villain-Con Minion Blast"
+    },
+    {
+      "id": "2c72d1d0-7106-439d-9672-5bf95795ccea",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Hollywood Rip Ride Rockit™"
+    },
+    {
+      "id": "37989fb7-5576-4247-bd6e-e981bc70cca2",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Trolls Trollercoaster"
+    },
+    {
+      "id": "5566e841-dfb1-40d6-9146-937f01da8120",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "El Artista: A Spanish Haunting"
+    },
+    {
+      "id": "625a3cc3-7d7e-468b-96fe-1ec00df7b739",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Race Through New York Starring Jimmy Fallon™"
+    },
+    {
+      "id": "6a3ffac7-bef4-4a22-8ba6-f2963aac7f70",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Fast & Furious - Supercharged™"
+    },
+    {
+      "id": "70ac72a3-9675-4c41-a1b1-e4801072927a",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Harry Potter and the Escape from Gringotts™"
+    },
+    {
+      "id": "7288f24a-396e-4eeb-bb3b-4a90e65269f2",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Despicable Me Minion Mayhem™"
+    },
+    {
+      "id": "750939c5-a69e-408a-8d55-66c272fa265e",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "TRANSFORMERS™: The Ride-3D"
+    },
+    {
+      "id": "7e70bc9e-7dce-4dd2-8823-57b8d6ec7570",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "The Simpsons Ride™"
+    },
+    {
+      "id": "85fa76ba-d128-4773-946f-f680d8be6b97",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "JASON UN1V3RSE"
+    },
+    {
+      "id": "91cae293-64f8-48b6-88ec-02dcfcdd1f91",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "MEN IN BLACK™ Alien Attack!™"
+    },
+    {
+      "id": "96e71193-49f0-40b2-9bba-644e530d8115",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Kang & Kodos' Twirl 'n' Hurl"
+    },
+    {
+      "id": "a8382eac-3a99-48fe-bb52-b90b72d074dc",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Illumination Theater"
+    },
+    {
+      "id": "c63ce74a-4489-4f9e-9d9c-0eda2fe33c95",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Dolls: Let’s Play Dead"
+    },
+    {
+      "id": "d90bbb2d-3d9d-440e-ab3f-6812fa157fee",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Fallout"
+    },
+    {
+      "id": "da33df63-c131-4e22-9d26-f780d73e991b",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Hatchet and Chains: Demon Bounty Hunters"
+    },
+    {
+      "id": "dea8397e-6d04-45b8-bbec-c7f8ae58e6dc",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Grave of Flesh"
+    },
+    {
+      "id": "e1973600-56f9-43d0-bd82-b35ee01f3904",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Terrifier"
+    },
+    {
+      "id": "ec25d9a7-b4d4-4ebf-a6c4-c18389351764",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Revenge of the Mummy™"
+    },
+    {
+      "id": "f0750e5e-7629-4c53-99d2-e0924a8afeed",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Hogwarts™ Express - King's Cross Station"
+    },
+    {
+      "id": "f44a531c-09cf-40c4-b2d4-236e8a9285dc",
+      "parkId": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Hogwarts™ Express - First Train"
+    }
+  ]
+}

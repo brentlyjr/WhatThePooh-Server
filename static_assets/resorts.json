@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "resortsVersion": 1,
+  "generatedAt": "2026-05-27T04:08:58Z",
+  "resorts": [
+    {
+      "id": "disneyland-resort",
+      "name": "Disneyland Resort",
+      "center": {
+        "latitude": 33.8085,
+        "longitude": -117.919
+      },
+      "radius": 6000,
+      "parkIds": [
+        "7340550b-c14d-4def-80bb-acdb51d49a66",
+        "832fcd51-ea19-4e77-85c7-75d5843b127c"
+      ]
+    },
+    {
+      "id": "walt-disney-world",
+      "name": "Walt Disney World",
+      "center": {
+        "latitude": 28.3852,
+        "longitude": -81.5639
+      },
+      "radius": 10000,
+      "parkIds": [
+        "75ea578a-adc8-4116-a54d-dccb60765ef9"
+      ]
+    },
+    {
+      "id": "disney-shanghai",
+      "name": "Shanghai Disneyland",
+      "center": {
+        "latitude": 31.1462,
+        "longitude": 121.6562
+      },
+      "radius": 5000,
+      "parkIds": [
+        "ddc4357c-c148-4b36-9888-07894fe75e83"
+      ]
+    },
+    {
+      "id": "universal-hollywood",
+      "name": "Universal Studios Hollywood",
+      "center": {
+        "latitude": 34.1396,
+        "longitude": -118.3553
+      },
+      "radius": 3000,
+      "parkIds": [
+        "bc4005c5-8c7e-41d7-b349-cdddf1796427"
+      ]
+    },
+    {
+      "id": "san-mateo-resort",
+      "name": "San Mateo Resort",
+      "center": {
+        "latitude": 37.542,
+        "longitude": -122.2957
+      },
+      "radius": 1000,
+      "parkIds": [
+        "1111-1111-1111-1111"
+      ]
+    }
+  ]
+}

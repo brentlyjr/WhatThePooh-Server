@@ -1,0 +1,150 @@
+ {
+  "schemaVersion": 1,
+  "manifestVersion": 2,
+  "generatedAt": "2026-05-27T04:37:11Z",
+  "sourceCommit": "4885776",
+  "resorts": {
+    "url": "resorts.json",
+    "resortsVersion": 1,
+    "sha256": "d450c4d35edbec10b7a79a27e3c9183671d7a9717c3d3ade7b689ab156244252",
+    "bytes": 1466
+  },
+  "parks": [
+    {
+      "id": "1111-1111-1111-1111",
+      "name": "Bay Meadows Theme Park",
+      "parkVersion": 1,
+      "url": "1111-1111-1111-1111.json",
+      "sha256": "c5150fe6e9379e078d65f4c42db94cc301f79d61f95690aa1840a5f572c409e1",
+      "bytes": 4975
+    },
+    {
+      "id": "12dbb85b-265f-44e6-bccf-f1faa17211fc",
+      "name": "Universal Epic Universe",
+      "parkVersion": 1,
+      "url": "12dbb85b-265f-44e6-bccf-f1faa17211fc.json",
+      "sha256": "68cd44f8ac69d46a25d2dfd6b8f9da2f2f2eb97eae8c2cd516118d234d94eba0",
+      "bytes": 2177
+    },
+    {
+      "id": "1c84a229-8862-4648-9c71-378ddd2c7693",
+      "name": "Disney's Animal Kingdom",
+      "parkVersion": 1,
+      "url": "1c84a229-8862-4648-9c71-378ddd2c7693.json",
+      "sha256": "35b9ac6cf159a101254e58a4792687966e7ffc14b5fe6064b543080185239a98",
+      "bytes": 2664
+    },
+    {
+      "id": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "Universal Islands of Adventure",
+      "parkVersion": 1,
+      "url": "267615cc-8943-4c2a-ae2c-5da728ca591f.json",
+      "sha256": "10bd8e41832ef37323758fe62ed58193f38940d37267807f060245691ff9c55e",
+      "bytes": 3938
+    },
+    {
+      "id": "288747d1-8b4f-4a64-867e-ea7c9b27bad8",
+      "name": "Disney's Hollywood Studios",
+      "parkVersion": 1,
+      "url": "288747d1-8b4f-4a64-867e-ea7c9b27bad8.json",
+      "sha256": "77390a89d01af117fdb805f88be9a2dd1c892dcb99b5df14db29c4d3b2354794",
+      "bytes": 2124
+    },
+    {
+      "id": "3cc919f1-d16d-43e0-8c3f-1dd269bd1a42",
+      "name": "Tokyo Disneyland",
+      "parkVersion": 1,
+      "url": "3cc919f1-d16d-43e0-8c3f-1dd269bd1a42.json",
+      "sha256": "2c69dd4f243ba5e1b9fd489212123814a7580c69cec5f8626d98d8684d6b116e",
+      "bytes": 6194
+    },
+    {
+      "id": "47f90d2c-e191-4239-a466-5892ef59a88b",
+      "name": "EPCOT",
+      "parkVersion": 1,
+      "url": "47f90d2c-e191-4239-a466-5892ef59a88b.json",
+      "sha256": "df91b34578fc2f346cd6e6d8f65e018506674215b310874485bc809cc328236f",
+      "bytes": 5603
+    },
+    {
+      "id": "67b290d5-3478-4f23-b601-2f8fb71ba803",
+      "name": "Tokyo DisneySea",
+      "parkVersion": 1,
+      "url": "67b290d5-3478-4f23-b601-2f8fb71ba803.json",
+      "sha256": "3ca869debf1728d7ef3dc98988af4acb949f615ffef080c2138c7b026865f9a8",
+      "bytes": 5812
+    },
+    {
+      "id": "7340550b-c14d-4def-80bb-acdb51d49a66",
+      "name": "Disneyland",
+      "parkVersion": 1,
+      "url": "7340550b-c14d-4def-80bb-acdb51d49a66.json",
+      "sha256": "388de4af7fc277c579a025d6d36265e6948b6d4982c91c9aa50c8af11007e5c7",
+      "bytes": 54225
+    },
+    {
+      "id": "75ea578a-adc8-4116-a54d-dccb60765ef9",
+      "name": "Magic Kingdom",
+      "parkVersion": 1,
+      "url": "75ea578a-adc8-4116-a54d-dccb60765ef9.json",
+      "sha256": "8a1415df7a1643254d8bda4d38e97d826b5bcb8989243cc6b8304a1496e894f6",
+      "bytes": 5978
+    },
+    {
+      "id": "832fcd51-ea19-4e77-85c7-75d5843b127c",
+      "name": "Disney California Adventure",
+      "parkVersion": 1,
+      "url": "832fcd51-ea19-4e77-85c7-75d5843b127c.json",
+      "sha256": "692a5fefbf7e070da0ccf2bc63a9420b7d1143af907dbbb345505de4ab05664a",
+      "bytes": 29514
+    },
+    {
+      "id": "bc4005c5-8c7e-41d7-b349-cdddf1796427",
+      "name": "Universal Studios Hollywood",
+      "parkVersion": 1,
+      "url": "bc4005c5-8c7e-41d7-b349-cdddf1796427.json",
+      "sha256": "45d737ac5f2782be59c98fa6695529bb5bfa534633bb730f7ccd6aa1e95c1a5e",
+      "bytes": 4804
+    },
+    {
+      "id": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b",
+      "name": "Hong Kong Disneyland",
+      "parkVersion": 1,
+      "url": "bd0eb47b-2f02-4d4d-90fa-cb3a68988e3b.json",
+      "sha256": "e62dd00900fd5d6bcfdcb45f9ac26d011a98f175cd7a6efa173c279ce37536d6",
+      "bytes": 7524
+    },
+    {
+      "id": "ca888437-ebb4-4d50-aed2-d227f7096968",
+      "name": "Disney Adventure World",
+      "parkVersion": 1,
+      "url": "ca888437-ebb4-4d50-aed2-d227f7096968.json",
+      "sha256": "6b349704aa622189f2f61aace368cedc36edd992d20f5fcc312101baef9aa51b",
+      "bytes": 2531
+    },
+    {
+      "id": "dae968d5-630d-4719-8b06-3d107e944401",
+      "name": "Disneyland Paris",
+      "parkVersion": 1,
+      "url": "dae968d5-630d-4719-8b06-3d107e944401.json",
+      "sha256": "f9855716769cf0c683e8d6d58575eaa56e715aad22bd1afdcc51837b88de8763",
+      "bytes": 6441
+    },
+    {
+      "id": "ddc4357c-c148-4b36-9888-07894fe75e83",
+      "name": "Shanghai Disneyland",
+      "parkVersion": 1,
+      "url": "ddc4357c-c148-4b36-9888-07894fe75e83.json",
+      "sha256": "bfa32a61c9c51aac37ef6a280255164b9e1076f1f239eac8e3b8134d0c3ade69",
+      "bytes": 16859
+    },
+    {
+      "id": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57",
+      "name": "Universal Studios Florida",
+      "parkVersion": 1,
+      "url": "eb3f4560-2383-4a36-9152-6b3e5ed6bc57.json",
+      "sha256": "1e63bd2fd3f82e79ce90cb4ee2b6ed4e34200f38616ecdc0cb8d6dfb3aa740f7",
+      "bytes": 4539
+    }
+  ]
+}

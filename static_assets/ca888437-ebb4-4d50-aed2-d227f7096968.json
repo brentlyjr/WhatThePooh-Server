@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "parkVersion": 1,
+  "generatedAt": "2026-05-27T04:08:58Z",
+  "park": {
+    "id": "ca888437-ebb4-4d50-aed2-d227f7096968",
+    "name": "Disney Adventure World",
+    "polygon": null
+  },
+  "rides": [
+    {
+      "id": "15bad9c3-8378-4ac5-ab90-2f8d0ee09d26",
+      "parkId": "ca888437-ebb4-4d50-aed2-d227f7096968",
+      "name": "RC Racer"
+    },
+    {
+      "id": "25556e4e-aa6c-41ff-b196-29967362345e",
+      "parkId": "ca888437-ebb4-4d50-aed2-d227f7096968",
+      "name": "Raiponce Tangled Spin"
+    },
+    {
+      "id": "337bce77-57bd-49c7-83d7-662f16c162ea",
+      "parkId": "ca888437-ebb4-4d50-aed2-d227f7096968",
+      "name": "Slinky® Dog Zigzag Spin"
+    },
+    {
+      "id": "449a20d8-9bfd-4b2b-b437-38a279aa8d88",
+      "parkId": "ca888437-ebb4-4d50-aed2-d227f7096968",
+      "name": "Cars ROAD TRIP"
+    },
+    {
+      "id": "630e2675-f9fc-4984-ba83-03daf5fc89ed",
+      "parkId": "ca888437-ebb4-4d50-aed2-d227f7096968",
+      "name": "Frozen Ever After"
+    },
+    {
+      "id": "73e1c590-ef8f-496c-bf6c-d7e7fde0c7df",
+      "parkId": "ca888437-ebb4-4d50-aed2-d227f7096968",
+      "name": "Ratatouille : L’Aventure Totalement Toquée de Rémy​"
+    },
+    {
+      "id": "8e229723-51c1-4668-b956-5bc45305acd9",
+      "parkId": "ca888437-ebb4-4d50-aed2-d227f7096968",
+      "name": "Les Tapis Volants - Flying Carpets Over Agrabah®"
+    },
+    {
+      "id": "9592508c-2b5b-48b1-965d-bcf1f2950ac6",
+      "parkId": "ca888437-ebb4-4d50-aed2-d227f7096968",
+      "name": "Entry to World of Frozen"
+    },
+    {
+      "id": "a10b25e2-3176-449a-a8a5-4119902887bb",
+      "parkId": "ca888437-ebb4-4d50-aed2-d227f7096968",
+      "name": "Toy Soldiers Parachute Drop"
+    },
+    {
+      "id": "d2ec9363-a215-4904-b297-b66734ea9a00",
+      "parkId": "ca888437-ebb4-4d50-aed2-d227f7096968",
+      "name": "The Twilight Zone Tower of Terror"
+    },
+    {
+      "id": "d944b02c-12ce-4176-ac62-6a936f180b5c",
+      "parkId": "ca888437-ebb4-4d50-aed2-d227f7096968",
+      "name": "Cars Quatre Roues Rallye"
+    },
+    {
+      "id": "f0d4b531-e291-471b-9527-00410c2bbd65",
+      "parkId": "ca888437-ebb4-4d50-aed2-d227f7096968",
+      "name": "Crush's Coaster"
+    },
+    {
+      "id": "f710814b-232d-4469-aad7-d98b328a15b7",
+      "parkId": "ca888437-ebb4-4d50-aed2-d227f7096968",
+      "name": "Spider-Man W.E.B. Adventure"
+    },
+    {
+      "id": "ff2e7d6f-5aaf-47b8-8695-53a66e9fe073",
+      "parkId": "ca888437-ebb4-4d50-aed2-d227f7096968",
+      "name": "Avengers Assemble: Flight Force"
+    }
+  ]
+}

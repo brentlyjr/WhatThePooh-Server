@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "parkVersion": 1,
+  "generatedAt": "2026-05-27T04:08:58Z",
+  "park": {
+    "id": "12dbb85b-265f-44e6-bccf-f1faa17211fc",
+    "name": "Universal Epic Universe",
+    "polygon": null
+  },
+  "rides": [
+    {
+      "id": "00feb57b-4fcc-48bc-9490-c9af71f30c1c",
+      "parkId": "12dbb85b-265f-44e6-bccf-f1faa17211fc",
+      "name": "Yoshi's Adventure™"
+    },
+    {
+      "id": "07143999-bacd-475f-a00b-8cc476204aff",
+      "parkId": "12dbb85b-265f-44e6-bccf-f1faa17211fc",
+      "name": "Constellation Carousel"
+    },
+    {
+      "id": "0c6a9af8-c006-4849-8475-1a6925e8f7d4",
+      "parkId": "12dbb85b-265f-44e6-bccf-f1faa17211fc",
+      "name": "Bowser Jr. Challenge"
+    },
+    {
+      "id": "1fda5e1f-8712-4165-a81d-ad74eef3e8ee",
+      "parkId": "12dbb85b-265f-44e6-bccf-f1faa17211fc",
+      "name": "Monsters Unchained: The Frankenstein Experiment"
+    },
+    {
+      "id": "281bc9e6-b208-4a70-85d2-0fb749c7658b",
+      "parkId": "12dbb85b-265f-44e6-bccf-f1faa17211fc",
+      "name": "Fyre Drill"
+    },
+    {
+      "id": "43df71bf-aa7c-46c0-925c-46f69d8bf23f",
+      "parkId": "12dbb85b-265f-44e6-bccf-f1faa17211fc",
+      "name": "Mario Kart™: Bowser's Challenge"
+    },
+    {
+      "id": "447033ce-ee1f-4cca-bb12-47d22583ac12",
+      "parkId": "12dbb85b-265f-44e6-bccf-f1faa17211fc",
+      "name": "Stardust Racers"
+    },
+    {
+      "id": "76caa8d0-f54b-4601-9d57-a7f1ddc02af4",
+      "parkId": "12dbb85b-265f-44e6-bccf-f1faa17211fc",
+      "name": "Dragon Racer's Rally"
+    },
+    {
+      "id": "c6b1b8cf-55ef-416c-b00d-e469993617b0",
+      "parkId": "12dbb85b-265f-44e6-bccf-f1faa17211fc",
+      "name": "Hiccup Wing Glider"
+    },
+    {
+      "id": "dbc4f0d8-fdef-4dfc-a1c2-33917f742f40",
+      "parkId": "12dbb85b-265f-44e6-bccf-f1faa17211fc",
+      "name": "Harry Potter and the Battle at the Ministry™"
+    },
+    {
+      "id": "dd8c015d-511f-47d4-b98b-18ce15735588",
+      "parkId": "12dbb85b-265f-44e6-bccf-f1faa17211fc",
+      "name": "Mine-Cart Madness™"
+    },
+    {
+      "id": "eaca831d-bcbb-4a1e-9bf0-6ea97ccc88e0",
+      "parkId": "12dbb85b-265f-44e6-bccf-f1faa17211fc",
+      "name": "Curse of the Werewolf"
+    }
+  ]
+}

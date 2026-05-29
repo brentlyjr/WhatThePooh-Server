@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "parkVersion": 1,
+  "generatedAt": "2026-05-27T04:08:58Z",
+  "park": {
+    "id": "1c84a229-8862-4648-9c71-378ddd2c7693",
+    "name": "Disney's Animal Kingdom",
+    "polygon": null
+  },
+  "rides": [
+    {
+      "id": "1a8ea967-229a-42a0-8290-59b036c84e14",
+      "parkId": "1c84a229-8862-4648-9c71-378ddd2c7693",
+      "name": "Maharajah Jungle Trek"
+    },
+    {
+      "id": "1b15c77b-0311-4171-8e59-7f38e6d60754",
+      "parkId": "1c84a229-8862-4648-9c71-378ddd2c7693",
+      "name": "Zootopia: Better Zoogether! - NEW!"
+    },
+    {
+      "id": "24cf863c-b6ba-4826-a056-0b698989cbf7",
+      "parkId": "1c84a229-8862-4648-9c71-378ddd2c7693",
+      "name": "Avatar Flight of Passage"
+    },
+    {
+      "id": "32e01181-9a5f-4936-8a77-0dace1de836c",
+      "parkId": "1c84a229-8862-4648-9c71-378ddd2c7693",
+      "name": "Kilimanjaro Safaris"
+    },
+    {
+      "id": "4d27b0d7-2b0a-4569-90fa-e79f117ec7ef",
+      "parkId": "1c84a229-8862-4648-9c71-378ddd2c7693",
+      "name": "Discovery Island Trails"
+    },
+    {
+      "id": "4f391f0e-52be-4f9d-99d6-b3ae0373b43c",
+      "parkId": "1c84a229-8862-4648-9c71-378ddd2c7693",
+      "name": "Wildlife Express Train"
+    },
+    {
+      "id": "64a6915f-a835-4226-ba5c-8389fc4cade3",
+      "parkId": "1c84a229-8862-4648-9c71-378ddd2c7693",
+      "name": "Expedition Everest - Legend of the Forbidden Mountain"
+    },
+    {
+      "id": "6ef1b126-5b0b-46a1-8608-4fcf98ab92c8",
+      "parkId": "1c84a229-8862-4648-9c71-378ddd2c7693",
+      "name": "Wilderness Explorers"
+    },
+    {
+      "id": "6fbe6d02-4057-43bb-80a3-047b1e8a50ca",
+      "parkId": "1c84a229-8862-4648-9c71-378ddd2c7693",
+      "name": "Animal Care at Conservation Station"
+    },
+    {
+      "id": "7a5af3b7-9bc1-4962-92d0-3ea9c9ce35f0",
+      "parkId": "1c84a229-8862-4648-9c71-378ddd2c7693",
+      "name": "Na'vi River Journey"
+    },
+    {
+      "id": "a15ce7cf-342a-4c7a-9372-7a1fa1054747",
+      "parkId": "1c84a229-8862-4648-9c71-378ddd2c7693",
+      "name": "Affection Section"
+    },
+    {
+      "id": "bc1ffa86-9b1a-4ce9-84a5-b479dfa3cb53",
+      "parkId": "1c84a229-8862-4648-9c71-378ddd2c7693",
+      "name": "Tree of Life"
+    },
+    {
+      "id": "bc997600-fcc0-4f6f-b908-a1419b26cfd8",
+      "parkId": "1c84a229-8862-4648-9c71-378ddd2c7693",
+      "name": "The Oasis Exhibits"
+    },
+    {
+      "id": "d58d9262-ec95-4161-80a0-07ca43b2f5f3",
+      "parkId": "1c84a229-8862-4648-9c71-378ddd2c7693",
+      "name": "Kali River Rapids"
+    },
+    {
+      "id": "e7976e25-4322-4587-8ded-fb1d9dcbb83c",
+      "parkId": "1c84a229-8862-4648-9c71-378ddd2c7693",
+      "name": "Gorilla Falls Exploration Trail"
+    }
+  ]
+}

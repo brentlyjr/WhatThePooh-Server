@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "parkVersion": 1,
+  "generatedAt": "2026-05-27T04:08:58Z",
+  "park": {
+    "id": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+    "name": "Universal Islands of Adventure",
+    "polygon": null
+  },
+  "rides": [
+    {
+      "id": "144450b9-4574-46be-abdf-4b1ca8974d9d",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "Hogwarts™ Express - Hogsmeade™ Station"
+    },
+    {
+      "id": "22dcd29e-d76a-45cd-b44a-dd6350dc3f8a",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "Jurassic Park Discovery Center™"
+    },
+    {
+      "id": "2365495a-790b-4a41-831e-65592c8a4359",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "The Cat in The Hat™"
+    },
+    {
+      "id": "23b613e0-ae83-455b-9163-231bdbd5c427",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "Flight of the Hippogriff™"
+    },
+    {
+      "id": "2f95b213-daaa-4370-8349-c2cd57be470e",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "Doctor Doom's Fearfall®"
+    },
+    {
+      "id": "370ba4d1-f199-4dc2-be6d-6bb09b442891",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "Skull Island: Reign of Kong™"
+    },
+    {
+      "id": "391dea99-303d-42a1-aa86-a846d1c1fa1f",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "If I Ran The Zoo™"
+    },
+    {
+      "id": "3cb52134-e9d6-4212-83c8-3ce1321dcb05",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "Caro-Seuss-el™"
+    },
+    {
+      "id": "3daca54f-50f0-44e9-a993-d706ce7520a0",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "Pteranodon Flyers™"
+    },
+    {
+      "id": "578bbd12-1975-4ec3-9879-ea641c780342",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "Hagrid's Magical Creatures Motorbike Adventure™"
+    },
+    {
+      "id": "61079a31-4165-4fb0-b36f-c01c5971f80a",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "Jurassic World VelociCoaster"
+    },
+    {
+      "id": "6af80308-647d-4d8b-bcf6-37517a93bdbc",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "Harry Potter and the Forbidden Journey™"
+    },
+    {
+      "id": "6be23178-7d00-4884-9e88-76787da1df86",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "The Amazing Adventures of Spider-Man®"
+    },
+    {
+      "id": "8babd50d-c570-423b-bd53-d040cad3e087",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "Me Ship, The Olive®"
+    },
+    {
+      "id": "905d7888-b866-4e74-90d1-07fc6ef6706f",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "Dudley Do-Right's Ripsaw Falls®"
+    },
+    {
+      "id": "b1e94e05-b360-4e3f-be8a-2a3744a97f97",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "One Fish, Two Fish, Red Fish, Blue Fish™"
+    },
+    {
+      "id": "b4445a1c-4d5c-4fca-a04a-f8867f1b6619",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "Popeye & Bluto's Bilge-Rat Barges®"
+    },
+    {
+      "id": "b694d5a5-155e-4796-af7e-5dbdcf3deba4",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "Storm Force Accelatron®"
+    },
+    {
+      "id": "b73e3256-9ee0-439e-9a3b-ffed287e10bb",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "The High in the Sky Seuss Trolley Train Ride!™"
+    },
+    {
+      "id": "db5b2165-15c2-4e51-8bd1-611e9c351866",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "Jurassic Park River Adventure™"
+    },
+    {
+      "id": "f6dba1c6-6f5a-4743-8470-f741ecac555d",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "Camp Jurassic™"
+    },
+    {
+      "id": "fa743143-281b-4b5b-b87b-d49fcb006772",
+      "parkId": "267615cc-8943-4c2a-ae2c-5da728ca591f",
+      "name": "The Incredible Hulk Coaster®"
+    }
+  ]
+}
