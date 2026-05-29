@@ -483,6 +483,10 @@ func StartAPNSWorkers(numWorkers int) {
 func apnsSender(id int) {
 	log.Printf("APNS Sender Worker %d started", id)
 	for req := range PushQueue {
+		if req.NotificationID == "" {
+			req.NotificationID = uuid.New().String()
+		}
+
 		// Create a NotificationRequest from the PushRequest
 		notificationReq := NotificationRequest{
 			DeviceToken:    req.DeviceToken,
@@ -504,7 +508,7 @@ func apnsSender(id int) {
 		if err := SendPushNotification(notificationReq); err != nil {
 			log.Printf("[Worker %d] Failed to send push notification for token %s: %v", id, req.DeviceToken, err)
 		} else {
-			log.Printf("[Worker %d] Push sent successfully to %s for %s", id, req.DeviceToken, req.EntityName)
+			log.Printf("[Worker %d] Push sent successfully to %s for %s (%s)", id, req.DeviceToken, req.EntityName, req.NotificationID)
 		}
 	}
 }

@@ -151,6 +151,20 @@ func main() {
 	wsClient := NewWebSocketClient(websocketURL, apiKey, entityManager)
 	go wsClient.Connect()
 
+	// Phase 7 — Optional read-only reconciliation loop. When RECONCILE_INTERVAL
+	// is set (e.g. "10m"), periodically diff the REST snapshot against the DB
+	// and log any status discrepancies. Disabled when the env var is empty.
+	if intervalStr := os.Getenv("RECONCILE_INTERVAL"); intervalStr != "" {
+		interval, err := time.ParseDuration(intervalStr)
+		if err != nil {
+			log.Printf("Invalid RECONCILE_INTERVAL %q: %v — reconciler disabled", intervalStr, err)
+		} else if interval <= 0 {
+			log.Printf("RECONCILE_INTERVAL must be positive, got %s — reconciler disabled", interval)
+		} else {
+			go NewReconciler(restClient, db, interval).Start()
+		}
+	}
+
 	// Create Fiber app with increased body size limit for feedback logs
 	app := fiber.New(fiber.Config{
 		BodyLimit: 10 * 1024 * 1024, // 10MB limit for large feedback logs

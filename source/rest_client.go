@@ -69,8 +69,6 @@ func (rc *RestClient) FetchAllEntities() ([]Entity, error) {
 	var allEntities []Entity
 
 	for _, resort := range resorts {
-		log.Printf("Fetching entities for resort: %s (%s)", resort.Name, resort.ID)
-
 		restEntities, err := rc.fetchResortEntities(resort.ID)
 		if err != nil {
 			log.Printf("Error fetching entities for resort %s: %v", resort.Name, err)
@@ -87,7 +85,7 @@ func (rc *RestClient) FetchAllEntities() ([]Entity, error) {
 			count++
 		}
 
-		log.Printf("Fetched %d entities for resort %s", count, resort.Name)
+		log.Printf("Fetched %d entities for resort %s (%s)", count, resort.Name,resort.ID)
 
 		// Small delay between requests to be respectful to the API
 		time.Sleep(100 * time.Millisecond)
