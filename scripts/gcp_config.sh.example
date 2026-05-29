@@ -17,7 +17,6 @@ SERVICE_NAME="service name"
 # The region to deploy the service in
 REGION="google region"
 
-
 # --- APNS Configuration ---
 # The path to your local APNS .p8 key file
 LOCAL_APNS_KEY_PATH="path to apns key file"
@@ -26,6 +25,9 @@ APNS_ENV="development"
 APNS_TEAM_ID="snv234"
 APNS_BUNDLE_ID="com.fredflinstone.myapp"
 
+# --- Reconciler ---
+# Set this value to a time to start reconciliation process at that interval
+# RECONCILE_INTERVAL=10m
 
 # --- Theme Park API Key ---
 # Your API key for the Theme Park Wiki

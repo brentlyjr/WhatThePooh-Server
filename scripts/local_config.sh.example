@@ -10,5 +10,9 @@
 # export THEMEPARK_API_KEY="your-themepark-api-key"
 # export WEBSOCKET_URL="your-websocket-url"
 
+# --- Reconciler ---
+# Set this value to a time to start reconciliation process at that interval
+# export RECONCILE_INTERVAL=10m
+
 # Supabase Configuration
 export SUPABASE_DB_URL="postgresql://postgres:your-database-password"
