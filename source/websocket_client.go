@@ -31,6 +31,14 @@ var resorts = []Resort{
 	{ID: "89db5d43-c434-4097-b71f-f6869f495a22", Name: "Universal Orlando Resort"},
 }
 
+// Keepalive timing: pingPeriod < pongWait; pongOverdueWarn < pongWait.
+const (
+	wsPingPeriod      = 30 * time.Second
+	wsPongWait        = 60 * time.Second
+	wsPongOverdueWarn = 45 * time.Second
+	wsWatchdogEvery   = 5 * time.Second
+)
+
 type WebSocketClient struct {
 	url             string
 	apiKey          string
@@ -135,7 +143,7 @@ func (c *WebSocketClient) logDisconnectSnapshot(reason string, err error) {
 
 	hint := "none"
 	if reason == "read-deadline-timeout" {
-		hint = "no_pong_within_60s"
+		hint = "no_inbound_within_" + wsPongWait.String()
 	}
 
 	errStr := "none"
@@ -202,8 +210,7 @@ func (c *WebSocketClient) Connect() {
 			AddReconnectionTimestamp()
 			log.Printf("[WS] Connected to WebSocket at %s", c.connectedAt.Format("2006-01-02 15:04:05 MST"))
 
-			pongWait := 60 * time.Second
-			c.conn.SetReadDeadline(time.Now().Add(pongWait))
+			c.conn.SetReadDeadline(time.Now().Add(wsPongWait))
 
 			c.conn.SetPingHandler(func(appData string) error {
 				now := time.Now()
@@ -236,7 +243,7 @@ func (c *WebSocketClient) Connect() {
 				}
 				c.diagMu.Unlock()
 
-				c.conn.SetReadDeadline(now.Add(pongWait))
+				c.conn.SetReadDeadline(now.Add(wsPongWait))
 				return nil
 			})
 
@@ -253,12 +260,8 @@ func (c *WebSocketClient) Connect() {
 				}
 			}
 
-			watchdogInterval := 5 * time.Second
-			pingPeriod := 30 * time.Second
-			pongOverdue := 45 * time.Second
-
-			ticker := time.NewTicker(watchdogInterval)
-			pingTicker := time.NewTicker(pingPeriod)
+			ticker := time.NewTicker(wsWatchdogEvery)
+			pingTicker := time.NewTicker(wsPingPeriod)
 			pingStop := make(chan struct{})
 
 			go func() {
@@ -277,7 +280,7 @@ func (c *WebSocketClient) Connect() {
 
 						if !sent.IsZero() && sent.After(recv) {
 							overdue := now.Sub(sent)
-							if overdue >= pongOverdue && !warned {
+							if overdue >= wsPongOverdueWarn && !warned {
 								log.Printf("[WS] Pong overdue: ping_sent=%v ago, last_pong=%v ago, outstanding=true",
 									overdue.Round(time.Millisecond), formatSince(recv))
 
@@ -296,10 +299,8 @@ func (c *WebSocketClient) Connect() {
 							return
 						}
 
-						// Keep the read deadline moving even if the server is quiet on livedata.
-						// This makes the "connection is alive" signal primarily depend on
-						// ping/pong rather than message cadence.
-						c.conn.SetReadDeadline(time.Now().Add(pongWait))
+						// Extend read window on ping send so quiet feeds don't die if pongs are slow.
+						c.conn.SetReadDeadline(time.Now().Add(wsPongWait))
 
 						c.diagMu.Lock()
 						c.lastPingSent = time.Now()
@@ -322,10 +323,8 @@ func (c *WebSocketClient) Connect() {
 				}
 				now := time.Now()
 				c.lastMessageTime = now
-				// Treat any inbound message as proof the connection is alive.
-				// Keep pong-based logging for diagnosing keepalive issues, but don't
-				// drop an otherwise active connection solely due to a missed pong.
-				c.conn.SetReadDeadline(now.Add(pongWait))
+				// Inbound frames refresh the read window; pong path tracked separately for diagnostics.
+				c.conn.SetReadDeadline(now.Add(wsPongWait))
 				c.diagMu.Lock()
 				c.messageCount++
 				c.diagMu.Unlock()
