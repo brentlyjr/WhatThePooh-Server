@@ -21,7 +21,7 @@ REGION="google region"
 # The path to your local APNS .p8 key file
 LOCAL_APNS_KEY_PATH="path to apns key file"
 APNS_KEY_ID="apns key"
-APNS_ENV="development"
+APNS_ENV="production"
 APNS_TEAM_ID="snv234"
 APNS_BUNDLE_ID="com.fredflinstone.myapp"
 
