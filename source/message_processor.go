@@ -10,7 +10,9 @@ func StartMessageProcessors() {
 	log.Printf("Starting message processors...")
 
 	// Goroutine for handling status changes (Fan-Out Processor)
+	messageProcessorWg.Add(1)
 	go func() {
+		defer messageProcessorWg.Done()
 		statusCh := messageBus.SubscribeStatus()
 		for msg := range statusCh {
 			duration := msg.Timestamp.Sub(msg.TimeOfLastStatus)
@@ -51,6 +53,7 @@ func StartMessageProcessors() {
 	}()
 
 	// Goroutine for handling wait time changes
+	// If re-enabling: messageProcessorWg.Add(1) here and add CloseWaitTimeSubscribers() to shutdown order.
 	// TODO: Re-enable when working on wait time functionality
 	// go func() {
 	// 	waitTimeCh := messageBus.SubscribeWaitTime()

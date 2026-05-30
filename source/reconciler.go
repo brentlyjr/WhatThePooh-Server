@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"sync"
 	"time"
 )
 
@@ -14,23 +15,43 @@ type Reconciler struct {
 	rc       *RestClient
 	db       Database
 	interval time.Duration
+	stop     chan struct{}
+	stopOnce sync.Once
 }
 
 // NewReconciler constructs a Reconciler. interval must be > 0.
 func NewReconciler(rc *RestClient, db Database, interval time.Duration) *Reconciler {
-	return &Reconciler{rc: rc, db: db, interval: interval}
+	return &Reconciler{
+		rc:       rc,
+		db:       db,
+		interval: interval,
+		stop:     make(chan struct{}),
+	}
 }
 
-// Start runs the reconciliation loop until the program exits. Intended to be
+// Start runs the reconciliation loop until Stop is called. Intended to be
 // launched as a goroutine.
 func (r *Reconciler) Start() {
 	log.Printf("[RECONCILE] Starting reconciliation loop, interval=%s", r.interval)
 	ticker := time.NewTicker(r.interval)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		r.runOnce()
+	for {
+		select {
+		case <-ticker.C:
+			r.runOnce()
+		case <-r.stop:
+			log.Printf("[RECONCILE] Stopped")
+			return
+		}
 	}
+}
+
+// Stop signals the reconciliation loop to exit.
+func (r *Reconciler) Stop() {
+	r.stopOnce.Do(func() {
+		close(r.stop)
+	})
 }
 
 // runOnce performs a single REST vs DB comparison and logs any discrepancies.

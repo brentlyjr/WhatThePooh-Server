@@ -44,6 +44,7 @@ type WebSocketClient struct {
 	apiKey          string
 	conn            *websocket.Conn
 	done            chan struct{}
+	closeOnce       sync.Once
 	lastMessageTime time.Time
 	entityManager   *EntityManager
 	writeMu         sync.Mutex
@@ -430,10 +431,12 @@ func classifyDisconnect(err error) string {
 }
 
 func (c *WebSocketClient) Close() {
-	close(c.done)
-	if c.conn != nil {
-		c.conn.Close()
-	}
+	c.closeOnce.Do(func() {
+		close(c.done)
+		if c.conn != nil {
+			c.conn.Close()
+		}
+	})
 }
 
 func (c *WebSocketClient) GetEventStats() map[string]uint64 {

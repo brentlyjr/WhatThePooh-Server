@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"regexp"
 	"sync"
@@ -97,9 +98,14 @@ func InitializeAPNS(config APNSConfig) error {
 		TeamID:  config.TeamID,
 	}
 
+	// Per-push timeout well under SHUTDOWN_TIMEOUT so hung TLS does not block drain.
+	httpClient := &http.Client{Timeout: 5 * time.Second}
+
 	// Initialize both development and production clients
 	apnsDevClient = apns2.NewTokenClient(tkn).Development()
+	apnsDevClient.HTTPClient = httpClient
 	apnsProdClient = apns2.NewTokenClient(tkn).Production()
+	apnsProdClient.HTTPClient = httpClient
 	
 	// Set the default client based on the environment variable for backward compatibility
 	if config.IsDev {
@@ -475,12 +481,14 @@ func SendPushNotification(req NotificationRequest) error {
 func StartAPNSWorkers(numWorkers int) {
 	log.Printf("Starting %d APNS worker(s)...", numWorkers)
 	for i := 0; i < numWorkers; i++ {
+		apnsWorkersWg.Add(1)
 		go apnsSender(i + 1)
 	}
 }
 
 // apnsSender is a single worker that consumes from the PushQueue.
 func apnsSender(id int) {
+	defer apnsWorkersWg.Done()
 	log.Printf("APNS Sender Worker %d started", id)
 	for req := range PushQueue {
 		if req.NotificationID == "" {

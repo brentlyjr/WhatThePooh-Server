@@ -151,10 +151,14 @@ done
 SECRET_ARGS_STRING=${SECRET_ARGS_STRING%,}
 
 # Prepare the environment variable arguments
-ENV_VARS="GIN_MODE=release,APNS_ENV=$APNS_ENV,WEBSOCKET_URL=$WEBSOCKET_URL,APNS_BUNDLE_ID=$APNS_BUNDLE_ID"
+ENV_VARS="GIN_MODE=release,APNS_ENV=$APNS_ENV,WEBSOCKET_URL=$WEBSOCKET_URL,APNS_BUNDLE_ID=$APNS_BUNDLE_ID,SHUTDOWN_TIMEOUT=8s"
 if [ -n "$RECONCILE_INTERVAL" ]; then
     ENV_VARS+=",RECONCILE_INTERVAL=$RECONCILE_INTERVAL"
 fi
+
+# Cloud Run sends SIGTERM and waits 10s before SIGKILL by default. SHUTDOWN_TIMEOUT=8s
+# fits within that window. If push drain routinely needs more time, increase the service
+# termination grace period (e.g. 30s) via Cloud Run service YAML / gcloud run services update.
 
 gcloud run deploy "$SERVICE_NAME" \
     --image="$REGION-docker.pkg.dev/$PROJECT_ID/$SERVICE_NAME/$SERVICE_NAME" \

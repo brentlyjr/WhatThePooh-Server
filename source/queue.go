@@ -30,7 +30,8 @@ var PushQueue = make(chan PushRequest, 100)
 func Push(req PushRequest) {
 	select {
 	case PushQueue <- req:
-		// Push queued successfully
+	case <-shutdownDone:
+		log.Printf("[SHUTDOWN] Dropping push: %s", req.EntityName)
 	default:
 		log.Printf("Push queue full, dropping notification for %s", req.EntityName)
 	}

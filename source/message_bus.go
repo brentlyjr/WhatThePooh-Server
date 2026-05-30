@@ -80,6 +80,18 @@ func (mb *MessageBus) PublishStatus(msg StatusChangeMessage) {
     }
 }
 
+// CloseStatusSubscribers closes all status subscriber channels.
+// Callers must guarantee no concurrent PublishStatus (entity consumer must have exited).
+func (mb *MessageBus) CloseStatusSubscribers() {
+	mb.mu.Lock()
+	defer mb.mu.Unlock()
+
+	for _, ch := range mb.statusSubscribers {
+		close(ch)
+	}
+	mb.statusSubscribers = nil
+}
+
 // Publish wait time change
 func (mb *MessageBus) PublishWaitTime(msg WaitTimeMessage) {
     mb.mu.RLock()

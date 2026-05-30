@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"log"
 	"os"
@@ -80,6 +81,8 @@ func main() {
 	}
 	log.Printf("Loaded %d ride emojis", len(rideEmojis))
 
+	shutdownTimeout := parseShutdownTimeout()
+
 	// Initialize Supabase database
 	supabaseDB, err := NewSupabaseDB()
 	if err != nil {
@@ -137,7 +140,9 @@ func main() {
 	StartAPNSWorkers(5)
 
 	// Phase 4 — Start the EntityQueue consumer for live WS updates.
+	entityConsumerWg.Add(1)
 	go func() {
+		defer entityConsumerWg.Done()
 		for entity := range EntityQueue {
 			entityManager.ProcessEntity(entity)
 		}
@@ -154,6 +159,7 @@ func main() {
 	// Phase 7 — Optional read-only reconciliation loop. When RECONCILE_INTERVAL
 	// is set (e.g. "10m"), periodically diff the REST snapshot against the DB
 	// and log any status discrepancies. Disabled when the env var is empty.
+	var reconciler *Reconciler
 	if intervalStr := os.Getenv("RECONCILE_INTERVAL"); intervalStr != "" {
 		interval, err := time.ParseDuration(intervalStr)
 		if err != nil {
@@ -161,7 +167,8 @@ func main() {
 		} else if interval <= 0 {
 			log.Printf("RECONCILE_INTERVAL must be positive, got %s — reconciler disabled", interval)
 		} else {
-			go NewReconciler(restClient, db, interval).Start()
+			reconciler = NewReconciler(restClient, db, interval)
+			go reconciler.Start()
 		}
 	}
 
@@ -177,7 +184,7 @@ func main() {
 	go func() {
 		log.Println("What the Pooh Server started on :8080")
 		if err := app.Listen(":8080"); err != nil {
-			log.Fatalf("Failed to start server: %v", err)
+			log.Printf("HTTP server stopped: %v", err)
 		}
 	}()
 
@@ -186,7 +193,12 @@ func main() {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigChan
 
-	// Cleanup
-	wsClient.Close()
-	log.Println("Shutting down...")
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+	gracefulShutdown(ctx, shutdownDeps{
+		App:        app,
+		WSClient:   wsClient,
+		Reconciler: reconciler,
+		SupabaseDB: supabaseDB,
+	})
 }
