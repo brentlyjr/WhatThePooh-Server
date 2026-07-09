@@ -12,6 +12,7 @@
 
 # --- Reconciler ---
 # Set this value to a time to start reconciliation process at that interval
+# Set value to 0 or comment out to prevent reconciliation process from running
 # export RECONCILE_INTERVAL=10m
 
 # Supabase Configuration
