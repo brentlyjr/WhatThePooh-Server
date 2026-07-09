@@ -17,7 +17,7 @@ func StartMessageProcessors() {
 		for msg := range statusCh {
 			duration := msg.Timestamp.Sub(msg.TimeOfLastStatus)
 			durationMinutes := int(duration.Minutes())
-			log.Printf("🔔 STATUS CHANGE: Entity %s (%s) changed from %s to %s (%d min in %s status)", msg.EntityName, msg.EntityID, msg.OldStatus, msg.NewStatus, durationMinutes, msg.OldStatus)
+			log.Printf("🔔 STATUS CHANGE: Entity %s in %s (%s) changed from %s to %s (%d min in %s status)", msg.EntityName, getParkName(msg.ParkID), msg.EntityID, msg.OldStatus, msg.NewStatus, durationMinutes, msg.OldStatus)
 
 			// Get devices subscribed to this specific entity/park.
 			devices, err := db.GetDevicesSubscribedToEntity(msg.EntityID, msg.ParkID)
