@@ -25,11 +25,6 @@ fi
 
 # Set default environment variables for local development (can be overridden by local_config.sh)
 export APNS_ENV=${APNS_ENV:-"development"}
-export APNS_KEY_ID=${APNS_KEY_ID:-"MU2W4LLRSY"}
-export APNS_TEAM_ID=${APNS_TEAM_ID:-"SVFXRTGAKU"}
-export APNS_BUNDLE_ID=${APNS_BUNDLE_ID:-"com.brentlyjr.WhatThePooh"}
-
-export THEMEPARK_API_KEY=${THEMEPARK_API_KEY:-"519dd9c1-cc1e-4d4a-906d-d628cf0250bc"}
 
 # Set the APNS key path for local development (sandbox)
 export APNS_KEY_BASE64=$(base64 -i "$PROJECT_ROOT/keys/AuthKey_MU2W4LLRSY.p8" | tr -d '\n')
