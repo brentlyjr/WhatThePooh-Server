@@ -8,7 +8,7 @@
 # export APNS_TEAM_ID="your-apns-team-id"
 # export APNS_BUNDLE_ID="your-bundle-id"
 # export THEMEPARK_API_KEY="your-themepark-api-key"
-# export WEBSOCKET_URL="your-websocket-url"
+# export WEBSOCKET_URL="wss://api.themeparks.wiki/v1/live"
 
 # --- Reconciler ---
 # Set this value to a time to start reconciliation process at that interval

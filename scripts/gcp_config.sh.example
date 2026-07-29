@@ -36,7 +36,7 @@ APNS_BUNDLE_ID="com.fredflinstone.myapp"
 THEMEPARK_API_KEY="your-themepark-api-key"
 
 # The WebSocket URL for the live entity feed.
-WEBSOCKET_URL="wss://api.themeparks.wiki/v1/entity/live" 
+WEBSOCKET_URL="wss://api.themeparks.wiki/v1/live" 
 
 # --- Supabase Configuration ---
 # Your Supabase database connection string (contains password - will be stored as a secret)
