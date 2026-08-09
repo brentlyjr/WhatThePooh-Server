@@ -357,8 +357,11 @@ func metricsHandler(entityManager *EntityManager, wsClient *WebSocketClient) fib
 			entityStats["statuses"].(map[string]int)[status]++
 		}
 
+		bootstrapComplete, bootstrapDuration := wsClient.GetBootstrapStats()
+
 		return c.JSON(fiber.Map{
 			"queue_length":   len(EntityQueue),
+			"queue_drops":    entityQueueDrops.Load(),
 			"entity_count":   len(entityManager.GetAllEntities()),
 			"entity_stats":   entityStats,
 			"device_count":   deviceCount,
@@ -366,7 +369,13 @@ func metricsHandler(entityManager *EntityManager, wsClient *WebSocketClient) fib
 			"restarts":       GetReconnectionTimestamps(),
 			"events":         wsClient.GetEventStats(),
 			"statuses":       wsClient.GetStatusStats(),
-	
+			"channels":       wsClient.GetChannelStats(),
+			"seq_gaps":       wsClient.GetSeqGaps(),
+			"resyncs":        wsClient.GetResyncs(),
+			"bootstrap_complete":    bootstrapComplete,
+			"bootstrap_duration_ms": bootstrapDuration.Milliseconds(),
+			"heartbeat_interval_ms": wsClient.GetHeartbeatInterval().Milliseconds(),
+
 			"server_start":   serverStartTime,
 		})
 	}

@@ -18,11 +18,15 @@ type ParkLiveDataResponse struct {
 	LiveData []LiveDataEntity `json:"liveData"`
 }
 
+// LiveDataEntity is one element of the REST /v1/entity/{id}/live array. The
+// preview WebSocket reuses this exact shape for snapshot elements and update
+// frames, so both transports share this struct and convertLiveDataEntity.
 type LiveDataEntity struct {
 	ID           string                 `json:"id"`
 	Name         string                 `json:"name"`
 	EntityType   string                 `json:"entityType"`
 	ParkID       string                 `json:"parkId"`
+	DestinationID string                `json:"destinationId"`
 	ExternalID   string                 `json:"externalId"`
 	Status       string                 `json:"status"`
 	LastUpdated  string                 `json:"lastUpdated"`
@@ -136,30 +140,43 @@ func (rc *RestClient) fetchResortEntities(resortID string) ([]LiveDataEntity, er
 // into our Entity format. Returns (entity, false) for entities that should be
 // skipped (e.g., non-ATTRACTION types).
 func convertRestEntity(restEntity LiveDataEntity) (Entity, bool) {
-	if restEntity.EntityType != "ATTRACTION" {
+	return convertLiveDataEntity(restEntity, 0)
+}
+
+// convertLiveDataEntity converts one API live-data element (REST or preview
+// WebSocket — identical shape) into an Entity. frameTs is the WS envelope's
+// server send time in epoch ms (0 when unknown, e.g. REST): it is the fallback
+// event time when the entity's lastUpdated is missing or unparseable.
+func convertLiveDataEntity(e LiveDataEntity, frameTs int64) (Entity, bool) {
+	if e.EntityType != "ATTRACTION" {
 		return Entity{}, false
 	}
 
-	lastUpdated, err := time.Parse(time.RFC3339, restEntity.LastUpdated)
+	lastUpdated, err := time.Parse(time.RFC3339, e.LastUpdated)
 	if err != nil {
-		log.Printf("Warning: Could not parse lastUpdated for entity %s: %v", restEntity.ID, err)
-		lastUpdated = time.Now()
+		if frameTs > 0 {
+			lastUpdated = time.UnixMilli(frameTs)
+		} else {
+			log.Printf("Warning: Could not parse lastUpdated for entity %s: %v", e.ID, err)
+			lastUpdated = time.Now()
+		}
 	}
 
 	waitTime := 0
-	if restEntity.Queue != nil {
-		if standby, exists := restEntity.Queue["STANDBY"]; exists && standby.WaitTime != nil {
+	if e.Queue != nil {
+		if standby, exists := e.Queue["STANDBY"]; exists && standby.WaitTime != nil {
 			waitTime = *standby.WaitTime
 		}
 	}
 
 	return Entity{
-		EntityID:           restEntity.ID,
-		Name:               restEntity.Name,
-		EntityType:         restEntity.EntityType,
-		ParkID:             restEntity.ParkID,
+		EntityID:           e.ID,
+		Name:               e.Name,
+		EntityType:         e.EntityType,
+		ParkID:             e.ParkID,
 		WaitTime:           waitTime,
-		Status:             EntityStatus(restEntity.Status),
+		Status:             EntityStatus(e.Status),
+		LastUpdated:        lastUpdated,
 		LastStatusChange:   lastUpdated,
 		LastWaitTimeChange: lastUpdated,
 	}, true

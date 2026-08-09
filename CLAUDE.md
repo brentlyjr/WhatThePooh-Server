@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-WhatThePooh-Server is a Go service that pushes APNS notifications to iOS clients when theme-park attractions change status. It ingests live data from `themeparks.wiki` via WebSocket (with a REST pre-population pass at startup), tracks per-entity status, and fans out push notifications to devices subscribed to specific (park, entity) pairs.
+WhatThePooh-Server is a Go service that pushes APNS notifications to iOS clients when theme-park attractions change status. It ingests live data from `themeparks.wiki` via the preview WebSocket protocol (bootstrapping state from snapshot-on-subscribe at startup), tracks per-entity status, and fans out push notifications to devices subscribed to specific (park, entity) pairs.
 
 ## Commands
 
@@ -45,7 +45,8 @@ The server fails fast on missing values via `getEnvOrExit` in `source/main.go`:
 - `APNS_ENV` — `development` or `production` (selects the default APNS client; per-device environment overrides this at send time)
 - `THEMEPARK_API_KEY`
 - `SUPABASE_DB_URL` — full Postgres connection string (`postgresql://...`)
-- `WEBSOCKET_URL` — optional, defaults to `wss://api.themeparks.wiki/v1/entity/live`
+- `WEBSOCKET_URL` — optional, defaults to `wss://api.themeparks.wiki/v1/live`
+- `BOOTSTRAP_TIMEOUT` — optional Go duration (default `60s`); how long startup waits for the WebSocket snapshot bootstrap before proceeding with partial data
 
 A `.env` file at the repo root is loaded automatically via `godotenv` if present; in GCP these are injected as Cloud Run env vars / Secret Manager mounts.
 
@@ -54,13 +55,12 @@ A `.env` file at the repo root is loaded automatically via `godotenv` if present
 The runtime is a pipeline of goroutines connected by buffered channels and a small pub/sub bus. Read these together — the flow spans multiple files:
 
 ```
-REST pre-populate (rest_client.go)
-        │
+WebSocket client (websocket_client.go, preview protocol)
+   ├── startup: snapshot frames → bootstrap gate → BulkLoad + ReconcileAgainst
+   └── live: update (and reconnect snapshot) frames
+        │ Entity (via convertLiveDataEntity)
         ▼
-WebSocket client (websocket_client.go)
-        │ Entity (parsed from livedata events)
-        ▼
-EntityQueue chan (queue.go, buffer 1000)
+EntityQueue chan (queue.go, buffer 5000)
         │
         ▼
 EntityManager.ProcessEntity (entity_manager.go)
@@ -86,11 +86,12 @@ Key architectural points:
 - **Ride emojis.** Per-entity emoji strings live in `source/data/ride_emojis.json`, are embedded at build time via `//go:embed` in `ride_emojis.go`, and are loaded into memory at startup with `loadRideEmojis()` (lookup via `getRideEmoji(entityID)`).
 - **APNS alert copy.** Status-change pushes use title `{rideEmoji} {entityName}` (name only if no emoji in the map) and body `{statusEmoji}Now {NEW_STATUS} in {parkName}`, plus optional wait-time and was-down lines when operating. Custom payload includes `rideEmoji` when mapped.
 - **`Database` interface (`database.go`) with two implementations.** `SupabaseDB` (`supabase_db.go`) is the real Postgres-backed store using `pgx`. `CachedDB` (`cache.go`) wraps it with an in-memory device cache (`sync.Map`) populated on startup and refreshed via `POST /api/cache/expire`. The cache holds only device rows — subscriptions and entity status calls pass through. The global `db` variable points to a `CachedDB` wrapping a `SupabaseDB`.
-- **WebSocket reconnect loop** (`websocket_client.go`) sends pings every 30s; the read deadline (60s) is extended on inbound messages, received pongs, and successful ping sends. On disconnect it appends a timestamp to a bounded `reconnectionTimestamps` slice exposed via `/api/metrics`. A 5s watchdog logs `[WS] Pong overdue` once if no pong arrives within 45s of the last ping; routine pongs are not logged. Disconnects emit a single consolidated `[WS] Connection lost` line with keepalive context (`pingOutstanding`, read-deadline hint on timeout). It subscribes to a hard-coded list of resort IDs (Disney + Universal) on every (re)connect.
+- **Preview WebSocket protocol** (`websocket_client.go`). Connects with the `preview` subprotocol and `X-API-Key` header; every server frame is the envelope `{type, channel, seq, ts, data}` routed by `handleFrame` (`welcome`, `subscribed`, `unsubscribed`, `snapshot`, `update`, `ping`, `error`; unknown types are counted and ignored). Subscriptions are sent **after** the `welcome` frame: one `{type:"subscribe", channel:<resortID>, filter:"ATTRACTION", snapshot:true}` per hard-coded resort (Disney + Universal). Snapshot/update payloads reuse the REST `LiveDataEntity` shape. At startup, snapshot entities accumulate behind a bootstrap gate (a channel completes on update-after-snapshot, a 2s snapshot debounce, or subscribe failure); `main.go` waits on `BootstrapDone()` (capped by `BOOTSTRAP_TIMEOUT`), then runs `BulkLoad` + `ReconcileAgainst`. Post-bootstrap, snapshot and update frames all flow through `EntityQueue` → `ProcessEntity`, which no-ops on unchanged status, so reconnect snapshots never double-notify. Server `ping` frames get an app-level `{type:"pong"}` reply; the read deadline is `max(90s, 3×heartbeatIntervalMs)`. Reconnects use exponential backoff (1s→30s + jitter) and append to `reconnectionTimestamps` (exposed via `/api/metrics`). Per-channel `seq` is tracked for gap metrics (`seq_gaps`); gaps are log/metrics-only (filtered-out events consume seq numbers, so gaps carry no loss signal under `filter:"ATTRACTION"`) — only a backwards cursor (server channel restart) triggers the rate-limited per-channel unsubscribe/resubscribe resync.
 - **Subscription updates use smart diffing.** `SupabaseDB.UpdateSubscriptions` computes added/removed `(park_id, entity_id)` pairs in a transaction and only INSERTs/DELETEs the differences. An empty `subscriptions` array means "unsubscribe from everything" and is valid.
 - **Per-device APNS environment.** `apns_worker.go` initializes both dev (`apnsDevClient`) and prod (`apnsProdClient`) clients. Each push uses the client matching the device's `environment` column, so dev and prod devices can coexist in the same database.
 - **Auto-disable on bad tokens.** When APNS returns `BadDeviceToken` or `Unregistered`, `SendPushNotification` calls `db.SetDeviceNotificationState(token, false)` — the device row and its subscriptions are preserved so re-registering restores everything.
-- **Entity state survives restarts.** On startup, `EntityManager.loadInitialStatuses` reads the `entity_status` table so prior statuses are known. The REST pre-population pass then calls `ProcessEntity(entity, true)` — passing `isInitial=true` suppresses notifications for the first observation of an entity but still emits them for discrepancies between the DB and the REST snapshot.
+- **Entity state survives restarts.** On startup, `EntityManager.loadInitialStatuses` reads the `entity_status` table so prior statuses are known. The WebSocket bootstrap snapshot is then loaded silently via `BulkLoad`, and `ReconcileAgainst(dbSnapshot)` emits notifications only for entities whose status changed while the server was offline (new entities are persisted without notifying; unchanged entities keep the DB's `LastStatusChange` so duration counters survive the restart).
+- **Timestamps come from the API.** `convertLiveDataEntity` (`rest_client.go`) parses each entity's `lastUpdated` (falling back to the frame's `ts`, then `time.Now()`); `ProcessEntity`/`ReconcileAgainst` use it (via `eventTimeOrNow`, with a monotonic guard against going backwards) for `LastStatusChange`, `entity_status.last_updated`, and the APNS `timestamp`/"Was Down X ago" math.
 - **Queues drop on overflow.** Both `QueueEntity` and `Push` use non-blocking `select`/`default` and log a drop if the channel is full — they never block the producer.
 
 ## Database Schema
@@ -106,7 +107,9 @@ RLS is enabled on all tables with a permissive "anonymous access" policy because
 
 ## Park ID Map
 
-`source/constants.go` hard-codes the `parkID → human-readable name` map used in APNS body copy (`Now … in {parkName}`). `websocket_client.go` separately hard-codes the **resort** IDs (parent of parks) to subscribe to. These two lists are intentionally different — resorts are subscription targets, parks are what come back in `livedata` messages.
+`source/constants.go` hard-codes the `parkID → human-readable name` map used in APNS body copy (`Now … in {parkName}`). `websocket_client.go` separately hard-codes the **resort** IDs (parent of parks) to subscribe to. These two lists are intentionally different — resorts are subscription channels, parks are what come back in each entity's `parkId` field.
+
+Note: the separate `comparison/` module still speaks the legacy (`v1` subprotocol, `event`-discriminated) WebSocket shape and will stop working when the legacy protocol is removed upstream.
 
 ## API Surface
 

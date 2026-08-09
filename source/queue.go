@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"sync/atomic"
 	"time"
 )
 
@@ -17,12 +18,18 @@ type PushRequest struct {
 	NewWaitTime    int
 	Environment    string // "development" or "production"
 	NotificationID string
-	Timestamp      time.Time // UTC timestamp when websocket message was received
+	Timestamp      time.Time // API-reported event time (entity lastUpdated)
 	TimeOfLastStatus time.Time
 }
 
-// EntityQueue is a buffered channel for entity updates
-var EntityQueue = make(chan Entity, 1000)
+// EntityQueue is a buffered channel for entity updates. Sized to absorb a full
+// reconnect snapshot burst (~2-3k attraction entities across all resorts)
+// plus live-update headroom.
+var EntityQueue = make(chan Entity, 5000)
+
+// entityQueueDrops counts updates dropped because EntityQueue was full,
+// exposed via /api/metrics.
+var entityQueueDrops atomic.Uint64
 
 // PushQueue is for push notifications
 var PushQueue = make(chan PushRequest, 100)
@@ -44,6 +51,7 @@ func QueueEntity(entity Entity) {
 		// Entity queued successfully
 	default:
 		// Queue is full, log and drop
+		entityQueueDrops.Add(1)
 		log.Printf("Entity queue full, dropping update for %s", entity.Name)
 	}
 }

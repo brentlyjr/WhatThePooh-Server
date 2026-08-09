@@ -36,7 +36,7 @@ type NotificationRequest struct {
 	NewWaitTime    int       `json:"newWaitTime"`
 	Environment    string    `json:"environment"` // "development" or "production"
 	NotificationID string    `json:"notificationId"`
-	Timestamp      time.Time `json:"timestamp"` // UTC timestamp when websocket message was received
+	Timestamp      time.Time `json:"timestamp"` // API-reported event time (entity lastUpdated)
 	TimeOfLastStatus time.Time `json:"timeOfLastStatus"`
 }
 

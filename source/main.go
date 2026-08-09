@@ -113,7 +113,7 @@ func main() {
 	}
 
 	// Get WebSocket URL and API key from environment variables
-	websocketURL := getEnvWithDefault("WEBSOCKET_URL", "wss://api.themeparks.wiki/v1/entity/live")
+	websocketURL := getEnvWithDefault("WEBSOCKET_URL", "wss://api.themeparks.wiki/v1/live")
 	apiKey := getEnvOrExit("THEMEPARK_API_KEY")
 
 	// Phase 1 — Load DB state.
@@ -122,24 +122,47 @@ func main() {
 	dbSnapshot := entityManager.GetAllEntities()
 	log.Printf("[STARTUP] Loaded %d entity statuses from DB", len(dbSnapshot))
 
-	// Phase 2 — Fetch the current REST snapshot and load it silently.
-	// No messages are published yet; subscribers haven't attached to the bus.
-	restClient := NewRestClient(apiKey)
-	restEntities, err := restClient.FetchAllEntities()
-	if err != nil {
-		log.Printf("Warning: Failed to fetch entities from REST: %v", err)
-	}
-	entityManager.BulkLoad(restEntities)
-	log.Printf("[STARTUP] Fetched %d entities from REST and loaded into memory", len(restEntities))
-
-	// Phase 3 — Wire up the message bus subscribers and APNS workers BEFORE
+	// Phase 2 — Wire up the message bus subscribers and APNS workers BEFORE
 	// reconciliation. This is the critical ordering: ReconcileAgainst publishes
 	// StatusChangeMessages, and MessageBus drops messages when no subscriber is
 	// attached.
 	StartMessageProcessors()
 	StartAPNSWorkers(5)
 
-	// Phase 4 — Start the EntityQueue consumer for live WS updates.
+	// Phase 3 — Connect the preview WebSocket. The client subscribes to every
+	// resort with snapshot:true and accumulates the snapshot entities behind
+	// its bootstrap gate; live update frames buffer in EntityQueue meanwhile
+	// (the consumer isn't running yet).
+	wsClient := NewWebSocketClient(websocketURL, apiKey)
+	go wsClient.Connect()
+
+	// Phase 4 — Wait for the bootstrap snapshot, then reconcile against the DB
+	// state. Any entity whose status changed while the server was offline gets
+	// a push fan-out here. On timeout we proceed with whatever arrived:
+	// missing resorts contribute only DB-hydrated entries, which reconcile as
+	// "unchanged" and self-heal when their first frame arrives.
+	bootstrapTimeout := 60 * time.Second
+	if timeoutStr := os.Getenv("BOOTSTRAP_TIMEOUT"); timeoutStr != "" {
+		if parsed, err := time.ParseDuration(timeoutStr); err == nil && parsed > 0 {
+			bootstrapTimeout = parsed
+		} else {
+			log.Printf("Invalid BOOTSTRAP_TIMEOUT %q — using default %s", timeoutStr, bootstrapTimeout)
+		}
+	}
+	var snapshotEntities []Entity
+	select {
+	case snapshotEntities = <-wsClient.BootstrapDone():
+	case <-time.After(bootstrapTimeout):
+		log.Printf("[STARTUP] Bootstrap timeout after %s — proceeding with partial data", bootstrapTimeout)
+		snapshotEntities = wsClient.ForceBootstrapComplete()
+	}
+	entityManager.BulkLoad(snapshotEntities)
+	log.Printf("[STARTUP] Loaded %d snapshot entities into memory", len(snapshotEntities))
+	entityManager.ReconcileAgainst(dbSnapshot)
+
+	// Phase 5 — Start the EntityQueue consumer. Updates that buffered during
+	// bootstrap now drain through ProcessEntity as ordinary diffs; from here on
+	// the pipeline is live.
 	entityConsumerWg.Add(1)
 	go func() {
 		defer entityConsumerWg.Done()
@@ -148,17 +171,11 @@ func main() {
 		}
 	}()
 
-	// Phase 5 — Reconcile DB snapshot vs REST snapshot. Any entity whose status
-	// changed while the server was offline gets a push fan-out here.
-	entityManager.ReconcileAgainst(dbSnapshot)
-
-	// Phase 6 — Connect the WebSocket for live updates.
-	wsClient := NewWebSocketClient(websocketURL, apiKey, entityManager)
-	go wsClient.Connect()
-
-	// Phase 7 — Optional read-only reconciliation loop. When RECONCILE_INTERVAL
+	// Phase 6 — Optional read-only reconciliation loop. When RECONCILE_INTERVAL
 	// is set (e.g. "10m"), periodically diff the REST snapshot against the DB
 	// and log any status discrepancies. Disabled when the env var is empty.
+	// This is the only remaining consumer of the REST client and doubles as a
+	// REST-vs-WebSocket cross-check during the protocol migration.
 	var reconciler *Reconciler
 	if intervalStr := os.Getenv("RECONCILE_INTERVAL"); intervalStr != "" {
 		interval, err := time.ParseDuration(intervalStr)
@@ -167,7 +184,7 @@ func main() {
 		} else if interval <= 0 {
 			log.Printf("RECONCILE_INTERVAL must be positive, got %s — reconciler disabled", interval)
 		} else {
-			reconciler = NewReconciler(restClient, db, interval)
+			reconciler = NewReconciler(NewRestClient(apiKey), db, interval)
 			go reconciler.Start()
 		}
 	}

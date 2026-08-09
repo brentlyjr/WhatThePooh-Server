@@ -24,8 +24,20 @@ type Entity struct {
 	ParkID            string       `json:"parkId"`
 	WaitTime          int          `json:"waitTime"`
 	Status            EntityStatus `json:"status"`
+	LastUpdated       time.Time    `json:"lastUpdated"` // API-reported event time; zero if unknown
 	LastStatusChange  time.Time    `json:"lastStatusChange"`
 	LastWaitTimeChange time.Time    `json:"lastWaitTimeChange"`
+}
+
+// eventTimeOrNow returns the entity's API-reported event time, falling back to
+// time.Now() when it is missing and clamping to now if the API clock is ahead
+// of ours.
+func eventTimeOrNow(e Entity) time.Time {
+	now := time.Now()
+	if e.LastUpdated.IsZero() || e.LastUpdated.After(now) {
+		return now
+	}
+	return e.LastUpdated
 }
 
 // EntityManager handles the thread-safe storage and updates of entities
@@ -89,12 +101,15 @@ func (em *EntityManager) ProcessEntity(entity Entity) {
 
 	existing, exists := em.entities.Load(entity.EntityID)
 	if !exists {
-		now := time.Now()
-		entity.LastStatusChange = now
-		entity.LastWaitTimeChange = now
+		// First observation: a stale-but-truthful API time is preferable to
+		// time.Now() — no notification fires on this path, and it makes later
+		// "in this status since" math more accurate.
+		eventTime := eventTimeOrNow(entity)
+		entity.LastStatusChange = eventTime
+		entity.LastWaitTimeChange = eventTime
 		em.entities.Store(entity.EntityID, entity)
 		// Persist this new entity to the database
-		err := em.db.StoreEntityStatus(entity.EntityID, entity.Name, entity.Status, now)
+		err := em.db.StoreEntityStatus(entity.EntityID, entity.Name, entity.Status, eventTime)
 		if err != nil {
 			log.Printf("Failed to store new entity status for %s: %v", entity.EntityID, err)
 		}
@@ -105,7 +120,13 @@ func (em *EntityManager) ProcessEntity(entity Entity) {
 
 	// Check for status change
 	if entity.Status != existingEntity.Status {
-		now := time.Now()
+		eventTime := eventTimeOrNow(entity)
+		// Monotonic guard: never let a stale API time trail the previous
+		// change (pre-migration rows were stamped with time.Now()), which
+		// would produce negative "was down for" durations downstream.
+		if eventTime.Before(existingEntity.LastStatusChange) {
+			eventTime = time.Now()
+		}
 		messageBus.PublishStatus(StatusChangeMessage{
 			EntityID:         entity.EntityID,
 			EntityName:       entity.Name,
@@ -114,12 +135,12 @@ func (em *EntityManager) ProcessEntity(entity Entity) {
 			NewStatus:        entity.Status,
 			OldWaitTime:      existingEntity.WaitTime,
 			NewWaitTime:      entity.WaitTime,
-			Timestamp:        now,
+			Timestamp:        eventTime,
 			TimeOfLastStatus: existingEntity.LastStatusChange,
 		})
 
 		existingEntity.Status = entity.Status
-		existingEntity.LastStatusChange = now
+		existingEntity.LastStatusChange = eventTime
 
 		// Persist the new status to the database
 		err := em.db.StoreEntityStatus(existingEntity.EntityID, existingEntity.Name, existingEntity.Status, existingEntity.LastStatusChange)
@@ -138,7 +159,7 @@ func (em *EntityManager) ProcessEntity(entity Entity) {
 		// 	Timestamp:   time.Now(),
 		// })
 		existingEntity.WaitTime = entity.WaitTime
-		existingEntity.LastWaitTimeChange = time.Now()
+		existingEntity.LastWaitTimeChange = eventTimeOrNow(entity)
 	}
 
 	em.entities.Store(entity.EntityID, existingEntity)
@@ -157,28 +178,29 @@ func (em *EntityManager) BulkLoad(entities []Entity) {
 	}
 }
 
-// ReconcileAgainst compares the manager's current state (loaded from REST via
-// BulkLoad) against a snapshot of the database's last-known state and emits a
-// StatusChangeMessage for each entity whose status differs. New entities (in
-// REST but not in the snapshot) are persisted without notification. For
-// unchanged entities, the snapshot's LastStatusChange is copied forward so the
-// "time in current status" duration survives the restart.
+// ReconcileAgainst compares the manager's current state (loaded from the WS
+// bootstrap snapshot via BulkLoad) against a snapshot of the database's
+// last-known state and emits a StatusChangeMessage for each entity whose
+// status differs. New entities (in the live snapshot but not in the DB) are
+// persisted without notification. For unchanged entities, the DB snapshot's
+// LastStatusChange is copied forward so the "time in current status" duration
+// survives the restart.
 func (em *EntityManager) ReconcileAgainst(snapshot map[string]Entity) {
 	em.mu.Lock()
 	defer em.mu.Unlock()
 
 	var discrepancies, newEntities, unchanged int
-	now := time.Now()
 
 	em.entities.Range(func(key, value interface{}) bool {
 		current := value.(Entity)
 		prior, existedInDB := snapshot[current.EntityID]
 
 		if !existedInDB {
-			current.LastStatusChange = now
-			current.LastWaitTimeChange = now
+			eventTime := eventTimeOrNow(current)
+			current.LastStatusChange = eventTime
+			current.LastWaitTimeChange = eventTime
 			em.entities.Store(current.EntityID, current)
-			if err := em.db.StoreEntityStatus(current.EntityID, current.Name, current.Status, now); err != nil {
+			if err := em.db.StoreEntityStatus(current.EntityID, current.Name, current.Status, eventTime); err != nil {
 				log.Printf("Failed to persist new entity %s during reconciliation: %v", current.EntityID, err)
 			}
 			newEntities++
@@ -186,6 +208,12 @@ func (em *EntityManager) ReconcileAgainst(snapshot map[string]Entity) {
 		}
 
 		if current.Status != prior.Status {
+			eventTime := eventTimeOrNow(current)
+			// Monotonic guard, same as ProcessEntity: a stale API time must
+			// not trail the DB's previous change time.
+			if eventTime.Before(prior.LastStatusChange) {
+				eventTime = time.Now()
+			}
 			messageBus.PublishStatus(StatusChangeMessage{
 				EntityID:         current.EntityID,
 				EntityName:       current.Name,
@@ -194,12 +222,12 @@ func (em *EntityManager) ReconcileAgainst(snapshot map[string]Entity) {
 				NewStatus:        current.Status,
 				OldWaitTime:      prior.WaitTime,
 				NewWaitTime:      current.WaitTime,
-				Timestamp:        now,
+				Timestamp:        eventTime,
 				TimeOfLastStatus: prior.LastStatusChange,
 			})
-			current.LastStatusChange = now
+			current.LastStatusChange = eventTime
 			em.entities.Store(current.EntityID, current)
-			if err := em.db.StoreEntityStatus(current.EntityID, current.Name, current.Status, now); err != nil {
+			if err := em.db.StoreEntityStatus(current.EntityID, current.Name, current.Status, eventTime); err != nil {
 				log.Printf("Failed to persist reconciled status for %s: %v", current.EntityID, err)
 			}
 			discrepancies++
