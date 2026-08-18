@@ -19,6 +19,9 @@ func SetupRoutes(app *fiber.App, entityManager *EntityManager, wsClient *WebSock
 	app.Get("/api/entities", getAllEntitiesHandler(entityManager))
 	app.Get("/api/entities/:id", getEntityByIDHandler(entityManager))
 
+	// Wait times (poll endpoint, served from in-memory entity state)
+	app.Post("/api/wait-times", getWaitTimesHandler(entityManager))
+
 	// Device routes
 	app.Post("/api/register-device", registerDeviceHandler)
 	app.Get("/api/devices", getAllDevicesHandler)

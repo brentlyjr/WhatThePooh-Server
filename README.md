@@ -338,6 +338,74 @@ The project can also be built and run as a Docker container.
 - **Get Entity by ID** (`GET /api/entities/:id`)
   Returns a specific attraction's status
 
+- **Get Wait Times** (`POST /api/wait-times`)
+  Returns current wait times for every attraction in a park. Served entirely from the
+  server's in-memory entity state — intended to be polled by the client (60s is plenty;
+  upstream only refreshes every few minutes). Every response is the full list; there is
+  no delta/cursor mechanism, so the client replaces its board wholesale.
+
+  `deviceToken` is a **"registered app" gate, not park authorization** — any registered
+  device can read any park. Park data is public, so this is fine, but the endpoint does
+  not enforce a per-park permission.
+
+  Request:
+  ```json
+  {
+    "deviceToken": "your-device-token",
+    "parkId": "75ea578a-adc8-4116-a54d-dccb60765ef9"
+  }
+  ```
+
+  Response (entries sorted by name, so the board does not reshuffle between polls):
+  ```json
+  {
+    "parkId": "75ea578a-adc8-4116-a54d-dccb60765ef9",
+    "parkName": "Magic Kingdom",
+    "serverTime": "2026-08-17T14:05:00Z",
+    "count": 2,
+    "waitTimes": [
+      {
+        "entityId": "entity-id-1",
+        "name": "Space Mountain",
+        "status": "OPERATING",
+        "waitTime": 45,
+        "rideEmoji": "🚀",
+        "lastWaitTimeChange": "2026-08-17T14:03:12Z",
+        "lastUpdated": "2026-08-17T14:04:50Z"
+      },
+      {
+        "entityId": "entity-id-2",
+        "name": "Enchanted Tiki Room",
+        "status": "OPERATING",
+        "waitTime": null,
+        "lastWaitTimeChange": "2026-08-17T09:00:00Z",
+        "lastUpdated": "2026-08-17T14:04:50Z"
+      }
+    ]
+  }
+  ```
+
+  Notes for the client:
+
+  - **`waitTime` is nullable.** `null` means the attraction reports no STANDBY queue
+    (shows, closed rides, virtual-queue-only attractions) — render it as "—". A
+    literal `0` means a real walk-on.
+  - **Use `lastWaitTimeChange` for freshness display** ("45 min · updated 2 min ago").
+    `lastUpdated` is the entity's last API frame time and advances even when the wait did
+    not.
+  - **`rideEmoji` is omitted** (absent key, not empty string) when the ride has no mapping.
+  - **`waitTimes` is always an array**, never `null` — an unknown or not-yet-loaded park
+    returns `[]` with `count: 0`.
+  - **`count: 0` means "no data yet", not "no rides".** Every real park has attractions, so
+    treat zero as a retry state. This can happen briefly if the server started on the
+    `BOOTSTRAP_TIMEOUT` path and a resort's snapshot has not arrived; the park fills in as
+    live frames land.
+  - Errors: `400` for a missing/unknown `parkId` or missing `deviceToken`, `404` for an
+    unregistered device, `500` if the device lookup fails.
+
+  Only entities with `entityType == "ATTRACTION"` are returned. Note that themeparks.wiki
+  classifies some meet-and-greets and shows as ATTRACTION, so those may still appear.
+
 ### System
 
 - **Health Check** (`GET /health`)

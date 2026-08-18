@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sort"
 	"sync"
 	"time"
 	"log"
@@ -23,6 +24,10 @@ type Entity struct {
 	EntityType        string       `json:"entityType"`
 	ParkID            string       `json:"parkId"`
 	WaitTime          int          `json:"waitTime"`
+	// WaitTimeReported distinguishes a genuine 0-minute STANDBY wait from the
+	// absence of a STANDBY queue (shows, closed rides, virtual-queue-only
+	// attractions), which convertLiveDataEntity also renders as 0.
+	WaitTimeReported  bool         `json:"waitTimeReported"`
 	Status            EntityStatus `json:"status"`
 	LastUpdated       time.Time    `json:"lastUpdated"` // API-reported event time; zero if unknown
 	LastStatusChange  time.Time    `json:"lastStatusChange"`
@@ -93,6 +98,37 @@ func (em *EntityManager) GetAllEntities() map[string]Entity {
 	return result
 }
 
+// GetAttractionsByPark returns every ATTRACTION currently known for a park,
+// sorted by name so the client's board does not reshuffle between polls
+// (sync.Map.Range yields keys in unspecified order).
+//
+// Deliberately does not take em.mu: Range is safe on its own, and that mutex
+// serialises the read-modify-write in ProcessEntity — holding it for a full-map
+// scan on every poll would stall entity ingestion.
+//
+// The EntityType check doubles as a "has been seen on the stream" test. Rows
+// hydrated from entity_status have an empty ParkID and EntityType, so retired
+// rides no longer in the feed are excluded automatically.
+func (em *EntityManager) GetAttractionsByPark(parkID string) []Entity {
+	var attractions []Entity
+	em.entities.Range(func(_, value interface{}) bool {
+		entity := value.(Entity)
+		if entity.ParkID == parkID && entity.EntityType == "ATTRACTION" {
+			attractions = append(attractions, entity)
+		}
+		return true
+	})
+
+	sort.Slice(attractions, func(i, j int) bool {
+		if attractions[i].Name != attractions[j].Name {
+			return attractions[i].Name < attractions[j].Name
+		}
+		return attractions[i].EntityID < attractions[j].EntityID
+	})
+
+	return attractions
+}
+
 // ProcessEntity processes a live entity update from the WebSocket stream.
 // Startup ingestion goes through BulkLoad + ReconcileAgainst instead.
 func (em *EntityManager) ProcessEntity(entity Entity) {
@@ -149,18 +185,37 @@ func (em *EntityManager) ProcessEntity(entity Entity) {
 		}
 	}
 
-	// Check for wait time change
-	if entity.WaitTime != existingEntity.WaitTime {
-		// TODO: Re-enable when working on wait time functionality
-		// messageBus.PublishWaitTime(WaitTimeMessage{
-		// 	EntityID:    entity.EntityID,
-		// 	OldWaitTime: existingEntity.WaitTime,
-		// 	NewWaitTime: entity.WaitTime,
-		// 	Timestamp:   time.Now(),
-		// })
+	// Check for wait time change. Currently log-only (see message_processor.go)
+	// while we size up the volume of these events before pushing them to clients.
+	if entity.WaitTime != existingEntity.WaitTime || entity.WaitTimeReported != existingEntity.WaitTimeReported {
+		eventTime := eventTimeOrNow(entity)
+		messageBus.PublishWaitTime(WaitTimeMessage{
+			EntityID:        entity.EntityID,
+			EntityName:      entity.Name,
+			ParkID:          entity.ParkID,
+			Status:          entity.Status,
+			OldWaitTime:     existingEntity.WaitTime,
+			OldWaitReported: existingEntity.WaitTimeReported,
+			NewWaitTime:     entity.WaitTime,
+			NewWaitReported: entity.WaitTimeReported,
+			Timestamp:       eventTime,
+		})
 		existingEntity.WaitTime = entity.WaitTime
-		existingEntity.LastWaitTimeChange = eventTimeOrNow(entity)
+		existingEntity.WaitTimeReported = entity.WaitTimeReported
+		existingEntity.LastWaitTimeChange = eventTime
 	}
+
+	// Live data is authoritative for identity fields, and until now nothing
+	// refreshed them: rows hydrated from entity_status carry an empty ParkID and
+	// EntityType (the table has no such columns), and BulkLoad — the only path
+	// that overwrote them — runs once at startup. Reconnect snapshots arrive
+	// through this function like any update, so without this copy a DB-hydrated
+	// entity stayed unidentifiable for the life of the process, and LastUpdated
+	// stayed frozen at snapshot time for every entity.
+	existingEntity.Name = entity.Name
+	existingEntity.ParkID = entity.ParkID
+	existingEntity.EntityType = entity.EntityType
+	existingEntity.LastUpdated = entity.LastUpdated
 
 	em.entities.Store(entity.EntityID, existingEntity)
 }

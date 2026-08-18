@@ -163,9 +163,11 @@ func convertLiveDataEntity(e LiveDataEntity, frameTs int64) (Entity, bool) {
 	}
 
 	waitTime := 0
+	waitTimeReported := false
 	if e.Queue != nil {
 		if standby, exists := e.Queue["STANDBY"]; exists && standby.WaitTime != nil {
 			waitTime = *standby.WaitTime
+			waitTimeReported = true
 		}
 	}
 
@@ -175,6 +177,7 @@ func convertLiveDataEntity(e LiveDataEntity, frameTs int64) (Entity, bool) {
 		EntityType:         e.EntityType,
 		ParkID:             e.ParkID,
 		WaitTime:           waitTime,
+		WaitTimeReported:   waitTimeReported,
 		Status:             EntityStatus(e.Status),
 		LastUpdated:        lastUpdated,
 		LastStatusChange:   lastUpdated,

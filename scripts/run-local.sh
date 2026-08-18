@@ -26,6 +26,10 @@ fi
 # Set default environment variables for local development (can be overridden by local_config.sh)
 export APNS_ENV=${APNS_ENV:-"development"}
 
+# DEBUG ONLY — logs every /api/wait-times poll. Remove once wait-time polling
+# is proven working (see the matching block in source/wait_times.go).
+export LOG_WAIT_TIME_POLLS=${LOG_WAIT_TIME_POLLS:-"true"}
+
 # Set the APNS key path for local development (sandbox)
 export APNS_KEY_BASE64=$(base64 -i "$PROJECT_ROOT/keys/AuthKey_MU2W4LLRSY.p8" | tr -d '\n')
 

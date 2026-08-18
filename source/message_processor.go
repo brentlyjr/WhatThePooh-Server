@@ -5,6 +5,15 @@ import (
 	"log"
 )
 
+// formatReportedWait renders a wait time for logging, distinguishing "no
+// STANDBY queue reported" from a real 0-minute wait.
+func formatReportedWait(minutes int, reported bool) string {
+	if !reported {
+		return "—"
+	}
+	return fmt.Sprintf("%d min", minutes)
+}
+
 // StartMessageProcessors subscribes to the message bus and processes incoming messages.
 func StartMessageProcessors() {
 	log.Printf("Starting message processors...")
@@ -55,14 +64,18 @@ func StartMessageProcessors() {
 		}
 	}()
 
-	// Goroutine for handling wait time changes
-	// If re-enabling: messageProcessorWg.Add(1) here and add CloseWaitTimeSubscribers() to shutdown order.
-	// TODO: Re-enable when working on wait time functionality
-	// go func() {
-	// 	waitTimeCh := messageBus.SubscribeWaitTime()
-	// 	for msg := range waitTimeCh {
-	// 		log.Printf("⏰ WAIT TIME CHANGE: Entity %s changed from %d to %d minutes at %v",
-	// 			msg.EntityID, msg.OldWaitTime, msg.NewWaitTime, msg.Timestamp)
-	// 	}
-	// }()
-} 
+	// Goroutine for handling wait time changes. Log-only for now: we are
+	// measuring how many of these arrive before deciding whether to push them.
+	messageProcessorWg.Add(1)
+	go func() {
+		defer messageProcessorWg.Done()
+		waitTimeCh := messageBus.SubscribeWaitTime()
+		for msg := range waitTimeCh {
+			log.Printf("⏰ WAIT TIME CHANGE: Entity %s in %s (%s) changed from %s to %s (status %s)",
+				msg.EntityName, getParkName(msg.ParkID), msg.EntityID,
+				formatReportedWait(msg.OldWaitTime, msg.OldWaitReported),
+				formatReportedWait(msg.NewWaitTime, msg.NewWaitReported),
+				msg.Status)
+		}
+	}()
+}

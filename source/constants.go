@@ -27,4 +27,13 @@ func getParkName(parkID string) string {
 		return name
 	}
 	return "Unknown Park"
-} 
+}
+
+// isKnownPark reports whether a park ID is one we serve. parkNames doubles as
+// the allowlist for POST /api/wait-times, so a live park absent from the map
+// above (hotel, water park, newly opened gate) is rejected until it is added —
+// the same maintenance burden getParkName already carries for APNS copy.
+func isKnownPark(parkID string) bool {
+	_, exists := parkNames[parkID]
+	return exists
+}

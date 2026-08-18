@@ -21,8 +21,13 @@ type StatusChangeMessage struct {
 
 type WaitTimeMessage struct {
     EntityID      string
+    EntityName    string
+    ParkID        string
+    Status        EntityStatus
     OldWaitTime   int
+    OldWaitReported bool
     NewWaitTime   int
+    NewWaitReported bool
     Timestamp     time.Time
 }
 
@@ -105,4 +110,16 @@ func (mb *MessageBus) PublishWaitTime(msg WaitTimeMessage) {
             log.Printf("Wait time subscriber channel full, dropping message for entity %s", msg.EntityID)
         }
     }
-} 
+}
+
+// CloseWaitTimeSubscribers closes all wait time subscriber channels.
+// Callers must guarantee no concurrent PublishWaitTime (entity consumer must have exited).
+func (mb *MessageBus) CloseWaitTimeSubscribers() {
+	mb.mu.Lock()
+	defer mb.mu.Unlock()
+
+	for _, ch := range mb.waitTimeSubscribers {
+		close(ch)
+	}
+	mb.waitTimeSubscribers = nil
+}

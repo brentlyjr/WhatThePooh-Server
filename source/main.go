@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/joho/godotenv"
 )
 
@@ -193,6 +194,11 @@ func main() {
 	app := fiber.New(fiber.Config{
 		BodyLimit: 10 * 1024 * 1024, // 10MB limit for large feedback logs
 	})
+
+	// Compress responses. The wait-times board is the motivation — a full park
+	// is ~10-50KB of JSON polled every 60s per active device — but /api/entities
+	// and /api/metrics benefit too.
+	app.Use(compress.New())
 
 	// Setup all routes using the handlers.go file
 	SetupRoutes(app, entityManager, wsClient)

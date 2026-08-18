@@ -85,6 +85,7 @@ func gracefulShutdown(ctx context.Context, deps shutdownDeps) {
 
 		log.Println("[SHUTDOWN] Draining message processor...")
 		messageBus.CloseStatusSubscribers()
+		messageBus.CloseWaitTimeSubscribers()
 		waitWithCtx(ctx, &messageProcessorWg, "message processor")
 
 		log.Println("[SHUTDOWN] Abandoning push enqueue...")
