@@ -191,7 +191,7 @@ func main() {
 
 	// Create Fiber app with increased body size limit for feedback logs
 	app := fiber.New(fiber.Config{
-		BodyLimit: 10 * 1024 * 1024, // 10MB limit for large feedback logs
+		BodyLimit: 30 * 1024 * 1024, // 10MB limit for large feedback logs
 	})
 
 	// Setup all routes using the handlers.go file

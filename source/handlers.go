@@ -577,7 +577,7 @@ func feedbackHandler(c *fiber.Ctx) error {
 	}
 
 	// Validate logs length if provided (allow larger logs for debugging)
-	if req.Logs != nil && len(*req.Logs) > 5*1024*1024 { // 5MB limit
+	if req.Logs != nil && len(*req.Logs) > 20*1024*1024 { // 5MB limit
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Logs must be 5MB or less",
 		})
