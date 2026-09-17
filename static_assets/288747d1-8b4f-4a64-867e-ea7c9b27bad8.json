@@ -1,67 +1,144 @@
 {
   "schemaVersion": 1,
-  "parkVersion": 1,
-  "generatedAt": "2026-05-27T04:08:58Z",
+  "parkVersion": 4,
+  "generatedAt": "2026-09-12T22:59:22Z",
   "park": {
     "id": "288747d1-8b4f-4a64-867e-ea7c9b27bad8",
     "name": "Disney's Hollywood Studios",
-    "polygon": null
+    "polygon": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            -81.56323348724128,
+            28.359936094004684
+          ],
+          [
+            -81.561068092408,
+            28.36138952940866
+          ],
+          [
+            -81.55877292655649,
+            28.362112175863018
+          ],
+          [
+            -81.55624671740196,
+            28.36189232849099
+          ],
+          [
+            -81.55839226490306,
+            28.3594394017938
+          ],
+          [
+            -81.5590579138906,
+            28.358488765472153
+          ],
+          [
+            -81.5570487531851,
+            28.35670555901013
+          ],
+          [
+            -81.55711796439482,
+            28.354867390705103
+          ],
+          [
+            -81.55840447864595,
+            28.354032784940916
+          ],
+          [
+            -81.55799531825912,
+            28.352373751531616
+          ],
+          [
+            -81.56022636196046,
+            28.352133547921433
+          ],
+          [
+            -81.56206911041905,
+            28.352534565813006
+          ],
+          [
+            -81.56374035757123,
+            28.353430240291647
+          ],
+          [
+            -81.56353883081354,
+            28.3593315137316
+          ],
+          [
+            -81.56323348724128,
+            28.359936094004684
+          ]
+        ]
+      ]
+    }
   },
   "rides": [
     {
       "id": "1a2e70d9-50d5-4140-b69e-799e950f7d18",
       "parkId": "288747d1-8b4f-4a64-867e-ea7c9b27bad8",
-      "name": "Star Wars: Rise of the Resistance"
+      "name": "Star Wars: Rise of the Resistance",
+      "emoji": "🌌"
     },
     {
       "id": "20b5daa8-e1ea-436f-830c-2d7d18d929b5",
       "parkId": "288747d1-8b4f-4a64-867e-ea7c9b27bad8",
-      "name": "Toy Story Mania!"
+      "name": "Toy Story Mania!",
+      "emoji": "🦖"
     },
     {
       "id": "34c4916b-989b-4ff1-a7e3-a6a846a3484f",
       "parkId": "288747d1-8b4f-4a64-867e-ea7c9b27bad8",
-      "name": "Millennium Falcon: Smugglers Run"
+      "name": "Millennium Falcon: Smugglers Run",
+      "emoji": "🛸"
     },
     {
       "id": "399aa0a1-98e2-4d2b-b297-2b451e9665e1",
       "parkId": "288747d1-8b4f-4a64-867e-ea7c9b27bad8",
-      "name": "Slinky Dog Dash"
+      "name": "Slinky Dog Dash",
+      "emoji": "🚥"
     },
     {
       "id": "3b290419-8ca2-44bc-a710-a6c83fca76ec",
       "parkId": "288747d1-8b4f-4a64-867e-ea7c9b27bad8",
-      "name": "Star Tours – The Adventures Continue"
+      "name": "Star Tours – The Adventures Continue",
+      "emoji": "🤖"
     },
     {
       "id": "6e118e37-5002-408d-9d88-0b5d9cdb5d14",
       "parkId": "288747d1-8b4f-4a64-867e-ea7c9b27bad8",
-      "name": "Mickey & Minnie's Runaway Railway"
+      "name": "Mickey & Minnie's Runaway Railway",
+      "emoji": "🚂"
     },
     {
       "id": "6f6998e8-a629-412c-b964-2cb06af8e26b",
       "parkId": "288747d1-8b4f-4a64-867e-ea7c9b27bad8",
-      "name": "The Twilight Zone™ Tower of Terror"
+      "name": "The Twilight Zone™ Tower of Terror",
+      "emoji": "🛗"
     },
     {
       "id": "9211adc9-b296-4667-8e97-b40cf76108e4",
       "parkId": "288747d1-8b4f-4a64-867e-ea7c9b27bad8",
-      "name": "Vacation Fun - An Original Animated Short with Mickey & Minnie"
+      "name": "Vacation Fun - An Original Animated Short with Mickey & Minnie",
+      "emoji": "📽️"
     },
     {
       "id": "d56506e2-6ad3-443a-8065-fea37987248d",
       "parkId": "288747d1-8b4f-4a64-867e-ea7c9b27bad8",
-      "name": "Alien Swirling Saucers"
+      "name": "Alien Swirling Saucers",
+      "emoji": "👽"
     },
     {
       "id": "d7669edc-eaa1-4af2-bbb5-6e98df564166",
       "parkId": "288747d1-8b4f-4a64-867e-ea7c9b27bad8",
-      "name": "Walt Disney Presents"
+      "name": "Walt Disney Presents",
+      "emoji": "🏛️"
     },
     {
       "id": "e516f303-e82d-4fd3-8fbf-8e6ab624cf89",
       "parkId": "288747d1-8b4f-4a64-867e-ea7c9b27bad8",
-      "name": "Rock ’n’ Roller Coaster Starring The Muppets — Opening May 26"
+      "name": "Rock ’n’ Roller Coaster Starring The Muppets",
+      "emoji": "🎸"
     }
   ]
 }

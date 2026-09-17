@@ -1,177 +1,558 @@
 {
   "schemaVersion": 1,
-  "parkVersion": 1,
-  "generatedAt": "2026-05-27T04:08:58Z",
+  "parkVersion": 5,
+  "generatedAt": "2026-09-15T17:38:54Z",
   "park": {
     "id": "47f90d2c-e191-4239-a466-5892ef59a88b",
     "name": "EPCOT",
-    "polygon": null
+    "polygon": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            -81.55359739264604,
+            28.374614070834095
+          ],
+          [
+            -81.553602979,
+            28.37205552072622
+          ],
+          [
+            -81.55349963145197,
+            28.371142151855835
+          ],
+          [
+            -81.55445769115393,
+            28.368846160383484
+          ],
+          [
+            -81.55426775511972,
+            28.367997034583492
+          ],
+          [
+            -81.55284323486316,
+            28.366811330958175
+          ],
+          [
+            -81.55111146513948,
+            28.36626666144831
+          ],
+          [
+            -81.54879312825135,
+            28.366216384262785
+          ],
+          [
+            -81.54739863464725,
+            28.3662890068641
+          ],
+          [
+            -81.54629812291962,
+            28.36665491304765
+          ],
+          [
+            -81.54392392249201,
+            28.368476064434475
+          ],
+          [
+            -81.54374725404843,
+            28.37028255164219
+          ],
+          [
+            -81.54448744594644,
+            28.37128041411603
+          ],
+          [
+            -81.54540640117078,
+            28.37533890025876
+          ],
+          [
+            -81.5483951005326,
+            28.376344443969277
+          ],
+          [
+            -81.55031680629048,
+            28.376299753137697
+          ],
+          [
+            -81.55170222206942,
+            28.37599809002454
+          ],
+          [
+            -81.55354571887203,
+            28.37512661880876
+          ],
+          [
+            -81.55359739264604,
+            28.374614070834095
+          ]
+        ]
+      ]
+    }
   },
   "rides": [
     {
       "id": "00666fe9-7774-4b53-9fb7-3d333f8aa503",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Impressions de France"
+      "name": "Impressions de France",
+      "emoji": "🇫🇷"
     },
     {
       "id": "07dbeaea-85fa-45f2-872f-02f9e7510419",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Gallery of Arts and History"
+      "name": "Gallery of Arts and History",
+      "emoji": "🐪"
     },
     {
       "id": "0f40274d-420a-425a-9377-29fd6e49484f",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "House of the Whispering Willows"
+      "name": "House of the Whispering Willows",
+      "emoji": "🐲"
     },
     {
       "id": "18c533d6-a395-4ae4-9488-80fce9c497fe",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Palais du Cinéma"
+      "name": "Palais du Cinéma",
+      "emoji": "📽️"
     },
     {
       "id": "1e735ffb-4868-47f1-b2cd-2ac1156cd5f0",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Remy's Ratatouille Adventure"
+      "name": "Remy's Ratatouille Adventure",
+      "emoji": "🐀",
+      "entranceCircles": [
+        {
+          "id": "standby",
+          "latitude": 28.36826,
+          "longitude": -81.553065,
+          "radius": 10.0
+        }
+      ],
+      "entrancePolygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -81.55297786241069,
+              28.36835911524151
+            ],
+            [
+              -81.55337789957771,
+              28.368030574078798
+            ],
+            [
+              -81.5534476932962,
+              28.36758627748052
+            ],
+            [
+              -81.55266123724869,
+              28.367075591735375
+            ],
+            [
+              -81.55181520119756,
+              28.367948864359576
+            ],
+            [
+              -81.55277018354099,
+              28.368422099816744
+            ],
+            [
+              -81.55297786241069,
+              28.36835911524151
+            ]
+          ]
+        ]
+      }
     },
     {
       "id": "1f542745-cda1-4786-a536-5fff373e5964",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "The American Adventure"
+      "name": "The American Adventure",
+      "emoji": "🗽"
     },
     {
       "id": "22f48b73-01df-460e-8969-9eb2b4ae836c",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Gran Fiesta Tour Starring The Three Caballeros"
+      "name": "Gran Fiesta Tour Starring The Three Caballeros",
+      "emoji": "🪇"
     },
     {
       "id": "2ecc4fff-2994-476f-9926-24a4af173838",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Bruce's Shark World"
+      "name": "Bruce's Shark World",
+      "emoji": "🦈"
     },
     {
       "id": "35ed719b-f7f0-488f-8346-4fbf8055d373",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Disney and Pixar Short Film Festival"
+      "name": "Disney and Pixar Short Film Festival",
+      "emoji": "🎬"
     },
     {
       "id": "37ae57c5-feaf-4e47-8f27-4b385be200f0",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Test Track"
+      "name": "Test Track",
+      "emoji": "🛣️",
+      "entrancePolygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -81.54772287284536,
+              28.373108080399025
+            ],
+            [
+              -81.5476786134141,
+              28.37323575183531
+            ],
+            [
+              -81.54749136197421,
+              28.37335661412833
+            ],
+            [
+              -81.54720367567111,
+              28.37336172098578
+            ],
+            [
+              -81.54692109622547,
+              28.373293629553096
+            ],
+            [
+              -81.5447813229533,
+              28.372801668951936
+            ],
+            [
+              -81.54571928243855,
+              28.371329191720097
+            ],
+            [
+              -81.5476871248432,
+              28.372490150647398
+            ],
+            [
+              -81.54779947570712,
+              28.37278634837958
+            ],
+            [
+              -81.54772287284536,
+              28.373108080399025
+            ]
+          ]
+        ]
+      }
     },
     {
       "id": "3ace01d1-15fc-4fbb-99e4-81a696cb2d05",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Kidcot Fun Stops"
+      "name": "Kidcot Fun Stops",
+      "emoji": "🖍️"
     },
     {
       "id": "3d8f8f8f-f984-4d2e-8dea-5a79432bdf05",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Advanced Training Lab"
+      "name": "Advanced Training Lab",
+      "emoji": "💻"
     },
     {
       "id": "3e5f26ee-c02d-47fd-891e-5e4479073444",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "ImageWorks - The \"What If\" Labs"
+      "name": "ImageWorks - The \"What If\" Labs",
+      "emoji": "🧪"
     },
     {
       "id": "480fde8f-fe58-4bfb-b3ab-052a39d4db7c",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Spaceship Earth"
+      "name": "Spaceship Earth",
+      "emoji": "🌐"
     },
     {
       "id": "482169b9-2889-4747-8aef-f9d13a37d940",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Awesome Planet"
+      "name": "Awesome Planet",
+      "emoji": "🌎"
     },
     {
       "id": "4f0df9e7-d4c1-45b5-93e2-4a7bc92547b0",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "American Heritage Gallery"
+      "name": "American Heritage Gallery",
+      "emoji": "🖼️"
     },
     {
       "id": "57acb522-a6fc-4aa4-a80e-21f21f317250",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Turtle Talk With Crush"
+      "name": "Turtle Talk With Crush",
+      "emoji": "🐢"
     },
     {
       "id": "5b6475ad-4e9a-4793-b841-501aa382c9c0",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Mission: SPACE"
+      "name": "Mission: SPACE",
+      "emoji": "🧑‍🚀",
+      "entranceCircles": [
+        {
+          "id": "standby",
+          "latitude": 28.373973,
+          "longitude": -81.546947,
+          "radius": 10.0
+        }
+      ],
+      "entrancePolygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -81.54702863613709,
+              28.374254450204905
+            ],
+            [
+              -81.54703714756617,
+              28.374039962191944
+            ],
+            [
+              -81.54691798755897,
+              28.373893565611667
+            ],
+            [
+              -81.54688394184264,
+              28.373767596461196
+            ],
+            [
+              -81.5467630795496,
+              28.37369354702815
+            ],
+            [
+              -81.5460668446504,
+              28.373553108448235
+            ],
+            [
+              -81.54607195150784,
+              28.374577884510163
+            ],
+            [
+              -81.54702863613709,
+              28.374254450204905
+            ]
+          ]
+        ]
+      }
     },
     {
       "id": "61fb49f8-e62f-4e1c-ae0e-8ab9929037bc",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Canada Far and Wide in Circle-Vision 360"
+      "name": "Canada Far and Wide in Circle-Vision 360",
+      "emoji": "🍁"
     },
     {
       "id": "66ff36de-9cb3-4d9a-b891-1665d19ffb3e",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Stave Church Gallery"
+      "name": "Stave Church Gallery",
+      "emoji": "⛪"
     },
     {
       "id": "6f1d3b25-42c9-4e99-9dce-6c20d7a5deea",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Bijutsu-kan Gallery"
+      "name": "Bijutsu-kan Gallery",
+      "emoji": "🇯🇵"
     },
     {
       "id": "75449e85-c410-4cef-a368-9d2ea5d52b58",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Journey Into Imagination With Figment"
+      "name": "Journey Into Imagination With Figment",
+      "emoji": "🎇"
     },
     {
       "id": "7969166f-feef-4350-b26e-6a6c745528f4",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "SeaBase Aquarium"
+      "name": "SeaBase Aquarium",
+      "emoji": "🪸"
     },
     {
       "id": "81b15dfd-cf6a-466f-be59-3dd65d2a2807",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Soarin' Around the World"
+      "name": "Soarin' Around the World",
+      "emoji": "🪂"
     },
     {
       "id": "8c8cd77d-97f6-4309-b285-42aad90e9f15",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Beauty and the Beast Sing-Along"
+      "name": "Beauty and the Beast Sing-Along",
+      "emoji": "🌹"
     },
     {
       "id": "8d7ccdb1-a22b-4e26-8dc8-65b1938ed5f0",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Frozen Ever After"
+      "name": "Frozen Ever After",
+      "emoji": "❄️",
+      "entranceCircles": [
+        {
+          "id": "standby",
+          "latitude": 28.370692,
+          "longitude": -81.546554,
+          "radius": 10.0
+        }
+      ],
+      "entrancePolygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -81.54657572859132,
+              28.370721379672442
+            ],
+            [
+              -81.54654850847933,
+              28.37060040139694
+            ],
+            [
+              -81.54618496876145,
+              28.370425587788837
+            ],
+            [
+              -81.54564298608717,
+              28.370518741060977
+            ],
+            [
+              -81.54546817247908,
+              28.371116978633335
+            ],
+            [
+              -81.54607911277036,
+              28.37129360691557
+            ],
+            [
+              -81.54658056772232,
+              28.370939140568346
+            ],
+            [
+              -81.54652673238972,
+              28.370798805768764
+            ],
+            [
+              -81.54657572859132,
+              28.370721379672442
+            ]
+          ]
+        ]
+      }
     },
     {
       "id": "8f353879-d6ac-4211-9352-4029efb47c18",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Living with the Land"
+      "name": "Living with the Land",
+      "emoji": "🌱"
     },
     {
       "id": "8f8746cb-c714-4c60-848d-e2dc4e6f586b",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Mexico Folk Art Gallery"
+      "name": "Mexico Folk Art Gallery",
+      "emoji": "🇲🇽"
     },
     {
       "id": "9053240b-7f7f-44fe-970b-bd7956cd5d4f",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Project Tomorrow: Inventing the Wonders of the Future"
+      "name": "Project Tomorrow: Inventing the Wonders of the Future",
+      "emoji": "🕹️"
     },
     {
       "id": "dae68dee-dfba-4128-b594-6aa12add1070",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Journey of Water, Inspired by Moana"
+      "name": "Journey of Water, Inspired by Moana",
+      "emoji": "💧",
+      "entranceCircles": [
+        {
+          "id": "standby",
+          "latitude": 28.374638,
+          "longitude": -81.550364,
+          "radius": 10.0
+        }
+      ],
+      "entrancePolygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -81.55024735309289,
+              28.37473568931645
+            ],
+            [
+              -81.55049233410078,
+              28.37454817298942
+            ],
+            [
+              -81.55053951562823,
+              28.374252381105816
+            ],
+            [
+              -81.54997938621266,
+              28.374098133804548
+            ],
+            [
+              -81.54971867802894,
+              28.37442658982254
+            ],
+            [
+              -81.55024735309289,
+              28.37473568931645
+            ]
+          ]
+        ]
+      }
     },
     {
       "id": "e3549451-b284-453d-9c31-e3b1207abd79",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Guardians of the Galaxy: Cosmic Rewind"
+      "name": "Guardians of the Galaxy: Cosmic Rewind",
+      "emoji": "💫",
+      "entranceCircles": [
+        {
+          "id": "standby",
+          "latitude": 28.374771,
+          "longitude": -81.547828,
+          "radius": 10.0
+        }
+      ],
+      "entrancePolygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -81.54800060663634,
+              28.374733686053336
+            ],
+            [
+              -81.54863385696032,
+              28.375312463231168
+            ],
+            [
+              -81.54790527863058,
+              28.376039339275096
+            ],
+            [
+              -81.546756235704,
+              28.375518439815043
+            ],
+            [
+              -81.54765844718709,
+              28.374735388339154
+            ],
+            [
+              -81.54800060663634,
+              28.374733686053336
+            ]
+          ]
+        ]
+      }
     },
     {
       "id": "ee070d46-6a64-41c0-9f12-69dcfcca10a0",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "Reflections of China"
+      "name": "Reflections of China",
+      "emoji": "🐼"
     },
     {
       "id": "fb076275-0570-4d62-b2a9-4d6515130fa3",
       "parkId": "47f90d2c-e191-4239-a466-5892ef59a88b",
-      "name": "The Seas with Nemo & Friends"
+      "name": "The Seas with Nemo & Friends",
+      "emoji": "🐠"
     }
   ]
 }
