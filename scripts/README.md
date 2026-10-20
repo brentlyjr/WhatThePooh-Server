@@ -6,6 +6,14 @@ This directory contains scripts for deploying and managing the WhatThePooh Serve
 
 ### Local Development
 - **`run-local.sh`**: Local development script that sets up environment variables and starts the server with sandbox APNS
+- **`export-feedback.go`**: Exports a `user_feedback.logs` blob as pretty JSON. `--db prod` reads `scripts/gcp_config.sh`; `--db test` reads `scripts/local_config.sh`. Run from the repo root:
+
+  ```bash
+  go run ./scripts/export-feedback.go --db prod --list
+  go run ./scripts/export-feedback.go --db prod --id 128
+  ```
+
+  `--list` prints each row’s id, date, logs size, and a short feedback snippet. `--id` writes `YYYY-MM-DD.json` in the current directory (or `YYYY-MM-DD-<id>.json` if that date file already exists). It also writes one `.txt` per day of console logs next to that file, named `YYYY-MM-DD-<log day>.txt`, with the JSON filename’s stem so the text files stay paired with that export.
 
 ### Google Cloud Platform (GCP) Deployment
 - **`gcp-deploy.sh`**: Main deployment script for GCP Cloud Run
