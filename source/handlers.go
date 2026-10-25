@@ -228,11 +228,23 @@ func checkDeviceExistsHandler(c *fiber.Ctx) error {
 		})
 	}
 
+	deviceInfo := fiber.Map{
+		"notificationsOn": device.NotificationsOn,
+	}
+
+	// Subscription fingerprint lets the client detect a drifted subscription set (e.g. an update
+	// lost when the app was killed) and re-sync. Optional: on a lookup failure we omit it rather
+	// than failing the whole check, and the client falls back to the notificationsOn compare.
+	if subscriptions, err := db.GetSubscriptions(token); err != nil {
+		log.Printf("Failed to load subscriptions for device %s exists check: %v", token, err)
+	} else {
+		deviceInfo["subscriptionsHash"] = subscriptionsHash(subscriptions)
+		deviceInfo["subscriptionCount"] = len(subscriptions)
+	}
+
 	return c.JSON(fiber.Map{
 		"exists": true,
-		"device": fiber.Map{
-			"notificationsOn": device.NotificationsOn,
-		},
+		"device": deviceInfo,
 	})
 }
 

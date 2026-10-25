@@ -144,6 +144,11 @@ func (c *CachedDB) UpdateSubscriptions(deviceToken string, subscriptions []Notif
 	return c.db.UpdateSubscriptions(deviceToken, subscriptions)
 } 
 
+// GetSubscriptions reads a device's subscriptions from the database (no caching for subscriptions)
+func (c *CachedDB) GetSubscriptions(deviceToken string) ([]NotificationSubscription, error) {
+	return c.db.GetSubscriptions(deviceToken)
+}
+
 // GetDevicesSubscribedToEntity returns devices subscribed to a specific entity/park
 func (c *CachedDB) GetDevicesSubscribedToEntity(entityID, parkID string) ([]DeviceRegistration, error) {
 	// This method requires database query with joins, so bypass cache
