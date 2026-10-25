@@ -11,6 +11,7 @@ type Database interface {
 	GetAllDevices() ([]DeviceRegistration, error)
 	DeleteDeviceToken(token string) error
 	UpdateSubscriptions(deviceToken string, subscriptions []NotificationSubscription) error
+	GetSubscriptions(deviceToken string) ([]NotificationSubscription, error)
 	GetDevicesSubscribedToEntity(entityID, parkID string) ([]DeviceRegistration, error)
 	SetDeviceNotificationState(deviceToken string, notificationsOn bool) error
 	StoreUserFeedback(feedback UserFeedback) error

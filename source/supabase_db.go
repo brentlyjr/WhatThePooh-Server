@@ -243,8 +243,23 @@ func (s *SupabaseDB) UpdateSubscriptions(deviceToken string, newSubscriptions []
 	return nil
 }
 
+// subscriptionQuerier is the Query method shared by pgxpool.Pool and pgx.Tx, so the
+// subscription SELECT can run either standalone or inside UpdateSubscriptions' transaction.
+type subscriptionQuerier interface {
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+}
+
+// GetSubscriptions returns all subscriptions for a device (used by the /exists self-heal hash)
+func (s *SupabaseDB) GetSubscriptions(deviceToken string) ([]NotificationSubscription, error) {
+	return querySubscriptions(s.pool, deviceToken)
+}
+
 // Helper function to get subscriptions within a transaction
 func (s *SupabaseDB) getSubscriptionsInTx(tx pgx.Tx, deviceToken string) ([]NotificationSubscription, error) {
+	return querySubscriptions(tx, deviceToken)
+}
+
+func querySubscriptions(q subscriptionQuerier, deviceToken string) ([]NotificationSubscription, error) {
 	query := `
 		SELECT device_token, entity_id, park_id, timestamp
 		FROM notification_subscriptions
@@ -252,9 +267,9 @@ func (s *SupabaseDB) getSubscriptionsInTx(tx pgx.Tx, deviceToken string) ([]Noti
 		ORDER BY park_id, entity_id
 	`
 
-	rows, err := tx.Query(context.Background(), query, deviceToken)
+	rows, err := q.Query(context.Background(), query, deviceToken)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query subscriptions in transaction: %v", err)
+		return nil, fmt.Errorf("failed to query subscriptions: %v", err)
 	}
 	defer rows.Close()
 
@@ -268,9 +283,12 @@ func (s *SupabaseDB) getSubscriptionsInTx(tx pgx.Tx, deviceToken string) ([]Noti
 			&sub.Timestamp,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan subscription row in transaction: %v", err)
+			return nil, fmt.Errorf("failed to scan subscription row: %v", err)
 		}
 		subscriptions = append(subscriptions, sub)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate subscription rows: %v", err)
 	}
 
 	return subscriptions, nil
