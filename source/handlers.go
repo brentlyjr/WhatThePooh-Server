@@ -381,12 +381,12 @@ func metricsHandler(entityManager *EntityManager, wsClient *WebSocketClient) fib
 			"restarts":       GetReconnectionTimestamps(),
 			"events":         wsClient.GetEventStats(),
 			"statuses":       wsClient.GetStatusStats(),
-			"channels":       wsClient.GetChannelStats(),
 			"seq_gaps":       wsClient.GetSeqGaps(),
 			"resyncs":        wsClient.GetResyncs(),
 			"bootstrap_complete":    bootstrapComplete,
 			"bootstrap_duration_ms": bootstrapDuration.Milliseconds(),
 			"heartbeat_interval_ms": wsClient.GetHeartbeatInterval().Milliseconds(),
+			"status_alerts_hourly":  statusAlertsHourly(),
 
 			"server_start":   serverStartTime,
 		})

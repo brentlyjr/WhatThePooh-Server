@@ -34,7 +34,7 @@ cd scripts && ./gcp-deploy.sh
 ./scripts/gcp-logs.sh
 ```
 
-There is no test suite — `go test ./...` is a no-op. There is no linter configured.
+Tests are minimal unit tests in `source/*_test.go` (subscription hash, hourly status-alert window). Run with `go test -race ./source`. The status-alert window tests share package-level state, so don't use `t.Parallel()` in them. There is no linter configured.
 
 ## Required Environment Variables
 
@@ -92,6 +92,7 @@ Key architectural points:
 - **Auto-disable on bad tokens.** When APNS returns `BadDeviceToken` or `Unregistered`, `SendPushNotification` calls `db.SetDeviceNotificationState(token, false)` — the device row and its subscriptions are preserved so re-registering restores everything.
 - **Entity state survives restarts.** On startup, `EntityManager.loadInitialStatuses` reads the `entity_status` table so prior statuses are known. The WebSocket bootstrap snapshot is then loaded silently via `BulkLoad`, and `ReconcileAgainst(dbSnapshot)` emits notifications only for entities whose status changed while the server was offline (new entities are persisted without notifying; unchanged entities keep the DB's `LastStatusChange` so duration counters survive the restart).
 - **Timestamps come from the API.** `convertLiveDataEntity` (`rest_client.go`) parses each entity's `lastUpdated` (falling back to the frame's `ts`, then `time.Now()`); `ProcessEntity`/`ReconcileAgainst` use it (via `eventTimeOrNow`, with a monotonic guard against going backwards) for `LastStatusChange`, `entity_status.last_updated`, and the APNS `timestamp`/"Was Down X ago" math.
+- **Hourly status-alert metric.** `/api/metrics` exposes `status_alerts_hourly`: 24 UTC hour buckets, oldest first, counting status-alert pushes APNS accepted via `apnsSender` (admin sends and failures excluded). It lives in memory (`apns_worker.go`) and resets on restart. The last entry is the current hour, still filling. `gcp-deploy.sh` pins `--max-instances=1` so one instance owns the WebSocket and this window. Revision rollouts can still briefly overlap.
 - **Queues drop on overflow.** Both `QueueEntity` and `Push` use non-blocking `select`/`default` and log a drop if the channel is full — they never block the producer.
 
 ## Database Schema

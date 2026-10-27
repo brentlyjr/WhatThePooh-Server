@@ -63,6 +63,75 @@ func incrementAPNSProdCounter() {
 	apnsMessageCounts.prodCount++
 }
 
+// Rolling 24-hour window of accepted status-alert pushes, bucketed by UTC send
+// hour. In-memory only: resets on restart. Exposed via /api/metrics.
+const statusAlertWindowHours = 24
+
+type statusAlertSlot struct {
+	unixHour int64
+	count    uint64
+}
+
+var statusAlertWindow struct {
+	sync.RWMutex
+	slots [statusAlertWindowHours]statusAlertSlot
+}
+
+// HourlyAlertCount is one bucket of the status_alerts_hourly metric.
+type HourlyAlertCount struct {
+	Hour string `json:"hour"`
+	Sent uint64 `json:"sent"`
+}
+
+func unixHourOf(t time.Time) int64 {
+	return t.UTC().Unix() / 3600
+}
+
+func recordStatusAlertSent() {
+	recordStatusAlertSentAt(time.Now().UTC())
+}
+
+// recordStatusAlertSentAt adds one to now's hour, resetting the slot first if
+// it still holds an older hour. This is the only place slots are modified.
+func recordStatusAlertSentAt(now time.Time) {
+	hour := unixHourOf(now)
+	slot := &statusAlertWindow.slots[hour%statusAlertWindowHours]
+
+	statusAlertWindow.Lock()
+	defer statusAlertWindow.Unlock()
+	if slot.unixHour != hour {
+		slot.unixHour = hour
+		slot.count = 0
+	}
+	slot.count++
+}
+
+func statusAlertsHourly() []HourlyAlertCount {
+	return statusAlertsHourlyAt(time.Now().UTC())
+}
+
+// statusAlertsHourlyAt returns the 24 UTC hours ending at now's hour, oldest
+// first. A slot holding a different hour reports 0. The last entry is the
+// current, still-filling hour. Read-only.
+func statusAlertsHourlyAt(now time.Time) []HourlyAlertCount {
+	current := unixHourOf(now)
+	result := make([]HourlyAlertCount, 0, statusAlertWindowHours)
+
+	statusAlertWindow.RLock()
+	defer statusAlertWindow.RUnlock()
+	for hour := current - statusAlertWindowHours + 1; hour <= current; hour++ {
+		var sent uint64
+		if slot := statusAlertWindow.slots[hour%statusAlertWindowHours]; slot.unixHour == hour {
+			sent = slot.count
+		}
+		result = append(result, HourlyAlertCount{
+			Hour: time.Unix(hour*3600, 0).UTC().Format(time.RFC3339),
+			Sent: sent,
+		})
+	}
+	return result
+}
+
 // ValidateAPNSConfiguration logs detailed information about the APNS configuration
 func ValidateAPNSConfiguration() {
 	log.Printf("=== APNS Configuration Validation ===")
@@ -517,6 +586,10 @@ func apnsSender(id int) {
 			log.Printf("[Worker %d] Failed to send push notification for token %s: %v", id, req.DeviceToken, err)
 		} else {
 			log.Printf("[Worker %d] Push sent successfully to %s for %s (%s)", id, req.DeviceToken, req.EntityName, req.NotificationID)
+			// Guard keeps future non-status push types out of the status-alert count.
+			if req.OldStatus != "" && req.NewStatus != "" {
+				recordStatusAlertSent()
+			}
 		}
 	}
 }

@@ -160,12 +160,17 @@ fi
 # fits within that window. If push drain routinely needs more time, increase the service
 # termination grace period (e.g. 30s) via Cloud Run service YAML / gcloud run services update.
 
+# --max-instances=1: each instance holds its own WebSocket and fans out pushes, and
+# /api/metrics status_alerts_hourly is in-memory per instance. During a revision rollout
+# the old and new revisions can still overlap briefly; this flag does not close that window.
+
 gcloud run deploy "$SERVICE_NAME" \
     --image="$REGION-docker.pkg.dev/$PROJECT_ID/$SERVICE_NAME/$SERVICE_NAME" \
     --platform="managed" \
     --region="$REGION" \
     --port="8080" \
     --min-instances=1 \
+    --max-instances=1 \
     --allow-unauthenticated \
     --set-secrets="$SECRET_ARGS_STRING" \
     --set-env-vars="$ENV_VARS" \
